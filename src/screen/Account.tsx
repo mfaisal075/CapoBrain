@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {
+  BackHandler,
   Image,
   ScrollView,
   StyleSheet,
@@ -101,7 +102,18 @@ const Account = ({navigation}: any) => {
   const to = Math.min((page + 1) * itemsPerPage, items.length);
 
   useEffect(() => {
+    const backAction = () => {
+      navigation.goBack();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
     setPage(0);
+    return () => backHandler.remove();
   }, [itemsPerPage]);
 
   return (

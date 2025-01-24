@@ -1,4 +1,5 @@
 import {
+  BackHandler,
   Image,
   ScrollView,
   StyleSheet,
@@ -6,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import NavBar from '../components/NavBar';
 import {DataTable} from 'react-native-paper';
 
@@ -37,6 +38,20 @@ const Download = ({navigation}: any) => {
       action: 'Download',
     },
   ]);
+
+  useEffect(() => {
+    const backAction = () => {
+      navigation.navigate('Home');
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -96,50 +111,50 @@ const Download = ({navigation}: any) => {
                   items.slice(0, items.length).map((item, index) => (
                     <DataTable.Row key={index}>
                       {[
-                      item.sr,
-                      item.class,
-                      item.section,
-                      item.title,
-                      item.date,
+                        item.sr,
+                        item.class,
+                        item.section,
+                        item.title,
+                        item.date,
                       ].map((value, idx) => (
-                      <DataTable.Cell
-                        key={idx}
-                        textStyle={{color: '#000', fontSize: 12}}
-                        style={{
-                        width: idx === 0 ? 50 : 125, // Reduced width for the first cell
-                        paddingHorizontal: 5,
-                        borderColor: '#000',
-                        borderWidth: 0.5,
-                        }}>
-                        {value}
-                      </DataTable.Cell>
+                        <DataTable.Cell
+                          key={idx}
+                          textStyle={{color: '#000', fontSize: 12}}
+                          style={{
+                            width: idx === 0 ? 50 : 125, // Reduced width for the first cell
+                            paddingHorizontal: 5,
+                            borderColor: '#000',
+                            borderWidth: 0.5,
+                          }}>
+                          {value}
+                        </DataTable.Cell>
                       ))}
                       <DataTable.Cell
-                      key={'action'}
-                      textStyle={{color: '#000', fontSize: 12}}
-                      style={{
-                        width: 125,
-                        paddingHorizontal: 5,
-                        borderColor: '#000',
-                        borderWidth: 0.5,
-                      }}>
-                      <TouchableOpacity
-                        onPress={() => {
-                        // Handle the action here
-                        console.log('Download clicked');
-                        }}>
-                        <View
+                        key={'action'}
+                        textStyle={{color: '#000', fontSize: 12}}
                         style={{
-                          backgroundColor: 'green',
-                          padding: 10,
-                          borderRadius: 5,
-                          alignItems: 'center',
+                          width: 125,
+                          paddingHorizontal: 5,
+                          borderColor: '#000',
+                          borderWidth: 0.5,
                         }}>
-                        <Text style={{color: '#fff', fontSize: 14}}>
-                          {item.action}
-                        </Text>
-                        </View>
-                      </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => {
+                            // Handle the action here
+                            console.log('Download clicked');
+                          }}>
+                          <View
+                            style={{
+                              backgroundColor: 'green',
+                              padding: 10,
+                              borderRadius: 5,
+                              alignItems: 'center',
+                            }}>
+                            <Text style={{color: '#fff', fontSize: 14}}>
+                              {item.action}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
                       </DataTable.Cell>
                     </DataTable.Row>
                   ))
