@@ -11,6 +11,11 @@ import Result from '../screen/Result';
 import LMS from '../screen/LMS';
 import Course from '../screen/Course';
 import Login from '../screen/Login';
+import SummerHomework from '../screen/LMS/SummerHomework';
+import SummerHomeWorkResult from '../screen/LMS/SummerHomeworkResult';
+import LibraryBooks from '../screen/LMS/LibraryBooks';
+import StudentDiary from '../screen/LMS/StudentDiary';
+import DateSheet from '../screen/LMS/DateSheet';
 
 const Stack = createNativeStackNavigator();
 
@@ -66,6 +71,31 @@ const AppNavigator = () => {
         <Stack.Screen
           name="Course"
           component={Course}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="SummerHomework"
+          component={SummerHomework}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="SummerHomeworkResult"
+          component={SummerHomeWorkResult}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="LibraryBooks"
+          component={LibraryBooks}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="StudentDiary"
+          component={StudentDiary}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="DateSheet"
+          component={DateSheet}
           options={{headerShown: false}}
         />
       </Stack.Navigator>

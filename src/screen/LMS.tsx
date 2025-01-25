@@ -46,11 +46,11 @@ const LMS = ({navigation}: any) => {
             <Text style={styles.tblHdCtr}>Lecture</Text>
           </View>
 
-          {/* Back Button */}
+          {/* Buttons Container  */}
           <View style={styles.bckBtnCtr}>
             <TouchableOpacity
               style={styles.bckBtn}
-              onPress={() => navigation.goBack()}>
+              onPress={() => navigation.navigate('Home')}>
               <Image
                 source={require('../assets/back.png')}
                 style={[styles.bckBtnIcon, {marginRight: -8}]}
@@ -60,6 +60,43 @@ const LMS = ({navigation}: any) => {
                 style={styles.bckBtnIcon}
               />
               <Text style={styles.bckBtnText}>Dashboard</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.bckBtn, {backgroundColor: '#3B82F6'}]}
+              onPress={() => navigation.navigate('SummerHomework')}>
+              <Text style={styles.bckBtnText}>Summer Homework</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.bckBtn,
+                {backgroundColor: '#3B82F6', marginTop: 10},
+              ]}
+              onPress={() => navigation.navigate('SummerHomeworkResult')}>
+              <Text style={styles.bckBtnText}>Summer Homework Result</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.bckBtn,
+                {backgroundColor: '#3B82F6', marginTop: 10},
+              ]}
+              onPress={() => navigation.navigate('LibraryBooks')}>
+              <Text style={styles.bckBtnText}>Library Books</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.bckBtn,
+                {backgroundColor: '#3B82F6', marginTop: 10},
+              ]}
+              onPress={() => navigation.navigate('StudentDiary')}>
+              <Text style={styles.bckBtnText}>Daily Diary</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.bckBtn,
+                {backgroundColor: '#3B82F6', marginTop: 10},
+              ]}
+              onPress={() => navigation.navigate('DateSheet')}>
+              <Text style={styles.bckBtnText}>Date Sheet</Text>
             </TouchableOpacity>
           </View>
 
@@ -203,11 +240,13 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   bckBtnCtr: {
-    height: 50,
+    height: 'auto',
     width: '100%',
-    justifyContent: 'center',
-    alignItems: 'flex-end',
+    justifyContent: 'flex-start', // Align buttons to the right
+    flexDirection: 'row-reverse', // Reverse the direction of the buttons
+    alignItems: 'center',
     paddingRight: 20,
+    flexWrap: 'wrap',
   },
   bckBtn: {
     backgroundColor: '#5A6268',
@@ -216,10 +255,12 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     flexDirection: 'row',
     alignItems: 'center',
+    marginLeft: 10, // Add margin to the left to space out buttons
+    marginTop: 10, // Add margin to the top to space out buttons in the next row
   },
   bckBtnText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   bckBtnIcon: {
