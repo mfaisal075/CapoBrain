@@ -16,7 +16,7 @@ const Login = ({navigation}: any) => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const {setUserName: setUserEmail} = useUser();
+  const {setUserName: setUserEmail, setUserRole, userRole} = useUser();
   const [loading, setLoading] = useState(false);
 
   const togglePasswordVisibility = () => {
@@ -40,7 +40,13 @@ const Login = ({navigation}: any) => {
 
       if (response.status === 200 && data.status === 200) {
         // Successful login
-        navigation.navigate('Home');
+        setUserRole('teacher');
+        if (userRole === 'student') {
+          navigation.navigate('StudentStack');
+        }
+        if (userRole === 'teacher') {
+          navigation.navigate('TeacherStack');
+        }
         console.log('Login successful:', data);
       } else if (data.status === 202) {
         // Invalid username or password

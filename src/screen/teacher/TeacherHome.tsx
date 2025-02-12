@@ -1,21 +1,21 @@
 import {
-  Image,
+  Alert,
+  BackHandler,
+  Dimensions,
   ScrollView,
   StyleSheet,
   Text,
-  View,
-  Dimensions,
   TouchableOpacity,
-  BackHandler,
+  View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
+import NavBar from '../../components/NavBar';
+import {Image} from 'react-native';
 import {PieChart} from 'react-native-chart-kit';
-import NavBar from '../components/NavBar';
-import {Alert} from 'react-native';
 
 const screenWidth = Dimensions.get('window').width;
 
-const Home = ({navigation}: any) => {
+const TeacherHome = ({navigation}: any) => {
   const [newsBtn, setNewsBtn] = useState('1');
 
   //Chart Data
@@ -71,7 +71,6 @@ const Home = ({navigation}: any) => {
 
   return (
     <View style={styles.container}>
-      {/* Nav Bar */}
       <NavBar />
 
       {/* Main Content */}
@@ -81,56 +80,42 @@ const Home = ({navigation}: any) => {
           <View style={styles.stdName}>
             <View style={styles.profilePicContainer}>
               <Image
-                source={require('../assets/user.png')}
+                source={require('../../assets/user.png')}
                 style={styles.profilePic}
               />
             </View>
             <View style={styles.txtConatiner}>
-              <Text style={styles.nameTxt}>Ayesha Naveed</Text>
-              <Text style={styles.nameTxt}>Student</Text>
-              <Text style={styles.nameTxt}>GCGS1124S010</Text>
+              <Text style={styles.nameTxt}>Isra</Text>
+              <Text style={styles.nameTxt}>Teacher</Text>
+              <Text style={styles.nameTxt}>GCGS1124T011</Text>
             </View>
           </View>
           <View style={styles.otherDetails}>
             <View style={styles.otherDetailsContainer}>
               <Image
-                source={require('../assets/email.png')}
-                style={[styles.otherDetailsIcon, {tintColor: 'transparent'}]}
-              />
-              <Text style={styles.otherDetailsText}>Naveed Ahmed</Text>
-            </View>
-            <View style={styles.otherDetailsContainer}>
-              <Image
-                source={require('../assets/person.png')}
+                source={require('../../assets/user.png')}
                 style={styles.otherDetailsIcon}
               />
-              <Text style={styles.otherDetailsText}>One (B)</Text>
+              <Text style={styles.otherDetailsText}>Isra</Text>
             </View>
             <View style={styles.otherDetailsContainer}>
               <Image
-                source={require('../assets/email.png')}
+                source={require('../../assets/email.png')}
                 style={styles.otherDetailsIcon}
               />
               <Text style={styles.otherDetailsText}>example123@gmail.com</Text>
             </View>
             <View style={styles.otherDetailsContainer}>
               <Image
-                source={require('../assets/smartphone.png')}
-                style={styles.otherDetailsIcon}
-              />
-              <Text style={styles.otherDetailsText}>Gujranwala</Text>
-            </View>
-            <View style={styles.otherDetailsContainer}>
-              <Image
-                source={require('../assets/id-card.png')}
+                source={require('../../assets/smartphone.png')}
                 style={styles.otherDetailsIcon}
               />
               <Text style={styles.otherDetailsText}>+923000200000</Text>
             </View>
             <View style={styles.otherDetailsContainer}>
               <Image
-                source={require('../assets/email.png')}
-                style={[styles.otherDetailsIcon, {tintColor: 'transparent'}]}
+                source={require('../../assets/id-card.png')}
+                style={styles.otherDetailsIcon}
               />
               <Text style={styles.otherDetailsText}>34103-2354635-6</Text>
             </View>
@@ -140,16 +125,15 @@ const Home = ({navigation}: any) => {
               <Text style={styles.statusHeading}>Account Status</Text>
             </View>
             <View style={styles.statusDetails}>
-              <Text style={styles.statusDetailsText}>Receivable: 2000</Text>
+              <Text style={styles.statusDetailsText}>
+                Salary Payable: 35000
+              </Text>
             </View>
             <View style={styles.statusDetails}>
-              <Text style={styles.statusDetailsText}>Paid: 0</Text>
+              <Text style={styles.statusDetailsText}>Paid Salary: 35000</Text>
             </View>
             <View style={styles.statusDetails}>
               <Text style={styles.statusDetailsText}>Inventory: 0</Text>
-            </View>
-            <View style={styles.statusDetails}>
-              <Text style={styles.statusDetailsText}>Balance: 2000</Text>
             </View>
           </View>
         </View>
@@ -158,18 +142,38 @@ const Home = ({navigation}: any) => {
           <View style={styles.btnRow}>
             <TouchableOpacity
               style={styles.btnContainer}
-              onPress={() => navigation.navigate('Account')}>
+              onPress={() => navigation.navigate('TimeTable')}>
               <Image
-                source={require('../assets/money.png')}
+                source={require('../../assets/time.png')}
+                style={styles.btnIcon}
+              />
+              <Text style={styles.btnText}>Time Table</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.btnContainer}
+              onPress={() => navigation.navigate('LessonPlan')}>
+              <Image
+                source={require('../../assets/book.png')}
+                style={styles.btnIcon}
+              />
+              <Text style={styles.btnText}>Lesson Plan</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.btnRow}>
+            <TouchableOpacity
+              style={styles.btnContainer}
+              onPress={() => navigation.navigate('TeacherAccount')}>
+              <Image
+                source={require('../../assets/money.png')}
                 style={styles.btnIcon}
               />
               <Text style={styles.btnText}>Account</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.btnContainer}
-              onPress={() => navigation.navigate('Attendance')}>
+              onPress={() => navigation.navigate('TeacherAttendance')}>
               <Image
-                source={require('../assets/attendance.png')}
+                source={require('../../assets/attendance.png')}
                 style={styles.btnIcon}
               />
               <Text style={styles.btnText}>Attendance</Text>
@@ -178,41 +182,21 @@ const Home = ({navigation}: any) => {
           <View style={styles.btnRow}>
             <TouchableOpacity
               style={styles.btnContainer}
-              onPress={() => navigation.navigate('HomeWork')}>
-              <Image
-                source={require('../assets/writing.png')}
-                style={styles.btnIcon}
-              />
-              <Text style={styles.btnText}>Home Work</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.btnContainer}
-              onPress={() => navigation.navigate('Download')}>
-              <Image
-                source={require('../assets/download.png')}
-                style={styles.btnIcon}
-              />
-              <Text style={styles.btnText}>DownLoad</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.btnRow}>
-            <TouchableOpacity
-              style={styles.btnContainer}
               onPress={() => navigation.navigate('ApplyLeave')}>
               <Image
-                source={require('../assets/about.png')}
+                source={require('../../assets/library.png')}
                 style={styles.btnIcon}
               />
-              <Text style={styles.btnText}>Apply Leave</Text>
+              <Text style={styles.btnText}>Library Book</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.btnContainer}
               onPress={() => navigation.navigate('Result')}>
               <Image
-                source={require('../assets/report-card.png')}
+                source={require('../../assets/homework.png')}
                 style={styles.btnIcon}
               />
-              <Text style={styles.btnText}>Result</Text>
+              <Text style={styles.btnText}>Home Work</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.btnRow}>
@@ -220,19 +204,39 @@ const Home = ({navigation}: any) => {
               style={styles.btnContainer}
               onPress={() => navigation.navigate('LMS')}>
               <Image
-                source={require('../assets/graduation.png')}
+                source={require('../../assets/about.png')}
                 style={styles.btnIcon}
               />
-              <Text style={styles.btnText}>LMS</Text>
+              <Text style={styles.btnText}>Apply Leave</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.btnContainer}
               onPress={() => navigation.navigate('Course')}>
               <Image
-                source={require('../assets/books.png')}
+                source={require('../../assets/checklist.png')}
                 style={styles.btnIcon}
               />
-              <Text style={styles.btnText}>Course</Text>
+              <Text style={styles.btnText}>Todo's</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.btnRow}>
+            <TouchableOpacity
+              style={styles.btnContainer}
+              onPress={() => navigation.navigate('LMS')}>
+              <Image
+                source={require('../../assets/download.png')}
+                style={styles.btnIcon}
+              />
+              <Text style={styles.btnText}>Downloads</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.btnContainer}
+              onPress={() => navigation.navigate('Course')}>
+              <Image
+                source={require('../../assets/upload.png')}
+                style={styles.btnIcon}
+              />
+              <Text style={styles.btnText}>Upload</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -310,7 +314,7 @@ const Home = ({navigation}: any) => {
           <View style={styles.atdHeadingContainer}>
             <Text style={styles.statusHeading}>Student & Attendance</Text>
             <Image
-              source={require('../assets/information.png')}
+              source={require('../../assets/information.png')}
               style={styles.abtOpt}
             />
           </View>
@@ -354,7 +358,7 @@ const Home = ({navigation}: any) => {
   );
 };
 
-export default Home;
+export default TeacherHome;
 
 const styles = StyleSheet.create({
   container: {
@@ -367,7 +371,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   studentDetails: {
-    height: 450,
+    height: 360,
     width: '90%',
     backgroundColor: 'white',
     marginHorizontal: '5%',
@@ -380,6 +384,7 @@ const styles = StyleSheet.create({
     height: '12%',
     width: '60%',
     marginTop: 10,
+    marginBottom: 5,
     marginHorizontal: 5,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -410,8 +415,10 @@ const styles = StyleSheet.create({
     color: '#3B82F6',
   },
   otherDetails: {
-    height: '40%',
+    height: '30%',
     width: '100%',
+    marginBottom: 15,
+    marginTop: 15,
     flexDirection: 'column',
     marginVertical: 10,
     paddingHorizontal: 10,
@@ -435,7 +442,7 @@ const styles = StyleSheet.create({
   },
   // accountStatus
   accountStatus: {
-    marginTop: 5,
+    marginTop: 15,
     height: '30%',
     width: '100%',
   },
@@ -473,6 +480,7 @@ const styles = StyleSheet.create({
   },
   btnRow: {
     marginTop: 10,
+    marginBottom: 5,
     height: 85,
     width: '100%',
     flexDirection: 'row',

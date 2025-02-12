@@ -1,5 +1,5 @@
 import React from 'react';
-import AppNavigator from './src/components/AppNavigator';
+import AppNavigator from './src/components/navigator/AppNavigator';
 import {DefaultTheme, PaperProvider} from 'react-native-paper';
 import {UserProvider} from './src/Ctx/UserContext';
 import {UserDataProvider} from './src/Ctx/UserDataContext';
