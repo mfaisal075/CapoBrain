@@ -182,7 +182,7 @@ const TeacherHome = ({navigation}: any) => {
           <View style={styles.btnRow}>
             <TouchableOpacity
               style={styles.btnContainer}
-              onPress={() => navigation.navigate('ApplyLeave')}>
+              onPress={() => navigation.navigate('LibraryBook')}>
               <Image
                 source={require('../../assets/library.png')}
                 style={styles.btnIcon}
@@ -191,7 +191,7 @@ const TeacherHome = ({navigation}: any) => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.btnContainer}
-              onPress={() => navigation.navigate('Result')}>
+              onPress={() => navigation.navigate('TeacherHomework')}>
               <Image
                 source={require('../../assets/homework.png')}
                 style={styles.btnIcon}

@@ -4,6 +4,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -11,7 +12,8 @@ import React, {useEffect, useState} from 'react';
 import NavBar from '../../components/NavBar';
 import {DataTable} from 'react-native-paper';
 
-const StaffAttendanceList = ({navigation}: any) => {
+const LibraryBook = ({navigation}: any) => {
+  const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState<number>(0);
   const [numberOfItemsPerPageList] = useState([10, 50, 100]);
   const [itemsPerPage, onItemsPerPageChange] = useState(
@@ -20,34 +22,20 @@ const StaffAttendanceList = ({navigation}: any) => {
 
   const [items] = useState([
     {
-      date: '13-Nov-2024',
-      clockin: '10:40:00',
-      clockout: '--:--:--',
-      status: '',
-      actionType: '',
-    },
-    {
-      date: '15-Nov-2024',
-      clockin: '10:42:00',
-      clockout: '3:42:00',
-      status: 'Present',
-      actionType: 'green',
-    },
-    {
-      date: '16-Nov-2024',
-      clockin: '10:50:00',
-      clockout: '11:00:00',
-      status: 'Present',
-      actionType: 'green',
-    },
-    {
-      date: '15-Nov-2024',
-      clockin: '--:--:--',
-      clockout: '--:--:--',
-      status: 'Absent',
-      actionType: 'red',
+      sr: 1,
+      book: 'Loyalty',
+      quantity: '1',
+      status: 'return',
+      issueDate: '14-11-2024',
+      returnDate: '06-12-2024',
     },
   ]);
+
+  const filteredItems = items.filter(item =>
+    Object.values(item).some(value =>
+      String(value).toLowerCase().includes(searchQuery.toLowerCase()),
+    ),
+  );
 
   const from = page * itemsPerPage;
   const to = Math.min((page + 1) * itemsPerPage, items.length);
@@ -63,8 +51,9 @@ const StaffAttendanceList = ({navigation}: any) => {
       backAction,
     );
 
+    setPage(0);
     return () => backHandler.remove();
-  }, []);
+  }, [itemsPerPage]);
   return (
     <View style={styles.container}>
       <NavBar />
@@ -72,7 +61,7 @@ const StaffAttendanceList = ({navigation}: any) => {
       <ScrollView>
         <View style={styles.accountContainer}>
           <View style={styles.actHeadingContainer}>
-            <Text style={styles.tblHdCtr}>Attendance List</Text>
+            <Text style={styles.tblHdCtr}>Staff's Library Book</Text>
           </View>
 
           {/* Back Button */}
@@ -88,13 +77,18 @@ const StaffAttendanceList = ({navigation}: any) => {
                 source={require('../../assets/back.png')}
                 style={styles.bckBtnIcon}
               />
-              <Text style={styles.bckBtnText}>Back</Text>
+              <Text style={styles.bckBtnText}>Dashboard</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.stdAttBtn}
-              onPress={() => navigation.navigate('StdAttendance')}>
-              <Text style={styles.stdAttBtnText}>Student Attendance</Text>
-            </TouchableOpacity>
+          </View>
+
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search..."
+              placeholderTextColor="#888"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
           </View>
 
           {/* Table */}
@@ -102,70 +96,56 @@ const StaffAttendanceList = ({navigation}: any) => {
             <ScrollView horizontal>
               <DataTable>
                 <DataTable.Header>
-                  {['Date', 'Clock in', 'Clock out', 'Status'].map(
-                    (title, index) => (
-                      <DataTable.Title
-                        key={index}
-                        textStyle={{
-                          color: 'black',
-                          fontSize: 14,
-                          fontWeight: 'bold',
-                        }}
-                        style={{
-                          width: 100,
-                          paddingHorizontal: 5,
-                          borderColor: '#000',
-                          borderWidth: 0.5,
-                          backgroundColor: '#F0F0F0',
-                        }}>
-                        {title}
-                      </DataTable.Title>
-                    ),
-                  )}
+                  {[
+                    'Sr#',
+                    'Book',
+                    'Quantity',
+                    'Status',
+                    'Issue Date',
+                    'Return Date',
+                  ].map((title, index) => (
+                    <DataTable.Title
+                      key={index}
+                      textStyle={{
+                        color: 'black',
+                        fontSize: 14,
+                        fontWeight: 'bold',
+                      }}
+                      style={{
+                        width: index === 0 ? 50 : 125, // Reduced width for the first header
+                        paddingHorizontal: 5,
+                        borderColor: '#000',
+                        borderWidth: 0.5,
+                        backgroundColor: '#F0F0F0',
+                      }}>
+                      {title}
+                    </DataTable.Title>
+                  ))}
                 </DataTable.Header>
 
-                {items.length > 0 ? (
-                  items.map((item, index) => (
+                {filteredItems.length > 0 ? (
+                  filteredItems.slice(from, to).map((item, index) => (
                     <DataTable.Row key={index}>
-                      {[item.date, item.clockin, item.clockout].map(
-                        (value, idx) => (
-                          <DataTable.Cell
-                            key={idx}
-                            textStyle={{color: '#000', fontSize: 12}}
-                            style={{
-                              width: 100, // Reduced width for the first cell
-                              paddingHorizontal: 5,
-                              borderColor: '#000',
-                              borderWidth: 0.5,
-                            }}>
-                            {value}
-                          </DataTable.Cell>
-                        ),
-                      )}
-                      <DataTable.Cell
-                        key={'action'}
-                        textStyle={{color: '#000', fontSize: 12}}
-                        style={{
-                          width: 100,
-                          paddingHorizontal: 5,
-                          borderColor: '#000',
-                          borderWidth: 0.5,
-                        }}>
-                        <View
+                      {[
+                        item.sr,
+                        item.book,
+                        item.quantity,
+                        item.status,
+                        item.issueDate,
+                        item.returnDate,
+                      ].map((value, idx) => (
+                        <DataTable.Cell
+                          key={idx}
+                          textStyle={{color: '#000', fontSize: 12}}
                           style={{
-                            width: '80%',
-                            backgroundColor: item.actionType,
-                            padding: 5,
-                            paddingHorizontal: 10,
-                            borderRadius: 15,
-                            alignItems: 'center',
-                            alignSelf: 'center',
+                            width: idx === 0 ? 50 : 125, // Reduced width for the first cell
+                            paddingHorizontal: 5,
+                            borderColor: '#000',
+                            borderWidth: 0.5,
                           }}>
-                          <Text style={{color: '#fff', fontSize: 12}}>
-                            {item.status}
-                          </Text>
-                        </View>
-                      </DataTable.Cell>
+                          {value}
+                        </DataTable.Cell>
+                      ))}
                     </DataTable.Row>
                   ))
                 ) : (
@@ -190,9 +170,9 @@ const StaffAttendanceList = ({navigation}: any) => {
 
                 <DataTable.Pagination
                   page={page}
-                  numberOfPages={Math.ceil(items.length / itemsPerPage)}
+                  numberOfPages={Math.ceil(filteredItems.length / itemsPerPage)}
                   onPageChange={page => setPage(page)}
-                  label={`${from + 1}-${to} of ${items.length}`}
+                  label={`${from + 1}-${to} of ${filteredItems.length}`}
                   numberOfItemsPerPageList={numberOfItemsPerPageList}
                   numberOfItemsPerPage={itemsPerPage}
                   onItemsPerPageChange={onItemsPerPageChange}
@@ -220,7 +200,7 @@ const StaffAttendanceList = ({navigation}: any) => {
   );
 };
 
-export default StaffAttendanceList;
+export default LibraryBook;
 
 const styles = StyleSheet.create({
   container: {
@@ -255,7 +235,6 @@ const styles = StyleSheet.create({
   bckBtnCtr: {
     height: 50,
     width: '100%',
-    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'flex-end',
     paddingRight: 20,
@@ -279,19 +258,16 @@ const styles = StyleSheet.create({
     tintColor: '#fff',
     marginRight: 5,
   },
-  stdAttBtn: {
-    backgroundColor: '#3B82F6',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 5,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 5,
+  searchContainer: {
+    paddingHorizontal: 20,
+    marginVertical: 10,
   },
-  stdAttBtnText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'center',
+  searchInput: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    color: '#000',
   },
 });

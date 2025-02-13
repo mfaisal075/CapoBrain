@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   printBtn: {
-    backgroundColor: '#218838',
+    backgroundColor: '#28A745',
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 5,

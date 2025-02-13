@@ -45,7 +45,7 @@ const TeacherAttendance = ({navigation}: any) => {
         <View style={styles.bckBtnCtr}>
           <TouchableOpacity
             style={styles.bckBtn}
-            onPress={() => navigation.goBack()}>
+            onPress={() => navigation.navigate('TeacherHome')}>
             <View style={{flexDirection: 'row'}}>
               <Image
                 source={require('../../assets/back.png')}
@@ -60,10 +60,14 @@ const TeacherAttendance = ({navigation}: any) => {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.attBtn}
-            onPress={() => {navigation.navigate('StaffAttendanceList')}}>
+            onPress={() => {
+              navigation.navigate('StaffAttendanceList');
+            }}>
             <Text style={styles.attBtnTxt}>Attendance List</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.attBtn}>
+          <TouchableOpacity
+            style={styles.attBtn}
+            onPress={() => navigation.navigate('StdAttendance')}>
             <Text style={styles.attBtnTxt}>Student Attendance</Text>
           </TouchableOpacity>
         </View>
@@ -168,20 +172,20 @@ const styles = StyleSheet.create({
   },
   clockinBtnCtr: {
     width: '100%',
-    height: 300,
+    height: 250,
     alignItems: 'center',
   },
   clockinText: {
-    marginTop: 50,
+    marginTop: 40,
     fontSize: 20,
     textAlign: 'center',
     color: 'gray',
   },
   clockinBtn: {
     marginTop: 100,
-    backgroundColor: '#218838',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+    backgroundColor: '#28A745',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
     borderRadius: 5,
     flexDirection: 'row',
     alignItems: 'center',

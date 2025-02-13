@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   leaveBtn: {
-    backgroundColor: '#218838',
+    backgroundColor: '#28A745',
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 5,
