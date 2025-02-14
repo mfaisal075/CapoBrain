@@ -11,6 +11,11 @@ import StdAttendance from '../../screen/teacher/StdAttendance';
 import LibraryBook from '../../screen/teacher/LibraryBook';
 import TeacherHomework from '../../screen/teacher/TeacherHomework';
 import TSummerHomework from '../../screen/teacher/TSummerHomework';
+import TeacherApplyLeave from '../../screen/teacher/TeacherApplyLeave';
+import TeacherTodos from '../../screen/teacher/TeacherTodos';
+import TeacherDownload from '../../screen/teacher/TeacherDownload';
+import TeacherUpload from '../../screen/teacher/TeacherUpload';
+import TeacherDateSheet from '../../screen/teacher/TeacherDateSheet';
 const Stack = createNativeStackNavigator();
 
 const TeacherStack = () => {
@@ -64,6 +69,31 @@ const TeacherStack = () => {
       <Stack.Screen
         name="TSummerHomework"
         component={TSummerHomework}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="TeacherApplyLeave"
+        component={TeacherApplyLeave}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="TeacherTodos"
+        component={TeacherTodos}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="TeacherDownload"
+        component={TeacherDownload}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="TeacherUpload"
+        component={TeacherUpload}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="TeacherDateSheet"
+        component={TeacherDateSheet}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

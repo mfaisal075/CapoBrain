@@ -30,7 +30,7 @@ const TSummerHomework = ({navigation}: any) => {
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [totalMarks, setTotalMarks] = useState('');
-  const [desc, setdesc] = useState('');
+  const [desc, setDesc] = useState('');
 
   const onChange = ({event, selectedDate}: any) => {
     setShowDatePicker(false); // Hide the picker
@@ -41,6 +41,8 @@ const TSummerHomework = ({navigation}: any) => {
     setHwModalVisible(true);
   };
   const hideDialog = () => {
+    setDesc('');
+    setDate(new Date());
     setHwModalVisible(false);
   };
 
@@ -339,7 +341,7 @@ const TSummerHomework = ({navigation}: any) => {
                 <TextInput
                   key="desc-input" // Add a unique key
                   value={desc}
-                  onChangeText={text => setdesc(text)}
+                  onChangeText={text => setDesc(text)}
                   style={{
                     flex: 1,
                     marginLeft: 5,

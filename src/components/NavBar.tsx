@@ -16,12 +16,6 @@ const NavBar = () => {
         </TouchableOpacity>
         <TouchableOpacity style={styles.optContainer}>
           <Image
-            source={require('../assets/settings.png')}
-            style={styles.optIcon}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.optContainer}>
-          <Image
             source={require('../assets/game.png')}
             style={[styles.optIcon, {transform: [{rotate: '-80deg'}]}]}
           />
@@ -66,13 +60,12 @@ const styles = StyleSheet.create({
   logoContainer: {
     height: 45,
     width: 70,
-    backgroundColor: '#3B82F6',
-    borderRadius: 10,
   },
   logo: {
     height: '100%',
     width: '100%',
     resizeMode: 'contain',
+    tintColor: '#3B82F6',
   },
   otherOpts: {
     flexDirection: 'row-reverse',

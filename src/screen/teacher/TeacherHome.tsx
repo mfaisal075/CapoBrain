@@ -12,6 +12,7 @@ import React, {useEffect, useState} from 'react';
 import NavBar from '../../components/NavBar';
 import {Image} from 'react-native';
 import {PieChart} from 'react-native-chart-kit';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -151,17 +152,6 @@ const TeacherHome = ({navigation}: any) => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.btnContainer}
-              onPress={() => navigation.navigate('LessonPlan')}>
-              <Image
-                source={require('../../assets/book.png')}
-                style={styles.btnIcon}
-              />
-              <Text style={styles.btnText}>Lesson Plan</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.btnRow}>
-            <TouchableOpacity
-              style={styles.btnContainer}
               onPress={() => navigation.navigate('TeacherAccount')}>
               <Image
                 source={require('../../assets/money.png')}
@@ -169,6 +159,25 @@ const TeacherHome = ({navigation}: any) => {
               />
               <Text style={styles.btnText}>Account</Text>
             </TouchableOpacity>
+          </View>
+          <View style={styles.btnRow}>
+            <TouchableOpacity
+              style={styles.btnContainer}
+              onPress={() => navigation.navigate('LessonPlan')}>
+              <Image
+                source={require('../../assets/book.png')}
+                style={styles.btnIcon}
+              />
+              <Text style={styles.btnText}>Lesson Plan</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.btnContainer}
+              onPress={() => navigation.navigate('TeacherDateSheet')}>
+              <Icon name="calendar" size={30} color={'#3B82F6'} />
+              <Text style={styles.btnText}>Date Sheet</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.btnRow}>
             <TouchableOpacity
               style={styles.btnContainer}
               onPress={() => navigation.navigate('TeacherAttendance')}>
@@ -178,8 +187,6 @@ const TeacherHome = ({navigation}: any) => {
               />
               <Text style={styles.btnText}>Attendance</Text>
             </TouchableOpacity>
-          </View>
-          <View style={styles.btnRow}>
             <TouchableOpacity
               style={styles.btnContainer}
               onPress={() => navigation.navigate('LibraryBook')}>
@@ -188,6 +195,17 @@ const TeacherHome = ({navigation}: any) => {
                 style={styles.btnIcon}
               />
               <Text style={styles.btnText}>Library Book</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.btnRow}>
+            <TouchableOpacity
+              style={styles.btnContainer}
+              onPress={() => navigation.navigate('TeacherApplyLeave')}>
+              <Image
+                source={require('../../assets/about.png')}
+                style={styles.btnIcon}
+              />
+              <Text style={styles.btnText}>Apply Leave</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.btnContainer}
@@ -202,36 +220,27 @@ const TeacherHome = ({navigation}: any) => {
           <View style={styles.btnRow}>
             <TouchableOpacity
               style={styles.btnContainer}
-              onPress={() => navigation.navigate('LMS')}>
-              <Image
-                source={require('../../assets/about.png')}
-                style={styles.btnIcon}
-              />
-              <Text style={styles.btnText}>Apply Leave</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.btnContainer}
-              onPress={() => navigation.navigate('Course')}>
+              onPress={() => navigation.navigate('TeacherTodos')}>
               <Image
                 source={require('../../assets/checklist.png')}
                 style={styles.btnIcon}
               />
               <Text style={styles.btnText}>Todo's</Text>
             </TouchableOpacity>
-          </View>
-          <View style={styles.btnRow}>
             <TouchableOpacity
               style={styles.btnContainer}
-              onPress={() => navigation.navigate('LMS')}>
+              onPress={() => navigation.navigate('TeacherDownload')}>
               <Image
                 source={require('../../assets/download.png')}
                 style={styles.btnIcon}
               />
               <Text style={styles.btnText}>Downloads</Text>
             </TouchableOpacity>
+          </View>
+          <View style={[styles.btnRow, {justifyContent: 'center'}]}>
             <TouchableOpacity
               style={styles.btnContainer}
-              onPress={() => navigation.navigate('Course')}>
+              onPress={() => navigation.navigate('TeacherUpload')}>
               <Image
                 source={require('../../assets/upload.png')}
                 style={styles.btnIcon}
@@ -240,6 +249,7 @@ const TeacherHome = ({navigation}: any) => {
             </TouchableOpacity>
           </View>
         </View>
+
         {/* News & Events */}
         <View style={styles.newsContainer}>
           <View style={styles.newsHeadingContainer}>
@@ -309,6 +319,7 @@ const TeacherHome = ({navigation}: any) => {
             <Text style={styles.eventsText}>Smog Holiday 25-Dec-2025</Text>
           </View>
         </View>
+
         {/* Attendance Conatiner */}
         <View style={styles.attendanceContainer}>
           <View style={styles.atdHeadingContainer}>

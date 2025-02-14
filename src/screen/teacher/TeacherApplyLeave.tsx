@@ -5,31 +5,21 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
+  TextInput,
   View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import NavBar from '../../components/NavBar';
-import {TextInput} from 'react-native-paper';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import {TouchableOpacity} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import DropDownPicker from 'react-native-dropdown-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
-const TeacherHomework = ({navigation}: any) => {
-  const [from, setFrom] = useState(new Date());
-  const [to, setTo] = useState(new Date());
-  const [showFromDatePicker, setShowFromDatePicker] = useState(false);
-  const [showToDatePicker, setShowToDatePicker] = useState(false);
-  const [hwModalVisible, setHwModalVisible] = useState(false);
-  const [modalClassOpen, setModalClassOpen] = useState(false);
-  const [modalClassValue, setModalClassValue] = useState(null);
-  const [subjectOpen, setSubjectOpen] = useState(false);
-  const [subjectValue, setSubjectValue] = useState(null);
-  const [modalSectionOpen, setModalSectionOpen] = useState(false);
-  const [modalSectionValue, setModalSectionValue] = useState(null);
+const TeacherApplyLeave = ({navigation}: any) => {
+  const [leaveSubject, setLeaveSubject] = useState('');
+  const [leaveDesc, setLeaveDesc] = useState('');
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [desc, setdesc] = useState('');
+  const [leaveModalVisible, setLeaveModalVisible] = useState(false);
 
   const onChange = ({event, selectedDate}: any) => {
     setShowDatePicker(false); // Hide the picker
@@ -37,23 +27,14 @@ const TeacherHomework = ({navigation}: any) => {
   };
 
   const showDialog = () => {
-    setHwModalVisible(true);
+    setLeaveModalVisible(true);
   };
   const hideDialog = () => {
-    setHwModalVisible(false);
+    setDate(new Date());
+    setLeaveDesc('');
+    setLeaveSubject('');
+    setLeaveModalVisible(false);
   };
-
-  const onChangeFrom = (event: any, selectedDate: Date | undefined) => {
-    setShowFromDatePicker(false); // Hide the picker
-    if (selectedDate) setFrom(selectedDate); // Set the selected date
-  };
-
-  const onChangeTo = (event: any, selectedDate: Date | undefined) => {
-    setShowToDatePicker(false); // Hide the picker
-    if (selectedDate) setTo(selectedDate); // Set the selected date
-  };
-
-  const classItems: {label: string; value: string}[] = [];
 
   useEffect(() => {
     const backAction = () => {
@@ -74,90 +55,15 @@ const TeacherHomework = ({navigation}: any) => {
 
       <ScrollView>
         <View style={styles.accountContainer}>
-          {/* From Date Picker */}
-          <View style={styles.datePickerContainer}>
-            <TouchableOpacity onPress={() => setShowFromDatePicker(true)}>
-              <TextInput
-                label="From"
-                value={from.toISOString().split('T')[0]} // Display date in YYYY-MM-DD format
-                theme={{
-                  colors: {
-                    primary: '#3B82F6',
-                  },
-                }}
-                mode="outlined"
-                editable={false} // Prevent keyboard from opening
-                right={
-                  <TextInput.Icon
-                    icon="calendar"
-                    onPress={() => setShowFromDatePicker(true)} // Open date picker on icon press
-                  />
-                }
-              />
-            </TouchableOpacity>
+          <View style={styles.actHeadingContainer}>
+            <Text style={styles.tblHdCtr}>Apply Leave</Text>
           </View>
-          {showFromDatePicker && (
-            <DateTimePicker
-              value={from}
-              mode="date"
-              display="default"
-              onChange={onChangeFrom}
-            />
-          )}
 
-          {/* To Date Picker */}
-          <View
-            style={[
-              styles.datePickerContainer,
-              {marginTop: 10, marginBottom: 40},
-            ]}>
-            <TouchableOpacity onPress={() => setShowToDatePicker(true)}>
-              <TextInput
-                label="To"
-                value={to.toISOString().split('T')[0]} // Display date in YYYY-MM-DD format
-                theme={{
-                  colors: {
-                    primary: '#3B82F6',
-                  },
-                }}
-                mode="outlined"
-                editable={false} // Prevent keyboard from opening
-                right={
-                  <TextInput.Icon
-                    icon="calendar"
-                    onPress={() => setShowToDatePicker(true)} // Open date picker on icon press
-                  />
-                }
-              />
-            </TouchableOpacity>
-          </View>
-          {showToDatePicker && (
-            <DateTimePicker
-              value={to}
-              mode="date"
-              display="default"
-              onChange={onChangeTo}
-            />
-          )}
-
-          {/*Buttons */}
-          <View style={styles.btnCtr}>
+          {/* Back Button */}
+          <View style={styles.bckBtnCtr}>
             <TouchableOpacity
-              style={[styles.btn, {backgroundColor: '#3B82F6'}]}
-              onPress={() => navigation.navigate('TSummerHomework')}>
-              <Text style={styles.btnText}>Summer Home Work </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.btn, {backgroundColor: '#28A745'}]}
-              onPress={showDialog}>
-              <Text style={styles.btnText}>Add Home Work </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.btn,
-                {backgroundColor: '#5A6268', flexDirection: 'row'},
-              ]}
-              onPress={() => navigation.navigate('TeacherHome')}>
+              style={styles.bckBtn}
+              onPress={() => navigation.goBack()}>
               <Image
                 source={require('../../assets/back.png')}
                 style={[styles.bckBtnIcon, {marginRight: -8}]}
@@ -166,7 +72,11 @@ const TeacherHomework = ({navigation}: any) => {
                 source={require('../../assets/back.png')}
                 style={styles.bckBtnIcon}
               />
-              <Text style={styles.btnText}>Dashboard</Text>
+              <Text style={styles.bckBtnText}>Dashboard</Text>
+            </TouchableOpacity>
+            {/* Apply Leave Button */}
+            <TouchableOpacity style={styles.leaveBtn} onPress={showDialog}>
+              <Text style={styles.bckBtnText}>Add Leave</Text>
             </TouchableOpacity>
           </View>
 
@@ -179,9 +89,9 @@ const TeacherHomework = ({navigation}: any) => {
         </View>
       </ScrollView>
 
-      {/* Add Home Work Modal */}
+      {/* Add Leave Modal */}
       <Modal
-        visible={hwModalVisible}
+        visible={leaveModalVisible}
         transparent={true}
         animationType="slide"
         onRequestClose={hideDialog}>
@@ -200,7 +110,7 @@ const TeacherHomework = ({navigation}: any) => {
               padding: 20,
             }}>
             <View style={styles.modalTitleCtr}>
-              <Text style={styles.modalTitle}>Add Home Work</Text>
+              <Text style={styles.modalTitle}>Add Leave</Text>
             </View>
             <View
               style={{
@@ -215,80 +125,35 @@ const TeacherHomework = ({navigation}: any) => {
                 onPress={() => hideDialog()}>
                 <Icon name="close" size={26} color={'#000'} />
               </TouchableOpacity>
-              <View style={[styles.picker, {marginTop: 20}]}>
+              <View
+                style={[
+                  styles.picker,
+                  {
+                    marginTop: 20,
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    paddingHorizontal: 15,
+                    height: 40,
+                  },
+                ]}>
                 <Text style={styles.text}>
-                  Class <Text style={{color: 'red'}}>*</Text>
+                  Subject <Text style={{color: 'red'}}>*</Text>
                 </Text>
-                <DropDownPicker
-                  open={modalClassOpen}
-                  value={modalClassValue}
-                  setOpen={setModalClassOpen}
-                  setValue={setModalClassValue}
-                  placeholder="Please Select Any Class"
-                  items={classItems}
+                <TextInput
+                  key="subject-input" // Add a unique key
+                  value={leaveSubject}
+                  onChangeText={text => setLeaveSubject(text)}
                   style={{
-                    borderColor: 'transparent',
+                    flex: 1,
+                    textAlignVertical: 'top',
                     backgroundColor: 'transparent',
-                    borderRadius: 10,
                   }}
-                  dropDownContainerStyle={{
-                    borderColor: '#ccc',
-                    borderRadius: 10,
-                    height: 'auto',
-                    zIndex: 100,
-                  }}
-                />
-              </View>
-              <View style={[styles.picker, {marginTop: 20}]}>
-                <Text style={styles.text}>
-                  Section <Text style={{color: 'red'}}>*</Text>
-                </Text>
-                <DropDownPicker
-                  open={modalSectionOpen}
-                  value={modalSectionValue}
-                  setOpen={setModalSectionOpen}
-                  setValue={setModalSectionValue}
-                  placeholder="Select Class First"
-                  items={classItems}
-                  style={{
-                    borderColor: 'transparent',
-                    backgroundColor: 'transparent',
-                    borderRadius: 10,
-                  }}
-                  dropDownContainerStyle={{
-                    borderColor: '#ccc',
-                    borderRadius: 10,
-                    height: 'auto',
-                    zIndex: 100,
-                  }}
-                />
-              </View>
-              <View style={[styles.picker, {marginTop: 20}]}>
-                <Text style={styles.text}>
-                  Assigned Subject <Text style={{color: 'red'}}>*</Text>
-                </Text>
-                <DropDownPicker
-                  open={subjectOpen}
-                  value={subjectValue}
-                  setOpen={setSubjectOpen}
-                  setValue={setSubjectValue}
-                  placeholder="Select Section First"
-                  items={classItems}
-                  style={{
-                    borderColor: 'transparent',
-                    backgroundColor: 'transparent',
-                    borderRadius: 10,
-                  }}
-                  dropDownContainerStyle={{
-                    borderColor: '#ccc',
-                    borderRadius: 10,
-                    height: 'auto',
-                    zIndex: 100,
-                  }}
+                  cursorColor={'#000'}
+                  multiline={true}
                 />
               </View>
 
-              {/* Date Picker */}
+              {/* Leave Date */}
               <View style={[styles.picker, {marginTop: 20}]}>
                 <Text style={styles.text}>
                   Date <Text style={{color: 'red'}}>*</Text>
@@ -343,12 +208,13 @@ const TeacherHomework = ({navigation}: any) => {
                 </Text>
                 <TextInput
                   key="desc-input" // Add a unique key
-                  value={desc}
-                  onChangeText={text => setdesc(text)}
+                  value={leaveDesc}
+                  onChangeText={text => setLeaveDesc(text)}
                   style={{
                     flex: 1,
                     textAlignVertical: 'top',
                     backgroundColor: 'transparent',
+                    height: '100%',
                   }}
                   cursorColor={'#000'}
                   multiline={true}
@@ -373,7 +239,7 @@ const TeacherHomework = ({navigation}: any) => {
   );
 };
 
-export default TeacherHomework;
+export default TeacherApplyLeave;
 
 const styles = StyleSheet.create({
   container: {
@@ -388,37 +254,61 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 10,
     marginHorizontal: '5%',
-    alignItems: 'center',
   },
-  datePickerContainer: {
-    marginTop: 20,
-    marginBottom: 10,
-    width: '80%',
+  actHeadingContainer: {
+    height: 50,
+    width: '100%',
+    justifyContent: 'center',
+    paddingLeft: 20,
   },
-  btnCtr: {
-    width: '80%',
+  tblHdCtr: {
+    fontSize: 18,
+    fontWeight: 'bold',
   },
-  btn: {
+  tblDataCtr: {
+    marginTop: 10,
+    height: 'auto',
+    width: '100%',
+    padding: 10,
+  },
+  bckBtnCtr: {
     height: 40,
     width: '100%',
-    borderRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
+    paddingHorizontal: '5%',
+    flexDirection: 'row',
+    paddingRight: 20,
+    marginBottom: 20,
   },
-  btnText: {
-    fontSize: 14,
+  bckBtn: {
+    backgroundColor: '#5A6268',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bckBtnText: {
     color: '#fff',
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   bckBtnIcon: {
-    height: 14,
-    width: 14,
+    height: 16,
+    width: 16,
     tintColor: '#fff',
     marginRight: 5,
   },
+  leaveBtn: {
+    backgroundColor: '#28A745',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
   dataCtr: {
-    width: '90%',
+    width: '100%',
     height: 200,
     marginTop: 20,
     justifyContent: 'center',
