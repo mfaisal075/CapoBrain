@@ -303,7 +303,10 @@ const Account = ({navigation}: any) => {
 
       {/* Modal */}
       <Portal>
-        <Dialog visible={feeModalVisible} onDismiss={hideDialog}>
+        <Dialog
+          visible={feeModalVisible}
+          onDismiss={hideDialog}
+          style={{backgroundColor: '#fff', borderRadius: 10}}>
           <Icon
             name="close"
             size={26}

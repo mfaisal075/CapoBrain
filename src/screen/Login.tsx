@@ -40,9 +40,12 @@ const Login = ({navigation}: any) => {
 
       if (response.status === 200 && data.status === 200) {
         // Successful login
-        setUserRole('teacher');
+        setUserRole('parent');
         if (userRole === 'student') {
           navigation.navigate('StudentStack');
+        }
+        if (userRole === 'parent') {
+          navigation.navigate('ParentStack');
         }
         if (userRole === 'teacher') {
           navigation.navigate('TeacherStack');

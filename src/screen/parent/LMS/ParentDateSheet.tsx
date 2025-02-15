@@ -1,6 +1,5 @@
 import {
   BackHandler,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,12 +7,12 @@ import {
   View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
-import NavBar from '../../components/NavBar';
+import NavBar from '../../../components/NavBar';
 import {Dialog, Portal} from 'react-native-paper';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const DateSheet = ({navigation}: any) => {
+const ParentDateSheet = ({navigation}: any) => {
   const [visible, setVisible] = useState(false);
   const [branchOpen, setBranchOpen] = useState(false);
   const [classOpen, setClassOpen] = useState(false);
@@ -26,9 +25,10 @@ const DateSheet = ({navigation}: any) => {
   const hideDialog = () => setVisible(false);
 
   const branchItems: {label: string; value: string}[] = [];
+
   useEffect(() => {
     const backAction = () => {
-      navigation.goBack();
+      navigation.navigate('ParentLMS');
       return true;
     };
 
@@ -42,6 +42,7 @@ const DateSheet = ({navigation}: any) => {
   return (
     <View style={styles.container}>
       <NavBar />
+
       <ScrollView>
         <View style={styles.accountContainer}>
           <View style={styles.actHeadingContainer}>
@@ -187,7 +188,7 @@ const DateSheet = ({navigation}: any) => {
   );
 };
 
-export default DateSheet;
+export default ParentDateSheet;
 
 const styles = StyleSheet.create({
   container: {

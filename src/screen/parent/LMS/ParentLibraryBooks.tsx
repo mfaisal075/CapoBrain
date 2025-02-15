@@ -9,10 +9,10 @@ import {
   View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
-import NavBar from '../../components/NavBar';
+import NavBar from '../../../components/NavBar';
 import {DataTable} from 'react-native-paper';
 
-const LibraryBook = ({navigation}: any) => {
+const ParentLibraryBooks = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState<number>(0);
   const [numberOfItemsPerPageList] = useState([10, 50, 100]);
@@ -42,7 +42,7 @@ const LibraryBook = ({navigation}: any) => {
 
   useEffect(() => {
     const backAction = () => {
-      navigation.goBack();
+      navigation.navigate('ParentLMS');
       return true;
     };
 
@@ -51,7 +51,6 @@ const LibraryBook = ({navigation}: any) => {
       backAction,
     );
 
-    setPage(0);
     return () => backHandler.remove();
   }, [itemsPerPage]);
   return (
@@ -61,20 +60,20 @@ const LibraryBook = ({navigation}: any) => {
       <ScrollView>
         <View style={styles.accountContainer}>
           <View style={styles.actHeadingContainer}>
-            <Text style={styles.tblHdCtr}>Staff's Library Book</Text>
+            <Text style={styles.tblHdCtr}>Library Books</Text>
           </View>
 
           {/* Back Button */}
           <View style={styles.bckBtnCtr}>
             <TouchableOpacity
               style={styles.bckBtn}
-              onPress={() => navigation.goBack()}>
+              onPress={() => navigation.navigate('ParentLMS')}>
               <Image
-                source={require('../../assets/back.png')}
+                source={require('../../../assets/back.png')}
                 style={[styles.bckBtnIcon, {marginRight: -8}]}
               />
               <Image
-                source={require('../../assets/back.png')}
+                source={require('../../../assets/back.png')}
                 style={styles.bckBtnIcon}
               />
               <Text style={styles.bckBtnText}>Dashboard</Text>
@@ -142,7 +141,7 @@ const LibraryBook = ({navigation}: any) => {
                             paddingHorizontal: 5,
                             borderColor: '#000',
                             borderWidth: 0.5,
-                            justifyContent: 'center',
+                            justifyContent: 'center'
                           }}>
                           {idx === 3 ? ( // Check if it's the Status Column
                             <View
@@ -229,7 +228,7 @@ const LibraryBook = ({navigation}: any) => {
   );
 };
 
-export default LibraryBook;
+export default ParentLibraryBooks;
 
 const styles = StyleSheet.create({
   container: {

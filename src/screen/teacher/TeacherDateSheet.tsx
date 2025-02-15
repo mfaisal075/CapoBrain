@@ -79,7 +79,7 @@ const TeacherDateSheet = ({navigation}: any) => {
         <Dialog
           visible={visible}
           onDismiss={hideDialog}
-          style={{backgroundColor: '#fff'}}>
+          style={{backgroundColor: '#fff', borderRadius: 10}}>
           <Dialog.Title>Add Date Sheet</Dialog.Title>
           <Dialog.Content style={styles.modalBody}>
             <TouchableOpacity

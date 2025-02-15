@@ -5,6 +5,7 @@ import Login from '../../screen/Login';
 import {useUser} from '../../Ctx/UserContext';
 import StudentStack from './StudentStack';
 import TeacherStack from './TeacherStack';
+import ParentStack from './ParentStack';
 
 const RootStack = createNativeStackNavigator();
 
@@ -31,7 +32,13 @@ const AppNavigator = () => {
             component={TeacherStack}
             options={{headerShown: false}}
           />
-        ) : null}
+        ) : (
+          <RootStack.Screen
+            name="ParentStack"
+            component={ParentStack}
+            options={{headerShown: false}}
+          />
+        )}
       </RootStack.Navigator>
     </NavigationContainer>
   );

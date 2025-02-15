@@ -84,7 +84,10 @@ const ApplyLeave = ({navigation}: any) => {
 
       {/* Add Leave Modal */}
       <Portal>
-        <Dialog visible={visible} onDismiss={hideDialog}>
+        <Dialog
+          visible={visible}
+          onDismiss={hideDialog}
+          style={{backgroundColor: '#fff', borderRadius: 10}}>
           <Dialog.Title style={styles.modalTitle}>Add Leave</Dialog.Title>
           <Dialog.Content>
             <TouchableOpacity
