@@ -12,6 +12,7 @@ import React, {useEffect, useState} from 'react';
 import NavBar from '../../components/NavBar';
 import {TouchableOpacity} from 'react-native';
 import {PieChart} from 'react-native-chart-kit';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -85,9 +86,9 @@ const ParentHome = ({navigation}: any) => {
               />
             </View>
             <View style={styles.txtConatiner}>
-              <Text style={styles.nameTxt}>Ayesha Naveed</Text>
-              <Text style={styles.nameTxt}>Student</Text>
-              <Text style={styles.nameTxt}>GCGS1124S010</Text>
+              <Text style={styles.nameTxt}>Abdullah</Text>
+              <Text style={styles.nameTxt}>Parent</Text>
+              <Text style={styles.nameTxt}>GCGS1124P006</Text>
             </View>
           </View>
           <View style={styles.otherDetails}>
@@ -183,27 +184,7 @@ const ParentHome = ({navigation}: any) => {
           <View style={styles.btnRow}>
             <TouchableOpacity
               style={styles.btnContainer}
-              onPress={() => navigation.navigate('ApplyLeave')}>
-              <Image
-                source={require('../../assets/about.png')}
-                style={styles.btnIcon}
-              />
-              <Text style={styles.btnText}>Apply Leave</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.btnContainer}
-              onPress={() => navigation.navigate('Download')}>
-              <Image
-                source={require('../../assets/download.png')}
-                style={styles.btnIcon}
-              />
-              <Text style={styles.btnText}>DownLoad</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.btnRow}>
-            <TouchableOpacity
-              style={styles.btnContainer}
-              onPress={() => navigation.navigate('HomeWork')}>
+              onPress={() => navigation.navigate('ParentHomeWork')}>
               <Image
                 source={require('../../assets/writing.png')}
                 style={styles.btnIcon}
@@ -212,12 +193,29 @@ const ParentHome = ({navigation}: any) => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.btnContainer}
-              onPress={() => navigation.navigate('Course')}>
+              onPress={() => navigation.navigate('ParentApplyLeave')}>
               <Image
-                source={require('../../assets/books.png')}
+                source={require('../../assets/about.png')}
                 style={styles.btnIcon}
               />
-              <Text style={styles.btnText}>Course</Text>
+              <Text style={styles.btnText}>Apply Leave</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.btnRow}>
+            <TouchableOpacity
+              style={styles.btnContainer}
+              onPress={() => navigation.navigate('ParentDownload')}>
+              <Image
+                source={require('../../assets/download.png')}
+                style={styles.btnIcon}
+              />
+              <Text style={styles.btnText}>DownLoad</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.btnContainer}
+              onPress={() => navigation.navigate('ParentChat')}>
+              <Icon name="chat" size={30} color={'#3B82F6'} />
+              <Text style={styles.btnText}>Chat</Text>
             </TouchableOpacity>
           </View>
         </View>

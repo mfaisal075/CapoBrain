@@ -12,6 +12,10 @@ import ParentDateSheet from '../../screen/parent/LMS/ParentDateSheet';
 import ParentDailyDiary from '../../screen/parent/LMS/ParentDailyDiary';
 import ParentAttendance from '../../screen/parent/ParentAttendance';
 import ParentResult from '../../screen/parent/ParentResult';
+import ParentHomeWork from '../../screen/parent/ParentHomeWork';
+import ParentApplyLeave from '../../screen/parent/ParentApplyLeave';
+import ParentDownload from '../../screen/parent/ParentDownload';
+import ParentChat from '../../screen/parent/ParentChat';
 
 const Stack = createNativeStackNavigator();
 
@@ -71,6 +75,26 @@ const ParentStack = () => {
       <Stack.Screen
         name="ParentResult"
         component={ParentResult}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ParentHomeWork"
+        component={ParentHomeWork}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ParentApplyLeave"
+        component={ParentApplyLeave}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ParentDownload"
+        component={ParentDownload}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ParentChat"
+        component={ParentChat}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

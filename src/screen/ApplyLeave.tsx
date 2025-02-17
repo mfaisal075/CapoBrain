@@ -1,6 +1,5 @@
 import {
   BackHandler,
-  Button,
   ScrollView,
   StyleSheet,
   Text,
