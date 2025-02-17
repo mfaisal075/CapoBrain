@@ -39,7 +39,7 @@ const ParentChat = ({navigation}: any) => {
                 style={styles.avatar}
               />
               {/* Online Status */}
-              <View style={styles.onlineMark} />
+              <View style={styles.onlineMark} />     
             </View>
             <View style={styles.userTextContainer}>
               <Text style={styles.userName}>Abdullah</Text>
