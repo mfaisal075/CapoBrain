@@ -1,19 +1,73 @@
 import {View, Text, Image, TouchableOpacity, StyleSheet} from 'react-native';
-import React from 'react';
+import React, {useState} from 'react';
+import {Menu, Divider} from 'react-native-paper';
+import {useUser} from '../Ctx/UserContext';
+import {useNavigation} from '@react-navigation/native';
 
 const NavBar = () => {
+  const navigation = useNavigation();
+  const {userRole, logout} = useUser();
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  const openMenu = () => setMenuVisible(true);
+  const closeMenu = () => setMenuVisible(false);
+
+  const handleLogout = () => {
+    logout(); // Reset user state
+    navigation.reset({
+      index: 0,
+      routes: [{name: 'Login' as never}], // Ensure it redirects to Login
+    });
+  };
+
   return (
     <View style={styles.navBar}>
+      {/* Logo */}
       <View style={styles.logoContainer}>
         <Image source={require('../assets/logo.png')} style={styles.logo} />
       </View>
+
+      {/* Navigation Options */}
       <View style={styles.otherOpts}>
-        <TouchableOpacity style={styles.optContainer}>
-          <Image
-            source={require('../assets/user.png')}
-            style={styles.optIcon}
+        {/* Profile Dropdown */}
+        <Menu
+          visible={menuVisible}
+          onDismiss={closeMenu}
+          anchor={
+            <TouchableOpacity style={styles.optContainer} onPress={openMenu}>
+              <Image
+                source={require('../assets/user.png')}
+                style={styles.optIcon}
+              />
+            </TouchableOpacity>
+          }>
+          {/* User Info */}
+          <View style={styles.userInfo}>
+            <Image
+              source={require('../assets/user.png')}
+              style={styles.userIcon}
+            />
+            <View>
+              <Text style={styles.userName}>Hanzala Ahmad</Text>
+              {userRole === 'student' ? (
+                <Text style={styles.userRole}>Student</Text>
+              ) : userRole === 'teacher' ? (
+                <Text style={styles.userRole}>Teacher</Text>
+              ) : (
+                <Text style={styles.userRole}>Parent</Text>
+              )}
+            </View>
+          </View>
+
+          <Divider />
+          <Menu.Item
+            onPress={() => console.log('Change Password')}
+            title="Change Password"
           />
-        </TouchableOpacity>
+          <Menu.Item onPress={() => logout()} title="Logout" />
+        </Menu>
+
+        {/* Other Icons */}
         <TouchableOpacity style={styles.optContainer}>
           <Image
             source={require('../assets/game.png')}
@@ -46,7 +100,6 @@ const NavBar = () => {
 export default NavBar;
 
 const styles = StyleSheet.create({
-  // Nav Bar style
   navBar: {
     height: 70,
     backgroundColor: 'white',
@@ -85,5 +138,26 @@ const styles = StyleSheet.create({
     width: 28,
     resizeMode: 'contain',
     tintColor: '#3B82F6',
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+  },
+  userIcon: {
+    width: 40,
+    height: 40,
+    marginRight: 10,
+    tintColor: '#3B82F6',
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  userRole: {
+    fontSize: 14,
+    color: '#777',
   },
 });

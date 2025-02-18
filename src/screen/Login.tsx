@@ -11,12 +11,18 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useUser} from '../Ctx/UserContext';
 import axios from 'axios';
+import {Cookies} from '@react-native-cookies/cookies';
 
 const Login = ({navigation}: any) => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const {setUserName: setUserEmail, setUserRole, userRole} = useUser();
+  const {
+    setUserName: setUserEmail,
+    setUserRole,
+    userRole,
+    setToken,
+  } = useUser();
   const [loading, setLoading] = useState(false);
 
   const togglePasswordVisibility = () => {
@@ -32,15 +38,29 @@ const Login = ({navigation}: any) => {
           user_name: email,
           password,
         },
+        {withCredentials: true},
       );
 
       setUserEmail(email);
 
       const data = response.data;
 
+      // Get CSRF token from response headers
+      const xsrfToken = response.headers['set-cookie']
+        ?.find(cookie => cookie.includes('XSRF-TOKEN'))
+        ?.split('=')[1]
+        ?.split(';')[0];
+
+      if (xsrfToken) {
+        axios.defaults.headers.common['X-XSRF-TOKEN'] = xsrfToken;
+        console.log('XSRF Token:', xsrfToken);
+      } else {
+        console.log('XSRF Token not found');
+      }
+
       if (response.status === 200 && data.status === 200) {
-        // Successful login
-        setUserRole('parent');
+        setUserRole('student');
+        setToken(xsrfToken || null);
         if (userRole === 'student') {
           navigation.navigate('StudentStack');
         }
@@ -52,29 +72,23 @@ const Login = ({navigation}: any) => {
         }
         console.log('Login successful:', data);
       } else if (data.status === 202) {
-        // Invalid username or password
         Alert.alert('Login failed', 'Invalid username or password');
         console.log('Login failed:', data);
       } else {
-        // Handle any other unexpected statuses
         Alert.alert('Login failed', 'Unexpected response from the server');
         console.log('Unexpected response:', data);
       }
     } catch (error: any) {
-      // Handle errors
       if (error.response) {
-        // Server responded with a status outside the 2xx range
         console.error('Server Error:', error.response.data);
         Alert.alert('Sign in failed', 'Invalid credentials or server error.');
       } else if (error.request) {
-        // Request was made but no response was received
         console.error('No Response:', error.request);
         Alert.alert(
           'Sign in failed',
           'No response from the server. Please try again.',
         );
       } else {
-        // Something else caused the error
         console.error('Error:', error.message);
         Alert.alert('Sign in failed', 'An error occurred. Please try again.');
       }

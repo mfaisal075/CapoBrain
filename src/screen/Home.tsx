@@ -12,11 +12,58 @@ import React, {useEffect, useState} from 'react';
 import {PieChart} from 'react-native-chart-kit';
 import NavBar from '../components/NavBar';
 import {Alert} from 'react-native';
+import {useUser} from '../Ctx/UserContext';
+import axios from 'axios';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+
+interface UserData {
+  cand: {
+    admissiondate: string;
+    cand_age: string;
+    cand_bform: string;
+    cand_bra_id: number;
+    cand_class_id: number;
+    cand_dob: string;
+    cand_gender: string;
+    cand_mothertongue: string;
+    cand_name: string;
+    cand_pic: string;
+    cand_school_id: number;
+    cand_section_id: number;
+    cand_status: string;
+    cand_user_id: number;
+    created_at: string;
+    family_id: string;
+    form_id: string;
+    id: number;
+    nationality_id: number;
+    par_id: number;
+    religion_id: number;
+    sibling_status: string;
+    student_id: string;
+    updated_at: string;
+  };
+  cand_class: {
+    cls_name: string;
+  };
+  section: {
+    sec_name: string;
+  };
+  parent: {
+    par_fathername: string;
+  };
+  user: {
+    role: string;
+    email: string;
+  };
+}
 
 const screenWidth = Dimensions.get('window').width;
 
 const Home = ({navigation}: any) => {
   const [newsBtn, setNewsBtn] = useState('1');
+  const {token} = useUser();
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   //Chart Data
   const data = [
@@ -50,7 +97,31 @@ const Home = ({navigation}: any) => {
     },
   ];
 
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetchprofile',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        setUserData((await response).data);
+      } catch (error) {
+        console.error('Error fetching data', error);
+      }
+    } else {
+      console.log('User is not authenticated');
+    }
+  };
+
   useEffect(() => {
+    fetchData();
+
+    //Naviagte to Home on back key press
     const backAction = () => {
       Alert.alert('Hold on!', 'Are you sure you want to exit the app?', [
         {
@@ -62,9 +133,7 @@ const Home = ({navigation}: any) => {
       ]);
       return true;
     };
-
     BackHandler.addEventListener('hardwareBackPress', backAction);
-
     return () =>
       BackHandler.removeEventListener('hardwareBackPress', backAction);
   }, []);
@@ -86,53 +155,66 @@ const Home = ({navigation}: any) => {
               />
             </View>
             <View style={styles.txtConatiner}>
-              <Text style={styles.nameTxt}>Ayesha Naveed</Text>
-              <Text style={styles.nameTxt}>Student</Text>
-              <Text style={styles.nameTxt}>GCGS1124S010</Text>
+              <Text style={styles.nameTxt}>{userData?.cand.cand_name}</Text>
+              <Text style={styles.nameTxt}>{userData?.user.role}</Text>
+              <Text style={styles.nameTxt}>{userData?.cand.student_id}</Text>
             </View>
           </View>
           <View style={styles.otherDetails}>
             <View style={styles.otherDetailsContainer}>
               <Image
-                source={require('../assets/email.png')}
-                style={[styles.otherDetailsIcon, {tintColor: 'transparent'}]}
-              />
-              <Text style={styles.otherDetailsText}>Naveed Ahmed</Text>
-            </View>
-            <View style={styles.otherDetailsContainer}>
-              <Image
                 source={require('../assets/person.png')}
                 style={styles.otherDetailsIcon}
               />
-              <Text style={styles.otherDetailsText}>One (B)</Text>
+              <Text style={styles.otherDetailsText}>
+                {userData?.parent.par_fathername}
+              </Text>
+            </View>
+            <View style={styles.otherDetailsContainer}>
+              <Icon
+                name="school"
+                size={22}
+                color="#3B82F6"
+                style={{marginRight: 10}}
+              />
+
+              <Text style={styles.otherDetailsText}>
+                {userData?.cand_class.cls_name} ({userData?.section.sec_name})
+              </Text>
             </View>
             <View style={styles.otherDetailsContainer}>
               <Image
                 source={require('../assets/email.png')}
                 style={styles.otherDetailsIcon}
               />
-              <Text style={styles.otherDetailsText}>example123@gmail.com</Text>
+              <Text style={styles.otherDetailsText}>
+                {userData?.user.email}
+              </Text>
+            </View>
+            <View style={styles.otherDetailsContainer}>
+              <Icon
+                name="map-marker"
+                size={22}
+                color="#3B82F6"
+                style={{marginRight: 10}}
+              />
+              <Text style={styles.otherDetailsText}></Text>
             </View>
             <View style={styles.otherDetailsContainer}>
               <Image
                 source={require('../assets/smartphone.png')}
                 style={styles.otherDetailsIcon}
               />
-              <Text style={styles.otherDetailsText}>Gujranwala</Text>
+              <Text style={styles.otherDetailsText}></Text>
             </View>
             <View style={styles.otherDetailsContainer}>
               <Image
                 source={require('../assets/id-card.png')}
                 style={styles.otherDetailsIcon}
               />
-              <Text style={styles.otherDetailsText}>+923000200000</Text>
-            </View>
-            <View style={styles.otherDetailsContainer}>
-              <Image
-                source={require('../assets/email.png')}
-                style={[styles.otherDetailsIcon, {tintColor: 'transparent'}]}
-              />
-              <Text style={styles.otherDetailsText}>34103-2354635-6</Text>
+              <Text style={styles.otherDetailsText}>
+                {userData?.cand.cand_bform}
+              </Text>
             </View>
           </View>
           <View style={styles.accountStatus}>
