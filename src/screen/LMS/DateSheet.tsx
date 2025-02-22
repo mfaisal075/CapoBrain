@@ -7,25 +7,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import NavBar from '../../components/NavBar';
-import {Dialog, Portal} from 'react-native-paper';
-import DropDownPicker from 'react-native-dropdown-picker';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const DateSheet = ({navigation}: any) => {
-  const [visible, setVisible] = useState(false);
-  const [branchOpen, setBranchOpen] = useState(false);
-  const [classOpen, setClassOpen] = useState(false);
-  const [sectionOpen, setSectionOpen] = useState(false);
-  const [branchValue, setBranchValue] = useState(null);
-  const [classValue, setClassValue] = useState(null);
-  const [sectionValue, setSectionValue] = useState(null);
-
-  const showDialog = () => setVisible(true);
-  const hideDialog = () => setVisible(false);
-
-  const branchItems: {label: string; value: string}[] = [];
   useEffect(() => {
     const backAction = () => {
       navigation.goBack();
@@ -52,8 +37,16 @@ const DateSheet = ({navigation}: any) => {
           <View style={styles.bckBtnCtr}>
             <TouchableOpacity
               style={styles.bckBtn}
-              onPress={() => showDialog()}>
-              <Text style={styles.bckBtnText}>Add Date Sheet</Text>
+              onPress={() => navigation.goBack()}>
+              <Image
+                source={require('../../assets/back.png')}
+                style={[styles.bckBtnIcon, {marginRight: -8}]}
+              />
+              <Image
+                source={require('../../assets/back.png')}
+                style={styles.bckBtnIcon}
+              />
+              <Text style={styles.bckBtnText}>Back</Text>
             </TouchableOpacity>
           </View>
 
@@ -72,117 +65,6 @@ const DateSheet = ({navigation}: any) => {
           </View>
         </View>
       </ScrollView>
-
-      {/* Add Date Sheet Modal */}
-      <Portal>
-        <Dialog
-          visible={visible}
-          onDismiss={hideDialog}
-          style={{backgroundColor: '#fff', borderRadius: 10}}>
-          <Dialog.Title>Add Date Sheet</Dialog.Title>
-          <Dialog.Content style={styles.modalBody}>
-            <TouchableOpacity
-              style={styles.clsIconCtr}
-              onPress={() => hideDialog()}>
-              <Icon name="close" size={26} color={'#000'} />
-            </TouchableOpacity>
-            <View style={styles.addSbjCtr}>
-              <TouchableOpacity style={[styles.bckBtn, {width: 120}]}>
-                <Text style={styles.bckBtnText}>Add Subject</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Dropdown Pickers Conatiner */}
-            <View style={styles.pickerCtr}>
-              <View style={[styles.picker, {marginTop: 10}]}>
-                <Text style={styles.text}>
-                  Branch <Text style={{color: 'red'}}>*</Text>
-                </Text>
-                <DropDownPicker
-                  open={branchOpen}
-                  value={branchValue}
-                  setOpen={setBranchOpen}
-                  setValue={setBranchValue}
-                  placeholder="Select Branch"
-                  items={branchItems}
-                  style={{
-                    borderColor: 'transparent',
-                    backgroundColor: 'transparent',
-                    borderRadius: 10,
-                  }}
-                  dropDownContainerStyle={{
-                    borderColor: '#ccc',
-                    borderRadius: 10,
-                    height: 'auto',
-                  }}
-                />
-              </View>
-              <View style={styles.picker}>
-                <Text style={styles.text}>
-                  Class <Text style={{color: 'red'}}>*</Text>
-                </Text>
-                <DropDownPicker
-                  open={classOpen}
-                  value={classValue}
-                  setOpen={setClassOpen}
-                  setValue={setClassValue}
-                  placeholder="Select Class"
-                  items={branchItems}
-                  style={{
-                    borderColor: 'transparent',
-                    backgroundColor: 'transparent',
-                    borderRadius: 10,
-                  }}
-                  dropDownContainerStyle={{
-                    borderColor: '#ccc',
-                    borderRadius: 10,
-                    height: 'auto',
-                  }}
-                />
-              </View>
-              <View style={styles.picker}>
-                <Text style={styles.text}>
-                  Section <Text style={{color: 'red'}}>*</Text>
-                </Text>
-                <DropDownPicker
-                  open={sectionOpen}
-                  value={sectionValue}
-                  setOpen={setSectionOpen}
-                  setValue={setSectionValue}
-                  placeholder="Select Section"
-                  items={branchItems}
-                  style={{
-                    borderColor: 'transparent',
-                    backgroundColor: 'transparent',
-                    borderRadius: 10,
-                  }}
-                  dropDownContainerStyle={{
-                    borderColor: '#ccc',
-                    borderRadius: 10,
-                    height: 'auto',
-                  }}
-                />
-              </View>
-            </View>
-            <View style={styles.dataCtr}>
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: '500',
-                  color: 'rgba(0,0,0,0.6)',
-                  textAlign: 'center',
-                }}>
-                No record present in the database!
-              </Text>
-            </View>
-          </Dialog.Content>
-          <Dialog.Actions style={{justifyContent: 'center'}}>
-            <TouchableOpacity style={styles.bckBtn}>
-              <Text style={styles.bckBtnText}>Save</Text>
-            </TouchableOpacity>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
     </View>
   );
 };
@@ -221,9 +103,9 @@ const styles = StyleSheet.create({
     paddingRight: 20,
   },
   bckBtn: {
-    backgroundColor: '#28A745',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+    backgroundColor: '#5A6268',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 5,
     flexDirection: 'row',
     alignItems: 'center',

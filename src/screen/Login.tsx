@@ -1,5 +1,12 @@
 import React, {useState} from 'react';
-import {Alert, ActivityIndicator} from 'react-native';
+import {
+  Alert,
+  ActivityIndicator,
+  TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+} from 'react-native';
 import {
   View,
   Text,
@@ -11,7 +18,11 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useUser} from '../Ctx/UserContext';
 import axios from 'axios';
-import {Cookies} from '@react-native-cookies/cookies';
+import {RFPercentage} from 'react-native-responsive-fontsize';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from 'react-native-responsive-screen';
 
 const Login = ({navigation}: any) => {
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -44,6 +55,7 @@ const Login = ({navigation}: any) => {
       setUserEmail(email);
 
       const data = response.data;
+      console.log('Data: ', data);
 
       // Get CSRF token from response headers
       const xsrfToken = response.headers['set-cookie']
@@ -59,9 +71,9 @@ const Login = ({navigation}: any) => {
       }
 
       if (response.status === 200 && data.status === 200) {
-        setUserRole('student');
+        setUserRole('Student');
         setToken(xsrfToken || null);
-        if (userRole === 'student') {
+        if (userRole === 'Student') {
           navigation.navigate('StudentStack');
         }
         if (userRole === 'parent') {
@@ -98,70 +110,82 @@ const Login = ({navigation}: any) => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Placeholder for Logo */}
-      <View style={styles.logoPlaceholder}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
         <Image
-          source={require('../assets/logo.png')}
-          style={{width: 180, height: 180}}
-          resizeMode="contain"
+          style={styles.backgroundImage}
+          source={require('../assets/hbg.png')}
         />
-      </View>
 
-      {/* Login Text */}
-      <Text style={styles.loginText}>LOGIN</Text>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'android' ? 'padding' : 'height'}
+          style={styles.keyboardView}>
+          <View style={styles.scrollContainer}>
+            <View style={styles.logoContainer}>
+              <Image
+                source={require('../assets/logo.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
 
-      {/* Username Input */}
-      <View style={styles.inputContainer}>
-        <Icon
-          name="mail"
-          size={20}
-          color="rgba(255,255,255,0.6)"
-          style={styles.icon}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="USER NAME"
-          placeholderTextColor="rgba(255,255,255,0.6)"
-          value={email.toUpperCase()}
-          onChangeText={text => setEmail(text.toLowerCase())}
-        />
-      </View>
+            <View style={styles.box}>
+              <Text style={styles.title}>Login</Text>
 
-      {/* Password Input */}
-      <View style={styles.inputContainer}>
-        <Icon
-          name="lock-closed"
-          size={20}
-          color="rgba(255,255,255,0.6)"
-          style={styles.icon}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="rgba(255,255,255,0.6)"
-          secureTextEntry={!passwordVisible}
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TouchableOpacity onPress={togglePasswordVisibility}>
-          <Icon
-            name={passwordVisible ? 'eye-off' : 'eye'}
-            size={20}
-            color="rgba(255,255,255,0.6)"
-            style={styles.icon}
-          />
-        </TouchableOpacity>
+              <View style={styles.inputContainer}>
+                <Icon name="mail" size={20} color="gray" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Username"
+                  placeholderTextColor="gray"
+                  value={email.toUpperCase()}
+                  onChangeText={text => setEmail(text.toLowerCase())}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Icon
+                  name="lock-closed"
+                  size={20}
+                  color="gray"
+                  style={styles.icon}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor="gray"
+                  secureTextEntry={!passwordVisible}
+                  value={password}
+                  onChangeText={setPassword}
+                />
+                <TouchableOpacity onPress={togglePasswordVisibility}>
+                  <Icon
+                    name={passwordVisible ? 'eye-off' : 'eye'}
+                    size={20}
+                    color="gray"
+                    style={styles.icon}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity style={styles.button} onPress={handleLogin}>
+                {loading ? (
+                  <ActivityIndicator size="small" color="#3B4A6B" />
+                ) : (
+                  <Text style={styles.buttonText}>LOGIN</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            Developed with ❤️ By: Technic Mentors
+          </Text>
+        </View>
       </View>
-      {/* Login Button */}
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        {loading ? (
-          <ActivityIndicator size="small" color="#3B4A6B" />
-        ) : (
-          <Text style={styles.buttonText}>LOGIN</Text>
-        )}
-      </TouchableOpacity>
-    </View>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -170,32 +194,53 @@ export default Login;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#3B4A6B', // Matches the dark blue background
-    alignItems: 'center',
-    paddingHorizontal: 20,
+    backgroundColor: 'white',
   },
-  logoPlaceholder: {
+  backgroundImage: {
+    width: wp('100%'),
+    height: hp('50%'),
+    position: 'absolute',
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#3B4A6B',
-    marginTop: 20,
-    marginBottom: 30,
+    paddingBottom: hp('20%'),
   },
-  loginText: {
-    fontSize: 24,
+  logoContainer: {
+    alignItems: 'center',
+    marginTop: hp('5%'),
+  },
+  logo: {
+    width: 180,
+    height: 180,
+  },
+  box: {
+    backgroundColor: 'white',
+    width: wp('90%'),
+    padding: 20,
+    borderRadius: 25,
+    borderColor: 'gray',
+    borderWidth: 2,
+    elevation: 15,
+    alignSelf: 'center',
+  },
+  title: {
+    textAlign: 'center',
+    color: '#3b82f6',
     fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 40,
+    fontSize: 34,
+    marginBottom: hp('2%'),
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomLeftRadius: 5,
-    borderBottomColor: '#fff',
-    marginBottom: 20,
-    width: '85%',
-    paddingHorizontal: 5,
+    borderBottomColor: 'gray',
+    marginBottom: hp('2%'),
   },
   icon: {
     marginRight: 10,
@@ -203,20 +248,28 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: '#fff',
+    color: 'gray',
   },
   button: {
-    backgroundColor: '#fff',
+    backgroundColor: '#3b82f6',
     borderRadius: 5,
     paddingVertical: 10,
-    paddingHorizontal: 60,
-    width: '85%',
-    marginTop: 30,
+    alignItems: 'center',
+    marginTop: hp('3%'),
   },
   buttonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#3B4A6B',
-    textAlign: 'center',
+    color: 'white',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: hp('1%'),
+    width: '100%',
+    alignItems: 'center',
+  },
+  footerText: {
+    color: '#3b82f6',
+    fontSize: RFPercentage(2),
   },
 });

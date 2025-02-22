@@ -6,7 +6,7 @@ import {useNavigation} from '@react-navigation/native';
 
 const NavBar = () => {
   const navigation = useNavigation();
-  const {userRole, logout} = useUser();
+  const {userRole, logout, userName} = useUser();
   const [menuVisible, setMenuVisible] = useState(false);
 
   const openMenu = () => setMenuVisible(true);
@@ -15,7 +15,7 @@ const NavBar = () => {
   const handleLogout = () => {
     logout(); // Reset user state
     navigation.reset({
-      index: 0,
+      index: 1,
       routes: [{name: 'Login' as never}], // Ensure it redirects to Login
     });
   };
@@ -48,10 +48,10 @@ const NavBar = () => {
               style={styles.userIcon}
             />
             <View>
-              <Text style={styles.userName}>Hanzala Ahmad</Text>
-              {userRole === 'student' ? (
+              <Text style={styles.userName}>{userName}</Text>
+              {userRole === 'Student' ? (
                 <Text style={styles.userRole}>Student</Text>
-              ) : userRole === 'teacher' ? (
+              ) : userRole === 'Teacher' ? (
                 <Text style={styles.userRole}>Teacher</Text>
               ) : (
                 <Text style={styles.userRole}>Parent</Text>

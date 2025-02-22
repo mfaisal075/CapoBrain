@@ -1,16 +1,78 @@
 import {
   BackHandler,
+  Dimensions,
   Image,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import NavBar from '../../components/NavBar';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
+import {useFocusEffect} from '@react-navigation/native';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLContentModel,
+  HTMLElementModel,
+} from 'react-native-render-html';
 
 const SummerHomework = ({navigation}: any) => {
+  const {token} = useUser();
+  const [userData, setUserData] = useState<any>(null);
+
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/studentsummerhomework',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        // Set user data for student details
+        setUserData(response.data);
+
+        return response.data.output;
+      } catch (error) {
+        console.error('Error fetching data', error);
+        throw error; // Ensure the error is thrown so useQuery can handle it
+      }
+    } else {
+      console.log('User is not authenticated');
+      throw new Error('User is not authenticated');
+    }
+  };
+
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true, // Fetch new data when screen is focused
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
+
   useEffect(() => {
     const backAction = () => {
       navigation.goBack();
@@ -61,17 +123,90 @@ const SummerHomework = ({navigation}: any) => {
 
           {/* Student Details */}
 
-          <View style={styles.attendanceCtr}>
-            <Text
-              style={{
-                marginTop: 20,
-                fontSize: 18,
-                fontWeight: '500',
-                color: 'rgba(0,0,0,0.6)',
-                textAlign: 'center',
-              }}>
-              No record present in the database!
-            </Text>
+          <View style={{width: '100%'}}>
+            <ScrollView
+              horizontal
+              style={{flex: 1, padding: 10, paddingHorizontal: 0}}
+              refreshControl={
+                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+              }>
+              {data ? (
+                <RenderHtml
+                  contentWidth={Dimensions.get('window').width}
+                  source={{html: data}}
+                  customHTMLElementModels={customHTMLElementModels}
+                  tagsStyles={{
+                    h4: {
+                      fontSize: 20,
+                      fontWeight: 'bold',
+                      color: '#000',
+                    },
+                    table: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: '100%',
+                      marginLeft: 0,
+                    },
+                    th: {
+                      backgroundColor: '#f2f2f2',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      marginHorizontal: -5,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: 100, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -10,
+                    },
+                    td: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      textAlign: 'center',
+                      width: 90, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -3,
+                    },
+                    tr: {
+                      backgroundColor: '#fff',
+                    },
+                    h6: {
+                      marginVertical: 0,
+                      textAlign: 'center',
+                    },
+                    span: {
+                      backgroundColor: '#28a745', // Green background (Approved)
+                      color: '#fff', // White text
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 4,
+                      fontSize: 12,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      alignSelf: 'center', // Center the badge
+                    },
+                    center: {
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    },
+                    a: {
+                      backgroundColor: '#3B82F6',
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 5,
+                      color: '#fff',
+                      fontWeight: 'bold',
+                    },
+                  }}
+                />
+              ) : null}
+            </ScrollView>
           </View>
         </View>
       </ScrollView>
@@ -135,11 +270,10 @@ const styles = StyleSheet.create({
     tintColor: '#fff',
     marginRight: 5,
   },
-  attendanceCtr: {
+  tblDataCtr: {
+    marginTop: 10,
     height: 'auto',
     width: '100%',
-    padding: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 10,
   },
 });

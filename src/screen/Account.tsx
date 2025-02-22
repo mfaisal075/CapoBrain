@@ -1,107 +1,59 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import {
   BackHandler,
   Image,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
+  Dimensions,
+  RefreshControl,
 } from 'react-native';
 import NavBar from '../components/NavBar';
-import {Button, DataTable, Dialog, Portal} from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useUser} from '../Ctx/UserContext';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLElementModel,
+  HTMLContentModel,
+} from 'react-native-render-html';
+import axios from 'axios';
 
 const Account = ({navigation}: any) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [page, setPage] = useState<number>(0);
-  const [numberOfItemsPerPageList] = useState([10, 50, 100]);
-  const [itemsPerPage, onItemsPerPageChange] = useState(
-    numberOfItemsPerPageList[0],
-  );
-  const [feeModalVisible, setFeeModalVisible] = useState(false);
+  const {token} = useUser();
 
-  const showDialog = () => setFeeModalVisible(true);
-  const hideDialog = () => setFeeModalVisible(false);
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetchstd_account',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
 
-  const [items] = useState([
-    {
-      sr: 1,
-      transaction: 'FC-22',
-      date: '13-11-2024',
-      fee: '2500',
-      transport: '0',
-      inventory: '0',
-      arrears: '0',
-      others: '6400',
-      payable: '8900',
-      paid: '0',
-      balance: '8900',
-      transactionType: 'Fee Charged',
-      action: 'Not Available',
-      actionType: 'red',
-    },
-    {
-      sr: 2,
-      transaction: 'FR#015',
-      date: '14-11-2024',
-      fee: '2500',
-      transport: '0',
-      inventory: '0',
-      arrears: '0',
-      others: '6400',
-      payable: '8900',
-      paid: '8900',
-      balance: '0',
-      transactionType: 'Payment Received',
-      action: 'Not Available',
-      actionType: 'red',
-    },
-    {
-      sr: 3,
-      transaction: 'INV#022',
-      date: '21-11-2024',
-      fee: '0',
-      transport: '0',
-      inventory: '240',
-      arrears: '0',
-      others: '0',
-      payable: '240',
-      paid: '240',
-      balance: '0',
-      transactionType: 'Inventory Issued',
-      action: 'Not Available',
-      actionType: 'red',
-    },
-    {
-      sr: 4,
-      transaction: 'MF-December',
-      date: '07-12-2024',
-      fee: '2500',
-      transport: '0',
-      inventory: '0',
-      arrears: '0',
-      others: '0',
-      payable: '2500',
-      paid: '0',
-      balance: '2500',
-      transactionType: 'Monthly Fee',
-      action: 'Payable Voucher',
-      actionType: 'green',
-    },
-  ]);
+        return response.data.output;
+      } catch (error) {
+        console.error('Error fetching data', error);
+        throw error; // Ensure the error is thrown so useQuery can handle it
+      }
+    } else {
+      console.log('User is not authenticated');
+      throw new Error('User is not authenticated');
+    }
+  };
 
-  const filteredItems = items.filter(item =>
-    Object.values(item).some(value =>
-      String(value).toLowerCase().includes(searchQuery.toLowerCase()),
-    ),
-  );
-
-  const from = page * itemsPerPage;
-  const to = Math.min((page + 1) * itemsPerPage, items.length);
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true, // Fetch new data when screen is focused
+  });
 
   useEffect(() => {
+    refetch();
+    // Hardware Back Press
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -111,10 +63,19 @@ const Account = ({navigation}: any) => {
       'hardwareBackPress',
       backAction,
     );
-
-    setPage(0);
     return () => backHandler.remove();
-  }, [itemsPerPage]);
+  }, []);
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
 
   return (
     <View style={styles.container}>
@@ -142,193 +103,73 @@ const Account = ({navigation}: any) => {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.searchContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search..."
-              placeholderTextColor="#888"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-
           {/* Table */}
           <View style={styles.tblDataCtr}>
-            <ScrollView horizontal>
-              <DataTable>
-                <DataTable.Header>
-                  {[
-                    'Sr#',
-                    'Transaction',
-                    'Date',
-                    'Fee',
-                    'Transport',
-                    'Inventory',
-                    'Arrears',
-                    'Others',
-                    'Payable',
-                    'Paid',
-                    'Balance',
-                    'Transaction Type',
-                    'Action',
-                  ].map((title, index) => (
-                    <DataTable.Title
-                      key={index}
-                      textStyle={{
-                        color: 'black',
-                        fontSize: 14,
-                        fontWeight: 'bold',
-                      }}
-                      style={{
-                        width: index === 0 ? 50 : 125, // Reduced width for the first header
-                        paddingHorizontal: 5,
-                        borderColor: '#000',
-                        borderWidth: 0.5,
-                        backgroundColor: '#F0F0F0',
-                      }}>
-                      {title}
-                    </DataTable.Title>
-                  ))}
-                </DataTable.Header>
-
-                {filteredItems.length > 0 ? (
-                  filteredItems.slice(from, to).map((item, index) => (
-                    <DataTable.Row key={index}>
-                      {[
-                        item.sr,
-                        item.transaction,
-                        item.date,
-                        item.fee,
-                        item.transport,
-                        item.inventory,
-                        item.arrears,
-                        item.others,
-                        item.payable,
-                        item.paid,
-                        item.balance,
-                        item.transactionType,
-                      ].map((value, idx) => (
-                        <DataTable.Cell
-                          key={idx}
-                          textStyle={{color: '#000', fontSize: 12}}
-                          style={{
-                            width: idx === 0 ? 50 : 125, // Reduced width for the first cell
-                            paddingHorizontal: 5,
-                            borderColor: '#000',
-                            borderWidth: 0.5,
-                          }}>
-                          {value}
-                        </DataTable.Cell>
-                      ))}
-                      <DataTable.Cell
-                        key={'action'}
-                        textStyle={{color: '#000', fontSize: 12}}
-                        style={{
-                          width: 125,
-                          paddingHorizontal: 5,
-                          borderColor: '#000',
-                          borderWidth: 0.5,
-                        }}>
-                        <TouchableOpacity
-                          disabled={item.actionType !== 'green'}
-                          onPress={() => {
-                            if (item.actionType === 'green') {
-                              // Handle the action here
-                              showDialog();
-                            }
-                          }}>
-                          <View
-                            style={{
-                              backgroundColor: item.actionType,
-                              padding: 5,
-                              borderRadius: 5,
-                              alignItems: 'center',
-                            }}>
-                            <Text style={{color: '#fff', fontSize: 12}}>
-                              {item.action}
-                            </Text>
-                          </View>
-                        </TouchableOpacity>
-                      </DataTable.Cell>
-                    </DataTable.Row>
-                  ))
-                ) : (
-                  <DataTable.Row>
-                    <DataTable.Cell
-                      textStyle={{
-                        color: 'gray',
-                        fontSize: 16,
-                        fontWeight: 'bold',
-                      }}
-                      style={{
-                        width: '100%',
-                        paddingHorizontal: 5,
-                        borderColor: '#000',
-                        borderWidth: 0.5,
-                        justifyContent: 'center',
-                      }}>
-                      No data found
-                    </DataTable.Cell>
-                  </DataTable.Row>
-                )}
-
-                <DataTable.Pagination
-                  page={page}
-                  numberOfPages={Math.ceil(filteredItems.length / itemsPerPage)}
-                  onPageChange={page => setPage(page)}
-                  label={`${from + 1}-${to} of ${filteredItems.length}`}
-                  numberOfItemsPerPageList={numberOfItemsPerPageList}
-                  numberOfItemsPerPage={itemsPerPage}
-                  onItemsPerPageChange={onItemsPerPageChange}
-                  showFastPaginationControls
-                  selectPageDropdownLabel={'Show Entries'}
-                  theme={{
-                    colors: {
-                      primary: '#000',
-                      elevation: {
-                        level2: '#fff',
-                      },
-                      text: '#616161',
-                      onSurface: '#616161',
+            <ScrollView
+              horizontal
+              style={{flex: 1, padding: 10}}
+              refreshControl={
+                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+              }>
+              {data ? (
+                <RenderHtml
+                  contentWidth={Dimensions.get('window').width}
+                  source={{html: data}}
+                  customHTMLElementModels={customHTMLElementModels}
+                  tagsStyles={{
+                    table: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: '100%',
+                      marginLeft: -10,
                     },
-                    dark: false,
-                    roundness: 1,
+                    th: {
+                      backgroundColor: '#f2f2f2',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      marginHorizontal: -5,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: 125, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -10,
+                      marginTop: -10,
+                    },
+                    td: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      textAlign: 'center',
+                      width: 100, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -3,
+                      borderBottomColor: 'white',
+                    },
+                    tr: {
+                      backgroundColor: '#fff',
+                    },
+                    a: {
+                      width: 100,
+                      backgroundColor: '#3B82F6',
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 5,
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: 10,
+                    },
                   }}
                 />
-              </DataTable>
+              ) : null}
             </ScrollView>
           </View>
         </View>
       </ScrollView>
-
-      {/* Modal */}
-      <Portal>
-        <Dialog
-          visible={feeModalVisible}
-          onDismiss={hideDialog}
-          style={{backgroundColor: '#fff', borderRadius: 10}}>
-          <Icon
-            name="close"
-            size={26}
-            onPress={hideDialog}
-            style={{position: 'absolute', right: 25, top: -2}}
-          />
-          <Dialog.Title
-            style={{
-              borderBottomColor: '#000',
-              borderBottomWidth: 0.5,
-              paddingBottom: 10,
-            }}>
-            Fee Challan
-          </Dialog.Title>
-          <Dialog.Content>
-            <Text>This is Fee Challan dialog</Text>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={hideDialog}>Done</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
     </View>
   );
 };
@@ -390,17 +231,5 @@ const styles = StyleSheet.create({
     width: 16,
     tintColor: '#fff',
     marginRight: 5,
-  },
-  searchContainer: {
-    paddingHorizontal: 20,
-    marginVertical: 10,
-  },
-  searchInput: {
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    color: '#000',
   },
 });

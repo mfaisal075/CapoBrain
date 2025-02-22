@@ -1,19 +1,95 @@
 import {
   BackHandler,
+  Dimensions,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import NavBar from '../components/NavBar';
 import {Image} from 'react-native';
+import {useUser} from '../Ctx/UserContext';
+import axios from 'axios';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLContentModel,
+  HTMLElementModel,
+} from 'react-native-render-html';
+import {useFocusEffect} from '@react-navigation/native';
+
+interface UserData {
+  applicant: {
+    cand_name: string;
+  };
+  class: {
+    cls_name: string;
+  };
+  section: {
+    sec_name: string;
+  };
+}
 
 const Attendance = ({navigation}: any) => {
+  const {token} = useUser();
+  const [userData, setUserData] = useState<UserData | null>(null);
+
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetch_studentattendance',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        // Set user data for student details
+        setUserData(response.data);
+
+        // Return the "output" field for the table
+        return response.data.output;
+      } catch (error) {
+        console.error('Error fetching data', error);
+        throw error; // Ensure the error is thrown so useQuery can handle it
+      }
+    } else {
+      console.log('User is not authenticated');
+      throw new Error('User is not authenticated');
+    }
+  };
+
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true, // Fetch new data when screen is focused
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
+
   useEffect(() => {
+    // Hardware Back Press
     const backAction = () => {
-      navigation.navigate('Home');
+      navigation.goBack();
       return true;
     };
 
@@ -59,30 +135,80 @@ const Attendance = ({navigation}: any) => {
                 <Text style={styles.heading}>Student Name</Text>
               </View>
               <View style={styles.headingCtr}>
-                <Text style={styles.simpleText}>Hanzala Ahmad</Text>
+                <Text style={styles.simpleText}>
+                  {userData?.applicant.cand_name}
+                </Text>
               </View>
               <View style={styles.headingCtr}>
                 <Text style={styles.heading}>Class</Text>
               </View>
               <View style={styles.headingCtr}>
-                <Text style={styles.simpleText}>Three</Text>
+                <Text style={styles.simpleText}>
+                  {userData?.class.cls_name}
+                </Text>
               </View>
               <View style={styles.headingCtr}>
                 <Text style={styles.heading}>Section</Text>
               </View>
               <View style={styles.headingCtr}>
-                <Text style={styles.simpleText}>A</Text>
+                <Text style={styles.simpleText}>
+                  {userData?.section.sec_name}
+                </Text>
               </View>
             </View>
           </ScrollView>
 
-          <View style={styles.attendanceCtr}>
-            <Text style={{
-              fontSize: 18,
-              fontWeight: '500',
-              color: 'rgba(0,0,0,0.6)',
-              textAlign: 'center',
-            }}>No record present in the database!</Text>
+          {/* Table */}
+          <View style={styles.tblDataCtr}>
+            <ScrollView
+              style={{flex: 1, padding: 10,}}
+              refreshControl={
+                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+              }>
+              {data ? (
+                <RenderHtml
+                  contentWidth={Dimensions.get('window').width}
+                  source={{html: data}}
+                  customHTMLElementModels={customHTMLElementModels}
+                  tagsStyles={{
+                    table: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: '100%',
+                      marginLeft: -10,
+                    },
+                    th: {
+                      backgroundColor: '#f2f2f2',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      marginHorizontal: -5,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: 125, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -10,
+                    },
+                    td: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      textAlign: 'center',
+                      width: 100, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -3,
+                    },
+                    tr: {
+                      backgroundColor: '#fff',
+                    },
+                  }}
+                />
+              ) : null}
+            </ScrollView>
           </View>
         </View>
       </ScrollView>
@@ -142,7 +268,6 @@ const styles = StyleSheet.create({
     tintColor: '#fff',
     marginRight: 5,
   },
-
   stdDtls: {
     height: 50,
     marginHorizontal: 20,
@@ -170,11 +295,9 @@ const styles = StyleSheet.create({
     fontWeight: 'normal',
     textAlign: 'center',
   },
-  attendanceCtr: {
+  tblDataCtr: {
+    marginTop: 10,
     height: 'auto',
     width: '100%',
-    padding: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  }
+  },
 });

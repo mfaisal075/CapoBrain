@@ -7,41 +7,27 @@ import {
   Dimensions,
   TouchableOpacity,
   BackHandler,
+  RefreshControl,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {PieChart} from 'react-native-chart-kit';
+import React, {useCallback, useEffect, useState} from 'react';
 import NavBar from '../components/NavBar';
 import {Alert} from 'react-native';
 import {useUser} from '../Ctx/UserContext';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLContentModel,
+  HTMLElementModel,
+} from 'react-native-render-html';
+import {useFocusEffect} from '@react-navigation/native';
 
 interface UserData {
   cand: {
-    admissiondate: string;
-    cand_age: string;
     cand_bform: string;
-    cand_bra_id: number;
-    cand_class_id: number;
-    cand_dob: string;
-    cand_gender: string;
-    cand_mothertongue: string;
     cand_name: string;
-    cand_pic: string;
-    cand_school_id: number;
-    cand_section_id: number;
-    cand_status: string;
-    cand_user_id: number;
-    created_at: string;
-    family_id: string;
-    form_id: string;
-    id: number;
-    nationality_id: number;
-    par_id: number;
-    religion_id: number;
-    sibling_status: string;
     student_id: string;
-    updated_at: string;
+    add: string;
   };
   cand_class: {
     cls_name: string;
@@ -55,49 +41,22 @@ interface UserData {
   user: {
     role: string;
     email: string;
+    contact: string;
+    name: string;
+  };
+  student_account: {
+    stuacc_balance: string;
+    stuacc_paid_amount: string;
+    inventory_amount: string;
+    stuacc_payable: string;
   };
 }
 
-const screenWidth = Dimensions.get('window').width;
-
 const Home = ({navigation}: any) => {
-  const [newsBtn, setNewsBtn] = useState('1');
-  const {token} = useUser();
+  const {token, setUserName, setUserRole} = useUser();
   const [userData, setUserData] = useState<UserData | null>(null);
 
-  //Chart Data
-  const data = [
-    {
-      name: 'Present Students',
-      population: 70,
-      color: '#FFB4A2',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-    {
-      name: 'Absent Students',
-      population: 20,
-      color: '#FED6E3',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-    {
-      name: 'Present Staff',
-      population: 90,
-      color: '#A8EDEA',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-    {
-      name: 'Absent Staff',
-      population: 10,
-      color: '#FF5733',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-  ];
-
-  const fetchData = async () => {
+  const fetchProfileData = async () => {
     if (token) {
       try {
         const response = await axios.get(
@@ -108,8 +67,10 @@ const Home = ({navigation}: any) => {
             },
           },
         );
-
         setUserData((await response).data);
+        setUserName(response.data.user.name);
+        setUserRole(response.data.user.role);
+        return response.data.newsoutput;
       } catch (error) {
         console.error('Error fetching data', error);
       }
@@ -118,8 +79,31 @@ const Home = ({navigation}: any) => {
     }
   };
 
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchProfileData,
+    refetchOnWindowFocus: true, // Fetch new data when screen is focused
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
+
   useEffect(() => {
-    fetchData();
+    refetch();
 
     //Naviagte to Home on back key press
     const backAction = () => {
@@ -188,7 +172,7 @@ const Home = ({navigation}: any) => {
                 style={styles.otherDetailsIcon}
               />
               <Text style={styles.otherDetailsText}>
-                {userData?.user.email}
+                {userData?.user.email ?? '--'}
               </Text>
             </View>
             <View style={styles.otherDetailsContainer}>
@@ -198,14 +182,18 @@ const Home = ({navigation}: any) => {
                 color="#3B82F6"
                 style={{marginRight: 10}}
               />
-              <Text style={styles.otherDetailsText}></Text>
+              <Text style={styles.otherDetailsText}>
+                {userData?.cand.add ?? 'NILL'}
+              </Text>
             </View>
             <View style={styles.otherDetailsContainer}>
               <Image
                 source={require('../assets/smartphone.png')}
                 style={styles.otherDetailsIcon}
               />
-              <Text style={styles.otherDetailsText}></Text>
+              <Text style={styles.otherDetailsText}>
+                {userData?.user.contact ?? '--'}
+              </Text>
             </View>
             <View style={styles.otherDetailsContainer}>
               <Image
@@ -213,7 +201,7 @@ const Home = ({navigation}: any) => {
                 style={styles.otherDetailsIcon}
               />
               <Text style={styles.otherDetailsText}>
-                {userData?.cand.cand_bform}
+                {userData?.cand.cand_bform ?? '--'}
               </Text>
             </View>
           </View>
@@ -222,16 +210,24 @@ const Home = ({navigation}: any) => {
               <Text style={styles.statusHeading}>Account Status</Text>
             </View>
             <View style={styles.statusDetails}>
-              <Text style={styles.statusDetailsText}>Receivable: 2000</Text>
+              <Text style={styles.statusDetailsText}>
+                Receivable: {userData?.student_account?.stuacc_payable ?? '0'}
+              </Text>
             </View>
             <View style={styles.statusDetails}>
-              <Text style={styles.statusDetailsText}>Paid: 0</Text>
+              <Text style={styles.statusDetailsText}>
+                Paid: {userData?.student_account.stuacc_paid_amount ?? '0'}
+              </Text>
             </View>
             <View style={styles.statusDetails}>
-              <Text style={styles.statusDetailsText}>Inventory: 0</Text>
+              <Text style={styles.statusDetailsText}>
+                Inventory: {userData?.student_account.inventory_amount ?? '0'}
+              </Text>
             </View>
             <View style={styles.statusDetails}>
-              <Text style={styles.statusDetailsText}>Balance: 2000</Text>
+              <Text style={styles.statusDetailsText}>
+                Balance: {userData?.student_account.stuacc_balance ?? '0'}
+              </Text>
             </View>
           </View>
         </View>
@@ -325,111 +321,34 @@ const Home = ({navigation}: any) => {
               Latest News & Events & Notices
             </Text>
           </View>
-          <View style={styles.newsBtn}>
-            <View
-              style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-              <TouchableOpacity
-                style={
-                  newsBtn === '1'
-                    ? styles.eventsContainerBtn
-                    : styles.eventsBtnNotSlt
-                }
-                onPress={() => setNewsBtn('1')}>
-                <Text
-                  style={
-                    newsBtn === '1'
-                      ? styles.eventsContainerBtnText
-                      : styles.eventsBtnNotSltText
-                  }>
-                  Science & Technology
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={
-                  newsBtn === '2'
-                    ? styles.eventsContainerBtn1
-                    : styles.eventsBtnNotSlt
-                }
-                onPress={() => setNewsBtn('2')}>
-                <Text
-                  style={
-                    newsBtn === '2'
-                      ? styles.eventsContainerBtnText1
-                      : styles.eventsBtnNotSltText
-                  }>
-                  Join us for [School Name]'s
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <View
-              style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-              <TouchableOpacity
-                style={
-                  newsBtn === '3'
-                    ? [styles.eventsContainerBtn, {width: '100%'}]
-                    : [styles.eventsBtnNotSlt, {width: '100%'}]
-                }
-                onPress={() => setNewsBtn('3')}>
-                <Text
-                  style={
-                    newsBtn === '3'
-                      ? styles.eventsContainerBtnText
-                      : styles.eventsBtnNotSltText
-                  }>
-                  Anual Science & Technology Fair on [Date] to witness exciting
-                  student Innovations!
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={styles.eventsContainer}>
-            <Text style={styles.eventsText}>Iqbal Day 9-Nov-2025</Text>
-            <Text style={styles.eventsText}>Smog Holiday 25-Dec-2025</Text>
-          </View>
-        </View>
-        {/* Attendance Conatiner */}
-        <View style={styles.attendanceContainer}>
-          <View style={styles.atdHeadingContainer}>
-            <Text style={styles.statusHeading}>Student & Attendance</Text>
-            <Image
-              source={require('../assets/information.png')}
-              style={styles.abtOpt}
-            />
-          </View>
-          <View style={styles.atdCount}>
-            <View style={styles.atdCountContainer}>
-              <Text style={styles.atdCountText}>Present Std: 70</Text>
-              <Text style={styles.atdCountText1}>Absent Std: 30</Text>
-            </View>
-            <View style={styles.atdCountContainer}>
-              <Text style={styles.atdCountText}>Present Staff: 70</Text>
-              <Text style={styles.atdCountText1}>Absent Staff: 30</Text>
-            </View>
-          </View>
-          <View style={styles.chartContainer}>
-            <PieChart
-              data={data}
-              width={screenWidth}
-              height={220}
-              chartConfig={{
-                color: () => `rgba(0, 0, 0, 0.5)`,
-              }}
-              accessor="population"
-              backgroundColor="transparent"
-              paddingLeft="15"
-              hasLegend={false}
-            />
-            <View style={styles.labelsContainer}>
-              {data.map((item, index) => (
-                <View key={index} style={styles.labelRow}>
-                  <View
-                    style={[styles.colorBox, {backgroundColor: item.color}]}
-                  />
-                  <Text style={styles.labelText}>{item.name}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
+          <ScrollView
+            style={{flex: 1, padding: 10}}
+            refreshControl={
+              <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+            }>
+            {data ? (
+              <RenderHtml
+                contentWidth={Dimensions.get('window').width}
+                source={{html: data}}
+                customHTMLElementModels={customHTMLElementModels}
+                tagsStyles={{
+                  table: {
+                    width: '100%',
+                  },
+                  tr: {
+                    backgroundColor: '#fff',
+                  },
+                  ul: {
+                    padding: 20,
+                  },
+                  li: {
+                    fontSize: 16,
+                    color: '#333',
+                  },
+                }}
+              />
+            ) : null}
+          </ScrollView>
         </View>
       </ScrollView>
     </View>
@@ -590,6 +509,7 @@ const styles = StyleSheet.create({
     marginHorizontal: '5%',
     borderRadius: 10,
     marginTop: 20,
+    marginBottom: 20,
     borderColor: '#3B82F6',
     borderWidth: 0.5,
   },
@@ -670,94 +590,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'ultralight',
     color: '#3B82F6',
-  },
-
-  // Attendance Container
-  attendanceContainer: {
-    height: 500,
-    width: '90%',
-    marginTop: 20,
-    backgroundColor: 'white',
-    marginHorizontal: '5%',
-    borderRadius: 10,
-    borderColor: '#3B82F6',
-    borderWidth: 0.5,
-    marginBottom: 20,
-  },
-  atdHeadingContainer: {
-    height: '20%',
-    width: '90%',
-    marginHorizontal: '5%',
-    justifyContent: 'center',
-  },
-  abtOpt: {
-    height: 18,
-    width: 18,
-    resizeMode: 'contain',
-    tintColor: '#3B82F6',
-    position: 'absolute',
-    right: 10,
-  },
-  atdCount: {
-    height: 'auto',
-    width: '90%',
-    marginHorizontal: '5%',
-    marginTop: 5,
-    flexDirection: 'column',
-  },
-  atdCountContainer: {
-    height: 40,
-    width: '100%',
-    backgroundColor: '#fff',
-    marginTop: 10,
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-    alignItems: 'center',
-    flexDirection: 'row',
-    borderColor: '#000',
-    borderWidth: 0.1,
-    elevation: 2,
-  },
-  atdCountText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#3B82F6',
-    borderRightColor: '#3B82F6',
-    borderRightWidth: 2,
-    paddingRight: 10,
-  },
-  atdCountText1: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: 'red',
-    paddingLeft: 10,
-  },
-  chartContainer: {
-    height: '100%',
-    width: '100%',
-    paddingHorizontal: '10%',
-    marginTop: 20,
-  },
-  labelsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    width: '100%',
-  },
-  labelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
-  colorBox: {
-    width: 12,
-    height: 12,
-    marginRight: 10,
-    borderRadius: 3,
-  },
-  labelText: {
-    fontSize: 10,
-    color: '#3B82F6',
-    fontWeight: 'bold',
-    marginRight: 5,
   },
 });

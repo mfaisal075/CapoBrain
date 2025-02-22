@@ -1,11 +1,11 @@
 import React, {useState} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {NavigationContainer} from '@react-navigation/native';
-import Login from '../../screen/Login';
 import {useUser} from '../../Ctx/UserContext';
 import StudentStack from './StudentStack';
 import TeacherStack from './TeacherStack';
 import ParentStack from './ParentStack';
+import AuthStack from './AuthStack';
 
 const RootStack = createNativeStackNavigator();
 
@@ -16,11 +16,11 @@ const AppNavigator = () => {
       <RootStack.Navigator>
         {!userRole ? (
           <RootStack.Screen
-            name="Login"
-            component={Login}
+            name="AuthStack"
+            component={AuthStack}
             options={{headerShown: false}}
           />
-        ) : userRole === 'student' ? (
+        ) : userRole === 'Student' ? (
           <RootStack.Screen
             name="StudentStack"
             component={StudentStack}

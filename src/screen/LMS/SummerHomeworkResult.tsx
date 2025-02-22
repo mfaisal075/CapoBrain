@@ -1,18 +1,90 @@
 import {
   BackHandler,
+  Dimensions,
   Image,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import NavBar from '../../components/NavBar';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLContentModel,
+  HTMLElementModel,
+} from 'react-native-render-html';
+
+interface UserData {
+  student: {
+    student_id: string;
+    cand_name: string;
+  };
+  parent: {
+    par_fathername: string;
+  };
+  class: {
+    cls_name: string;
+  };
+  section: {
+    sec_name: string;
+  };
+  school: {
+    scl_institute_name: string;
+  };
+  branch: {
+    bra_name: string;
+  };
+}
 
 const SummerHomeWorkResult = ({navigation}: any) => {
+  const {token} = useUser();
+  const [userData, setUserData] = useState<UserData | null>(null);
+
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetchstudentsummerhomeworkmarking',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        setUserData(response.data);
+        return response.data.output;
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
+      throw new Error('User is not authenticated');
+    }
+  };
+
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true,
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
   useEffect(() => {
+    refetch();
     const backAction = () => {
       navigation.navigate('LMS');
       return true;
@@ -53,61 +125,109 @@ const SummerHomeWorkResult = ({navigation}: any) => {
           </View>
 
           {/* Student Details */}
-
-          <ScrollView horizontal>
-            <View style={styles.resultsCtr}>
-              <View style={styles.headingCtr}>
-                <Text style={styles.rsltHeading}>
-                  Gujranwala City Grammar School
-                </Text>
-                <Text style={styles.branchText}>Main Branch</Text>
+          <View style={styles.resultsCtr}>
+            <View style={styles.headingCtr}>
+              <Text style={styles.rsltHeading}>
+                {userData?.school.scl_institute_name}
+              </Text>
+              <Text style={styles.branchText}>{userData?.branch.bra_name}</Text>
+            </View>
+            <View style={styles.stdDetails}>
+              <View style={styles.detailsCtr}>
+                <Text style={styles.stdDetailsText}>Student ID:</Text>
+                <Text style={styles.stdDetailsText}>Student Name:</Text>
+                <Text style={styles.stdDetailsText}>Father Name:</Text>
+                <Text style={styles.stdDetailsText}>Class:</Text>
+                <Text style={styles.stdDetailsText}>Section:</Text>
               </View>
-              <View style={styles.stdDetails}>
-                <View style={styles.detailsCtr}>
-                  <Text style={styles.stdDetailsText}>Student ID:</Text>
-                  <Text style={styles.stdDetailsText}>Student Name:</Text>
-                  <Text style={styles.stdDetailsText}>Father Name:</Text>
-                  <Text style={styles.stdDetailsText}>Class:</Text>
-                  <Text style={styles.stdDetailsText}>Section:</Text>
-                </View>
-                <View style={styles.detailsCtr}>
-                  <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
-                    GCGS1124S010
-                  </Text>
-                  <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
-                    Hanzala Ahmad
-                  </Text>
-                  <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
-                    Aftab Ahmad
-                  </Text>
-                  <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
-                    Three
-                  </Text>
-                  <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
-                    A
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.attendanceCtr}>
-                <Text
-                  style={{
-                    fontSize: 18,
-                    fontWeight: '500',
-                    color: 'rgba(0,0,0,0.6)',
-                    textAlign: 'center',
-                  }}>
-                  No record present in the database!
+              <View style={styles.detailsCtr}>
+                <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
+                  {userData?.student.student_id}
                 </Text>
-
-                <View style={styles.printBtnCtr}>
-                  <TouchableOpacity style={styles.printBtn}>
-                    <Icon name="file" size={20} color={'#fff'} />
-                    <Text style={styles.printBtnText}>Print</Text>
-                  </TouchableOpacity>
-                </View>
+                <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
+                  {userData?.student.cand_name}
+                </Text>
+                <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
+                  {userData?.parent.par_fathername}
+                </Text>
+                <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
+                  {userData?.class.cls_name}
+                </Text>
+                <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
+                  {userData?.section.sec_name}
+                </Text>
               </View>
             </View>
-          </ScrollView>
+            <View style={styles.tblDataCtr}>
+              <ScrollView
+                horizontal
+                style={{flex: 1, padding: 10}}
+                refreshControl={
+                  <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+                }>
+                {data ? (
+                  <RenderHtml
+                    contentWidth={Dimensions.get('window').width}
+                    source={{html: data}}
+                    customHTMLElementModels={customHTMLElementModels}
+                    tagsStyles={{
+                      h4: {
+                        fontSize: 20,
+                        fontWeight: 'bold',
+                        color: '#000',
+                      },
+                      table: {
+                        borderWidth: 1,
+                        borderColor: '#ddd',
+                        width: '100%',
+                        marginLeft: -10,
+                      },
+                      th: {
+                        backgroundColor: '#f2f2f2',
+                        paddingVertical: 0,
+                        paddingHorizontal: 6,
+                        marginHorizontal: -5,
+                        fontWeight: 'bold',
+                        textAlign: 'center',
+                        borderWidth: 1,
+                        borderColor: '#ddd',
+                        width: 100, // Adjust width as needed
+                        height: 50,
+                        justifyContent: 'center',
+                        marginBottom: -10,
+                      },
+                      td: {
+                        borderWidth: 1,
+                        borderColor: '#ddd',
+                        paddingVertical: 0,
+                        paddingHorizontal: 6,
+                        textAlign: 'center',
+                        width: 90, // Adjust width as needed
+                        height: 50,
+                        justifyContent: 'center',
+                        marginBottom: -3,
+                      },
+                      tr: {
+                        width: '100%',
+                      },
+                      h6: {
+                        marginVertical: 0,
+                        textAlign: 'center',
+                      },
+                    }}
+                  />
+                ) : null}
+              </ScrollView>
+            </View>
+            <View style={styles.attendanceCtr}>
+              <View style={styles.printBtnCtr}>
+                <TouchableOpacity style={styles.printBtn}>
+                  <Icon name="file" size={20} color={'#fff'} />
+                  <Text style={styles.printBtnText}>Print</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -192,6 +312,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: 'rgba(0,0,0,0.6)',
+    textAlign: 'center',
   },
   branchText: {
     fontSize: 16,
@@ -249,5 +370,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginLeft: 2,
+  },
+  tblDataCtr: {
+    marginTop: 10,
+    marginBottom: 20,
+    height: 'auto',
+    width: '100%',
+    paddingLeft: 5,
   },
 });

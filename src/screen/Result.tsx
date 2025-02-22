@@ -1,6 +1,8 @@
 import {
   BackHandler,
+  Dimensions,
   Image,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,10 +13,80 @@ import React, {useEffect, useState} from 'react';
 import NavBar from '../components/NavBar';
 import DropDownPicker from 'react-native-dropdown-picker';
 import {Avatar} from 'react-native-paper';
+import {useUser} from '../Ctx/UserContext';
+import axios from 'axios';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLContentModel,
+  HTMLElementModel,
+} from 'react-native-render-html';
+
+interface UserData {
+  id: number;
+  candidate: {
+    cand_name: string;
+  };
+  bra: {
+    bra_name: string;
+  };
+  parent: {
+    par_fathername: string;
+  };
+  class: {
+    cls_name: string;
+  };
+  school: {
+    scl_institute_name: string;
+  };
+  section: {
+    sec_name: string;
+  };
+}
 
 const Result = ({navigation}: any) => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(null);
+  const {token} = useUser();
+  const [userData, setUserData] = useState<UserData | null>(null);
+
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const reaponse = await axios.get(
+          'https://demo.capobrain.com/fetchstd_result',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        setUserData(reaponse.data);
+        return reaponse.data.output;
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    } else {
+      throw new Error('User is not authenticated');
+    }
+  };
+
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true,
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
 
   const examItems = [
     {label: 'Mids', value: 'mids'},
@@ -30,6 +102,7 @@ const Result = ({navigation}: any) => {
   ];
 
   useEffect(() => {
+    fetchData();
     const backAction = () => {
       navigation.navigate('Home');
       return true;
@@ -46,7 +119,7 @@ const Result = ({navigation}: any) => {
     <View style={styles.container}>
       {/* NavBar */}
       <NavBar />
-      <ScrollView>
+      <ScrollView nestedScrollEnabled>
         <View style={styles.accountContainer}>
           <View style={styles.actHeadingContainer}>
             <Text style={styles.tblHdCtr}>Results</Text>
@@ -70,75 +143,123 @@ const Result = ({navigation}: any) => {
           </View>
 
           {/* Student Details */}
-          <ScrollView horizontal>
-            <View style={styles.resultsCtr}>
-              <View style={styles.headingCtr}>
-                <Text style={styles.rsltHeading}>
-                  Gujranwala City Grammar School
-                </Text>
-                <Text style={styles.branchText}>Main Branch</Text>
+          <View style={styles.resultsCtr}>
+            <View style={styles.headingCtr}>
+              <Text style={styles.rsltHeading}>
+                {userData?.school.scl_institute_name}
+              </Text>
+              <Text style={styles.branchText}>{userData?.bra.bra_name}</Text>
+            </View>
+            <View style={styles.examPickerCtr}>
+              <DropDownPicker
+                listMode="SCROLLVIEW"
+                open={open}
+                value={value}
+                setOpen={setOpen}
+                setValue={setValue}
+                placeholder="Select Exams Type Filter"
+                items={examItems}
+                style={{
+                  borderColor: 'transparent',
+                  backgroundColor: 'transparent',
+                  borderRadius: 10,
+                }}
+                dropDownContainerStyle={{
+                  borderColor: '#ccc',
+                  borderRadius: 10,
+                  height: 180,
+                }}
+              />
+            </View>
+            <View style={styles.stdDetails}>
+              <View style={styles.detailsCtr}>
+                <Text style={styles.stdDetailsText}>Student Name:</Text>
+                <Text style={styles.stdDetailsText}>Father Name:</Text>
+                <Text style={styles.stdDetailsText}>Class:</Text>
+                <Text style={styles.stdDetailsText}>Section:</Text>
               </View>
-              <View style={styles.examPickerCtr}>
-                <DropDownPicker
-                  open={open}
-                  value={value}
-                  setOpen={setOpen}
-                  setValue={setValue}
-                  placeholder="Select Exams Type Filter"
-                  items={examItems}
-                  style={{
-                    borderColor: 'transparent',
-                    backgroundColor: 'transparent',
-                    borderRadius: 10,
-                  }}
-                  dropDownContainerStyle={{
-                    borderColor: '#ccc',
-                    borderRadius: 10,
-                    height: 180,
-                  }}
+              <View style={styles.detailsCtr}>
+                <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
+                  {userData?.candidate.cand_name}
+                </Text>
+                <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
+                  {userData?.parent.par_fathername}
+                </Text>
+                <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
+                  {userData?.class.cls_name}
+                </Text>
+                <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
+                  {userData?.section.sec_name}
+                </Text>
+              </View>
+              <View style={styles.picCtr}>
+                <Avatar.Image
+                  size={90}
+                  source={require('../assets/avatar.png')}
                 />
               </View>
-              <View style={styles.stdDetails}>
-                <View style={styles.detailsCtr}>
-                  <Text style={styles.stdDetailsText}>Student Name:</Text>
-                  <Text style={styles.stdDetailsText}>Father Name:</Text>
-                  <Text style={styles.stdDetailsText}>Class:</Text>
-                  <Text style={styles.stdDetailsText}>Section:</Text>
-                </View>
-                <View style={styles.detailsCtr}>
-                  <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
-                    Hanzala Ahmad
-                  </Text>
-                  <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
-                    Aftab Ahmad
-                  </Text>
-                  <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
-                    Three
-                  </Text>
-                  <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
-                    A
-                  </Text>
-                </View>
-                <View style={styles.picCtr}>
-                  <Avatar.Image
-                    size={100}
-                    source={require('../assets/avatar.png')}
-                  />
-                </View>
-              </View>
-              <View style={styles.attendanceCtr}>
-                <Text
-                  style={{
-                    fontSize: 18,
-                    fontWeight: '500',
-                    color: 'rgba(0,0,0,0.6)',
-                    textAlign: 'center',
-                  }}>
-                  No record present in the database!
-                </Text>
-              </View>
             </View>
-          </ScrollView>
+          </View>
+
+          <View style={styles.tblDataCtr}>
+            <ScrollView
+              horizontal
+              style={{flex: 1, padding: 10}}
+              refreshControl={
+                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+              }>
+              {data ? (
+                <RenderHtml
+                  contentWidth={Dimensions.get('window').width}
+                  source={{html: data}}
+                  customHTMLElementModels={customHTMLElementModels}
+                  tagsStyles={{
+                    h4: {
+                      fontSize: 20,
+                      fontWeight: 'bold',
+                      color: '#000',
+                    },
+                    table: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: '100%',
+                      marginLeft: -10,
+                    },
+                    th: {
+                      backgroundColor: '#f2f2f2',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      marginHorizontal: -5,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: 100, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -10,
+                    },
+                    td: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      textAlign: 'center',
+                      width: 100, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -3,
+                    },
+                    tr: {},
+                    h6: {
+                      marginVertical: 0,
+                      textAlign: 'center',
+                    },
+                  }}
+                />
+              ) : null}
+            </ScrollView>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -216,7 +337,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   rsltHeading: {
-    fontSize: 22,
+    textAlign: 'center',
+    fontSize: 18,
     fontWeight: 'bold',
     color: 'rgba(0,0,0,0.6)',
   },
@@ -226,10 +348,11 @@ const styles = StyleSheet.create({
     color: 'rgba(0,0,0,0.6)',
     marginLeft: 30,
     marginTop: 15,
+    textAlign: 'center',
   },
   examPickerCtr: {
-    width: '60%',
-    marginHorizontal: 20,
+    width: '90%',
+    marginHorizontal: '5%',
     height: 40,
     borderRadius: 10,
     justifyContent: 'center',
@@ -246,7 +369,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   detailsCtr: {
-    width: '30%',
+    width: '35%',
     height: 'auto',
     flexDirection: 'column',
     marginTop: 10,
@@ -258,9 +381,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   picCtr: {
-    width: '40%',
+    width: '30%',
     height: 'auto',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  tblDataCtr: {
+    marginTop: 10,
+    marginBottom: 20,
+    height: 'auto',
+    width: '100%',
+    padding: 10,
   },
 });

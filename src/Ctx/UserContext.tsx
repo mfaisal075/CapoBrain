@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {createContext, ReactNode, useContext, useState} from 'react';
 
 interface UserContextProps {
@@ -18,10 +19,11 @@ export const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
   const [token, setToken] = useState<string | null>(null); // Add token state
 
   // Logout function
-  const logout = () => {
+  const logout = async () => {
     setUserName(null);
     setUserRole(null);
     setToken(null); // Clear the token on logout
+    await AsyncStorage.clear();
   };
 
   return (
