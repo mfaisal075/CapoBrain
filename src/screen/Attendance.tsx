@@ -161,7 +161,8 @@ const Attendance = ({navigation}: any) => {
           {/* Table */}
           <View style={styles.tblDataCtr}>
             <ScrollView
-              style={{flex: 1, padding: 10,}}
+              horizontal
+              style={{flex: 1, padding: 10}}
               refreshControl={
                 <RefreshControl refreshing={isFetching} onRefresh={refetch} />
               }>

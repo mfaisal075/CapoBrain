@@ -15,6 +15,11 @@ import SummerHomeWorkResult from '../../screen/LMS/SummerHomeworkResult';
 import LibraryBooks from '../../screen/LMS/LibraryBooks';
 import StudentDiary from '../../screen/LMS/StudentDiary';
 import DateSheet from '../../screen/LMS/DateSheet';
+import Std_Notification from '../../screen/Std_Notification';
+import StdCalendar from '../../screen/StdCalendar';
+import StdComplain from '../../screen/StdComplain';
+import StdSports from '../../screen/StdSports';
+import StdUpdate from '../../screen/StdUpdate';
 
 const Stack = createNativeStackNavigator();
 
@@ -85,6 +90,31 @@ const StudentStack = () => {
       <Stack.Screen
         name="DateSheet"
         component={DateSheet}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Std_Notification"
+        component={Std_Notification}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="StdCalendar"
+        component={StdCalendar}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="StdComplain"
+        component={StdComplain}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="StdSports"
+        component={StdSports}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="StdUpdate"
+        component={StdUpdate}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

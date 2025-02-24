@@ -76,7 +76,7 @@ const Login = ({navigation}: any) => {
         if (userRole === 'Student') {
           navigation.navigate('StudentStack');
         }
-        if (userRole === 'parent') {
+        if (userRole === 'Parent') {
           navigation.navigate('ParentStack');
         }
         if (userRole === 'teacher') {

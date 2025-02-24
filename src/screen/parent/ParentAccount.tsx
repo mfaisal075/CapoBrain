@@ -3,6 +3,7 @@ import {
   Button,
   Image,
   Modal,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,8 +14,17 @@ import React, {useEffect, useState} from 'react';
 import NavBar from '../../components/NavBar';
 import {DataTable} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLElementModel,
+  HTMLContentModel,
+} from 'react-native-render-html';
+import {Dimensions} from 'react-native';
 
 const ParentAccount = ({navigation}: any) => {
+  const {token} = useUser();
   const [page, setPage] = useState<number>(0);
   const [numberOfItemsPerPageList] = useState([10, 50, 100]);
   const [itemsPerPage, onItemsPerPageChange] = useState(
@@ -34,6 +44,46 @@ const ParentAccount = ({navigation}: any) => {
   };
   const hideVoucherModal = () => {
     setVoucherModalVisible(false);
+  };
+
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetchchildren',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        return response.data.output;
+      } catch (error) {
+        console.error('Error fetching data', error);
+        throw error; // Ensure the error is thrown so useQuery can handle it
+      }
+    } else {
+      console.log('User is not authenticated');
+      throw new Error('User is not authenticated');
+    }
+  };
+
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true, // Fetch new data when screen is focused
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
   };
 
   const [items] = useState([
@@ -185,143 +235,68 @@ const ParentAccount = ({navigation}: any) => {
 
           {/* Table */}
           <View style={styles.tblDataCtr}>
-            <ScrollView horizontal>
-              <DataTable>
-                <DataTable.Header>
-                  {[
-                    'Sr#',
-                    'Branch',
-                    'Registration',
-                    'Student',
-                    'Class',
-                    'Section',
-                    'Balance',
-                    'Actions',
-                  ].map((title, index) => (
-                    <DataTable.Title
-                      key={index}
-                      textStyle={{
-                        color: 'black',
-                        fontSize: 14,
-                        fontWeight: 'bold',
-                      }}
-                      style={{
-                        width: index === 0 ? 50 : index === 7 ? 220 : 125, // Reduced width for the first header
-                        paddingHorizontal: 5,
-                        borderColor: '#000',
-                        borderWidth: 0.5,
-                        backgroundColor: '#F0F0F0',
-                      }}>
-                      {title}
-                    </DataTable.Title>
-                  ))}
-                </DataTable.Header>
-
-                {items.length > 0 ? (
-                  items.slice(from, to).map((item, index) => (
-                    <DataTable.Row key={index}>
-                      {[
-                        item.sr,
-                        item.branch,
-                        item.registration,
-                        item.student,
-                        item.class,
-                        item.section,
-                        item.balance,
-                      ].map((value, idx) => (
-                        <DataTable.Cell
-                          key={idx}
-                          textStyle={{color: '#000', fontSize: 12}}
-                          style={{
-                            width: idx === 0 ? 50 : idx === 7 ? 220 : 125, // Reduced width for the first cell
-                            paddingHorizontal: 5,
-                            borderColor: '#000',
-                            borderWidth: 0.5,
-                          }}>
-                          {value}
-                        </DataTable.Cell>
-                      ))}
-                      {/* Actions Column with Buttons */}
-                      <DataTable.Cell
-                        style={{
-                          width: 220,
-                          paddingHorizontal: 5,
-                          borderColor: '#000',
-                          borderWidth: 0.5,
-                          flexDirection: 'row',
-                        }}>
-                        <View style={styles.tblBtnCtr}>
-                          <TouchableOpacity
-                            style={[
-                              styles.tblActionBtn,
-                              {
-                                backgroundColor: '#007BFF',
-                                marginRight: 5,
-                                flexDirection: 'row',
-                              },
-                            ]}
-                            onPress={showViewModal}>
-                            <Icon name="eye" size={14} color={'#fff'} />
-                            <Text style={styles.tblBtnTxt}>View</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[
-                              styles.tblActionBtn,
-                              {backgroundColor: '#F39C12'},
-                            ]}
-                            onPress={showVoucherModal}>
-                            <Text style={styles.tblBtnTxt}>
-                              Payable Voucher
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      </DataTable.Cell>
-                    </DataTable.Row>
-                  ))
-                ) : (
-                  <DataTable.Row>
-                    <DataTable.Cell
-                      textStyle={{
-                        color: 'gray',
-                        fontSize: 16,
-                        fontWeight: 'bold',
-                      }}
-                      style={{
-                        width: '100%',
-                        paddingHorizontal: 5,
-                        borderColor: '#000',
-                        borderWidth: 0.5,
-                        justifyContent: 'center',
-                      }}>
-                      No data found
-                    </DataTable.Cell>
-                  </DataTable.Row>
-                )}
-
-                <DataTable.Pagination
-                  page={page}
-                  numberOfPages={Math.ceil(items.length / itemsPerPage)}
-                  onPageChange={page => setPage(page)}
-                  label={`${from + 1}-${to} of ${items.length}`}
-                  numberOfItemsPerPageList={numberOfItemsPerPageList}
-                  numberOfItemsPerPage={itemsPerPage}
-                  onItemsPerPageChange={onItemsPerPageChange}
-                  showFastPaginationControls
-                  selectPageDropdownLabel={'Show Entries'}
-                  theme={{
-                    colors: {
-                      primary: '#000',
-                      elevation: {
-                        level2: '#fff',
-                      },
-                      text: '#616161',
-                      onSurface: '#616161',
+            <ScrollView
+              horizontal
+              style={{flex: 1, padding: 10}}
+              refreshControl={
+                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+              }>
+              {data ? (
+                <RenderHtml
+                  contentWidth={Dimensions.get('window').width}
+                  source={{html: data}}
+                  customHTMLElementModels={customHTMLElementModels}
+                  tagsStyles={{
+                    table: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: '100%',
+                      marginLeft: -10,
                     },
-                    dark: false,
-                    roundness: 1,
+                    th: {
+                      backgroundColor: '#f2f2f2',
+                      paddingVertical: 0,
+                      paddingHorizontal: 1,
+                      marginHorizontal: -5,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: 125, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -10,
+                      marginTop: -10,
+                    },
+                    td: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      textAlign: 'center',
+                      width: 100, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -3,
+                      borderBottomColor: 'white',
+                    },
+                    tr: {
+                      backgroundColor: '#fff',
+                      marginHorizontal: -3,
+                    },
+                    a: {
+                      width: 100,
+                      backgroundColor: '#3B82F6',
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 5,
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: 10,
+                    },
                   }}
                 />
-              </DataTable>
+              ) : null}
             </ScrollView>
           </View>
         </View>
@@ -613,6 +588,7 @@ const styles = StyleSheet.create({
     height: 'auto',
     width: '100%',
     padding: 10,
+    marginVertical: 5,
   },
   bckBtnCtr: {
     height: 50,

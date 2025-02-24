@@ -1,6 +1,8 @@
 import {
   BackHandler,
+  Dimensions,
   Image,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,9 +12,59 @@ import {
 import React, {useEffect, useState} from 'react';
 import NavBar from '../../components/NavBar';
 import {DataTable} from 'react-native-paper';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLContentModel,
+  HTMLElementModel,
+} from 'react-native-render-html';
 
 const ParentAttendance = ({navigation}: any) => {
+  const {token} = useUser();
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetchchildrenattendance',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        // setUserData(response.data);
+
+        return response.data.output;
+      } catch (error) {
+        console.error('Error fetching data', error);
+        throw error; // Ensure the error is thrown so useQuery can handle it
+      }
+    } else {
+      console.log('User is not authenticated');
+      throw new Error('User is not authenticated');
+    }
+  };
+
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true, // Fetch new data when screen is focused
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
+
   useEffect(() => {
+    refetch();
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -90,91 +142,70 @@ const ParentAttendance = ({navigation}: any) => {
 
           {/* Table */}
           <View style={styles.tblDataCtr}>
-            <ScrollView horizontal>
-              <DataTable>
-                {/* Table Header */}
-                <DataTable.Header>
-                  {['Sr#', 'Student', 'Class', 'Section', 'Status', 'Date'].map(
-                    (title, index) => (
-                      <DataTable.Title
-                        key={index}
-                        textStyle={{
-                          color: 'black',
-                          fontSize: 14,
-                          fontWeight: 'bold',
-                        }}
-                        style={{
-                          width: index === 0 ? 50 : 90, // Reduced width for the first header
-                          paddingHorizontal: 5,
-                          borderColor: '#000',
-                          borderWidth: 0.5,
-                          backgroundColor: '#F0F0F0',
-                        }}>
-                        {title}
-                      </DataTable.Title>
-                    ),
-                  )}
-                </DataTable.Header>
-
-                {/* Table Rows */}
-                {items.length > 0 ? (
-                  items.map((item, index) => (
-                    <DataTable.Row key={index}>
-                      {[
-                        item.sr,
-                        item.student,
-                        item.class,
-                        item.section,
-                        item.status,
-                        item.date,
-                      ].map((value, idx) => (
-                        <DataTable.Cell
-                          key={idx}
-                          textStyle={{color: '#000', fontSize: 12}}
-                          style={{
-                            width: idx === 0 ? 50 : 90, // Reduced width for the first cell
-                            paddingHorizontal: 5,
-                            borderColor: '#000',
-                            borderWidth: 0.5,
-                          }}>
-                          {value}
-                        </DataTable.Cell>
-                      ))}
-                    </DataTable.Row>
-                  ))
-                ) : (
-                  <DataTable.Row>
-                    <DataTable.Cell
-                      textStyle={{
-                        color: 'gray',
-                        fontSize: 16,
-                        fontWeight: 'bold',
-                      }}
-                      style={{
-                        width: '100%',
-                        paddingHorizontal: 5,
-                        borderColor: '#000',
-                        borderWidth: 0.5,
-                        justifyContent: 'center',
-                      }}>
-                      No data found
-                    </DataTable.Cell>
-                  </DataTable.Row>
-                )}
-              </DataTable>
+            <ScrollView
+              horizontal
+              style={{flex: 1, padding: 10}}
+              refreshControl={
+                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+              }>
+              {data ? (
+                <RenderHtml
+                  contentWidth={Dimensions.get('window').width}
+                  source={{html: data}}
+                  customHTMLElementModels={customHTMLElementModels}
+                  tagsStyles={{
+                    table: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: '100%',
+                      marginLeft: -10,
+                    },
+                    th: {
+                      backgroundColor: '#f2f2f2',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      marginHorizontal: -5,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: 125, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -10,
+                    },
+                    td: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      textAlign: 'center',
+                      width: 100, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -3,
+                    },
+                    tr: {
+                      backgroundColor: '#fff',
+                      marginLeft: -3,
+                      marginTop: -8,
+                    },
+                  }}
+                />
+              ) : (
+                <View style={styles.attendanceCtr}>
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: '500',
+                      color: 'rgba(0,0,0,0.6)',
+                      textAlign: 'center',
+                    }}>
+                    No record present in the database!
+                  </Text>
+                </View>
+              )}
             </ScrollView>
-          </View>
-
-          <View style={styles.attendanceCtr}>
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: '500',
-                color: 'rgba(0,0,0,0.6)',
-                textAlign: 'center',
-              }}>
-              No record present in the database!
-            </Text>
           </View>
         </View>
       </ScrollView>
@@ -234,13 +265,6 @@ const styles = StyleSheet.create({
     tintColor: '#fff',
     marginRight: 5,
   },
-  attendanceCtr: {
-    height: 'auto',
-    width: '100%',
-    padding: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   tblDataCtr: {
     marginTop: 10,
     height: 'auto',
@@ -258,5 +282,12 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
     color: '#000',
+  },
+  attendanceCtr: {
+    height: 'auto',
+    width: '100%',
+    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
