@@ -1,46 +1,67 @@
 import {
   BackHandler,
+  Dimensions,
   Image,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import NavBar from '../../../components/NavBar';
-import {DataTable} from 'react-native-paper';
+import {useUser} from '../../../Ctx/UserContext';
+import axios from 'axios';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLContentModel,
+  HTMLElementModel,
+} from 'react-native-render-html';
 
 const ParentLibraryBooks = ({navigation}: any) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [page, setPage] = useState<number>(0);
-  const [numberOfItemsPerPageList] = useState([10, 50, 100]);
-  const [itemsPerPage, onItemsPerPageChange] = useState(
-    numberOfItemsPerPageList[0],
-  );
+  const {token} = useUser();
 
-  const [items] = useState([
-    {
-      sr: 1,
-      book: 'Loyalty',
-      quantity: '1',
-      status: 'Returned',
-      issueDate: '14-11-2024',
-      returnDate: '06-12-2024',
-    },
-  ]);
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetchstudentlibrarybooks',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        return response.data.output;
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    } else {
+      throw new Error('User is not authenticated');
+    }
+  };
 
-  const filteredItems = items.filter(item =>
-    Object.values(item).some(value =>
-      String(value).toLowerCase().includes(searchQuery.toLowerCase()),
-    ),
-  );
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true, // Fetch new data when screen is focused
+  });
 
-  const from = page * itemsPerPage;
-  const to = Math.min((page + 1) * itemsPerPage, items.length);
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
 
   useEffect(() => {
+    refetch();
     const backAction = () => {
       navigation.navigate('ParentLMS');
       return true;
@@ -52,7 +73,7 @@ const ParentLibraryBooks = ({navigation}: any) => {
     );
 
     return () => backHandler.remove();
-  }, [itemsPerPage]);
+  }, []);
   return (
     <View style={styles.container}>
       <NavBar />
@@ -80,146 +101,107 @@ const ParentLibraryBooks = ({navigation}: any) => {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.searchContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search..."
-              placeholderTextColor="#888"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-
           {/* Table */}
           <View style={styles.tblDataCtr}>
-            <ScrollView horizontal>
-              <DataTable>
-                <DataTable.Header>
-                  {[
-                    'Sr#',
-                    'Book',
-                    'Quantity',
-                    'Status',
-                    'Issue Date',
-                    'Return Date',
-                  ].map((title, index) => (
-                    <DataTable.Title
-                      key={index}
-                      textStyle={{
-                        color: 'black',
-                        fontSize: 14,
-                        fontWeight: 'bold',
-                      }}
-                      style={{
-                        width: index === 0 ? 50 : 125, // Reduced width for the first header
-                        paddingHorizontal: 5,
-                        borderColor: '#000',
-                        borderWidth: 0.5,
-                        backgroundColor: '#F0F0F0',
-                        justifyContent: 'center',
-                      }}>
-                      {title}
-                    </DataTable.Title>
-                  ))}
-                </DataTable.Header>
-
-                {filteredItems.length > 0 ? (
-                  filteredItems.slice(from, to).map((item, index) => (
-                    <DataTable.Row key={index}>
-                      {[
-                        item.sr,
-                        item.book,
-                        item.quantity,
-                        item.status,
-                        item.issueDate,
-                        item.returnDate,
-                      ].map((value, idx) => (
-                        <DataTable.Cell
-                          key={idx}
-                          style={{
-                            width: idx === 0 ? 50 : 125,
-                            paddingHorizontal: 5,
-                            borderColor: '#000',
-                            borderWidth: 0.5,
-                            justifyContent: 'center'
-                          }}>
-                          {idx === 3 ? ( // Check if it's the Status Column
-                            <View
-                              style={{
-                                backgroundColor:
-                                  value === 'Returned'
-                                    ? '#ffbc34' // Light Green
-                                    : value === 'Pending'
-                                    ? '#FEEFB3' // Light Yellow
-                                    : value === 'Overdue'
-                                    ? '#FFBABA' // Light Red
-                                    : '#E0E0E0', // Default Gray
-                                borderRadius: 20, // Rounded Badge
-                                paddingVertical: 3,
-                                paddingHorizontal: 10,
-                              }}>
-                              <Text
-                                style={{
-                                  color: '#000',
-                                  fontSize: 12,
-                                  fontWeight: 'bold',
-                                }}>
-                                {value}
-                              </Text>
-                            </View>
-                          ) : (
-                            <Text style={{color: '#000', fontSize: 12}}>
-                              {value}
-                            </Text>
-                          )}
-                        </DataTable.Cell>
-                      ))}
-                    </DataTable.Row>
-                  ))
-                ) : (
-                  <DataTable.Row>
-                    <DataTable.Cell
-                      textStyle={{
-                        color: 'gray',
-                        fontSize: 16,
-                        fontWeight: 'bold',
-                      }}
-                      style={{
-                        width: '100%',
-                        paddingHorizontal: 5,
-                        borderColor: '#000',
-                        borderWidth: 0.5,
-                        justifyContent: 'center',
-                      }}>
-                      No data found
-                    </DataTable.Cell>
-                  </DataTable.Row>
-                )}
-
-                <DataTable.Pagination
-                  page={page}
-                  numberOfPages={Math.ceil(filteredItems.length / itemsPerPage)}
-                  onPageChange={page => setPage(page)}
-                  label={`${from + 1}-${to} of ${filteredItems.length}`}
-                  numberOfItemsPerPageList={numberOfItemsPerPageList}
-                  numberOfItemsPerPage={itemsPerPage}
-                  onItemsPerPageChange={onItemsPerPageChange}
-                  showFastPaginationControls
-                  selectPageDropdownLabel={'Show Entries'}
-                  theme={{
-                    colors: {
-                      primary: '#000',
-                      elevation: {
-                        level2: '#fff',
-                      },
-                      text: '#616161',
-                      onSurface: '#616161',
+            <ScrollView
+              horizontal
+              style={{flex: 1, padding: 10}}
+              refreshControl={
+                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+              }>
+              {data ? (
+                <RenderHtml
+                  contentWidth={Dimensions.get('window').width}
+                  source={{html: data}}
+                  customHTMLElementModels={customHTMLElementModels}
+                  tagsStyles={{
+                    h4: {
+                      fontSize: 20,
+                      fontWeight: 'bold',
+                      color: '#000',
+                      textAlign: 'center',
                     },
-                    dark: false,
-                    roundness: 1,
+                    table: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: '100%',
+                      marginLeft: -10,
+                    },
+                    th: {
+                      backgroundColor: '#f2f2f2',
+                      paddingVertical: 0,
+                      paddingHorizontal: 1,
+                      marginHorizontal: -5,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: 125, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -10,
+                      marginTop: -10,
+                    },
+                    td: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      textAlign: 'center',
+                      width: 100, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -2,
+                      borderBottomColor: 'white',
+                    },
+                    tr: {
+                      backgroundColor: '#fff',
+                      marginLeft: -3,
+                    },
+                    h6: {
+                      marginVertical: 0,
+                      textAlign: 'center',
+                    },
+                    span: {
+                      backgroundColor: 'gray', // Green background (Approved)
+                      color: '#fff', // White text
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 4,
+                      fontSize: 12,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      alignSelf: 'center', // Center the badge
+                    },
+                    center: {
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    },
+                    a: {
+                      backgroundColor: 'green',
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 5,
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      textDecorationLine: 'none',
+                    },
                   }}
                 />
-              </DataTable>
+              ) : (
+                <View style={styles.attendanceCtr}>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: '500',
+                      color: 'rgba(0,0,0,0.6)',
+                      textAlign: 'center',
+                    }}>
+                    No record present in the database!
+                  </Text>
+                </View>
+              )}
             </ScrollView>
           </View>
         </View>
@@ -286,16 +268,12 @@ const styles = StyleSheet.create({
     tintColor: '#fff',
     marginRight: 5,
   },
-  searchContainer: {
-    paddingHorizontal: 20,
-    marginVertical: 10,
-  },
-  searchInput: {
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    color: '#000',
+  attendanceCtr: {
+    height: 'auto',
+    width: '100%',
+    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
   },
 });

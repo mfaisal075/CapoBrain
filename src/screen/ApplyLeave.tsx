@@ -1,7 +1,6 @@
 import {
   BackHandler,
   Dimensions,
-  Linking,
   RefreshControl,
   ScrollView,
   StyleSheet,

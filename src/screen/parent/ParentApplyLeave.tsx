@@ -1,6 +1,9 @@
 import {
+  BackHandler,
+  Dimensions,
   Image,
   Modal,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,12 +11,18 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import NavBar from '../../components/NavBar';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import DropDownPicker from 'react-native-dropdown-picker';
-import {DataTable} from 'react-native-paper';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLContentModel,
+  HTMLElementModel,
+} from 'react-native-render-html';
 
 const ParentApplyLeave = ({navigation}: any) => {
   const [visible, setVisible] = useState(false);
@@ -24,12 +33,46 @@ const ParentApplyLeave = ({navigation}: any) => {
   const [openStudent, setOpenStudent] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const studentItems = [{label: 'Hibba', value: 'Hibba'}];
-  const [page, setPage] = useState<number>(0);
-  const [numberOfItemsPerPageList] = useState([10, 50, 100]);
-  const [itemsPerPage, onItemsPerPageChange] = useState(
-    numberOfItemsPerPageList[0],
-  );
   const [viewModalVisible, setViewModalVisible] = useState(false);
+  const {token} = useUser();
+
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetchleave',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        return response.data.output;
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    } else {
+      throw new Error('User is not authenticated');
+    }
+  };
+
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true, // Fetch new data when screen is focused
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
 
   // State to store the selected leave data
   interface Leave {
@@ -67,35 +110,20 @@ const ParentApplyLeave = ({navigation}: any) => {
     if (selectedDate) setDate(selectedDate); // Set the selected date
   };
 
-  const [items] = useState([
-    {
-      sr: 1,
-      student: 'Hibba',
-      subject: 'Urgent Piece of Work',
-      date: '24-01-2025',
-      status: 'Approved',
-      desc: 'This is a dummy description for leave 1.',
-    },
-    {
-      sr: 2,
-      student: 'Hibba',
-      subject: 'to',
-      date: '24-06-2025',
-      status: 'Approved',
-      desc: 'This is a dummy description for leave 2.',
-    },
-    {
-      sr: 3,
-      student: 'Hibba',
-      subject: 'ssssssss',
-      date: '07-02-2025',
-      status: 'Rejected',
-      desc: 'This is a dummy description for leave 3.',
-    },
-  ]);
+  useEffect(() => {
+    refetch();
+    const backAction = () => {
+      navigation.goBack();
+      return true;
+    };
 
-  const from = page * itemsPerPage;
-  const to = Math.min((page + 1) * itemsPerPage, items.length);
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -126,158 +154,91 @@ const ParentApplyLeave = ({navigation}: any) => {
 
           {/* Table */}
           <View style={styles.tblDataCtr}>
-            <ScrollView horizontal>
-              <DataTable>
-                <DataTable.Header>
-                  {[
-                    'Sr#',
-                    'Student',
-                    'Subject',
-                    'Date',
-                    'Status',
-                    'Actions',
-                  ].map((title, index) => (
-                    <DataTable.Title
-                      key={index}
-                      textStyle={{
-                        color: 'black',
-                        fontSize: 14,
-                        fontWeight: 'bold',
-                      }}
-                      style={{
-                        width: index === 0 ? 50 : 125, // Reduced width for the first header
-                        paddingHorizontal: 5,
-                        borderColor: '#000',
-                        borderWidth: 0.5,
-                        backgroundColor: '#F0F0F0',
-                        justifyContent: 'center',
-                      }}>
-                      {title}
-                    </DataTable.Title>
-                  ))}
-                </DataTable.Header>
-
-                {items.length > 0 ? (
-                  items.slice(from, to).map((item, index) => (
-                    <DataTable.Row key={index}>
-                      {[item.sr, item.student, item.subject, item.date].map(
-                        (value, idx) => (
-                          <DataTable.Cell
-                            key={idx}
-                            textStyle={{color: '#000', fontSize: 12}}
-                            style={{
-                              width: idx === 0 ? 50 : 125, // Reduced width for the first cell
-                              paddingHorizontal: 5,
-                              borderColor: '#000',
-                              borderWidth: 0.5,
-                              justifyContent: 'center',
-                            }}>
-                            {value}
-                          </DataTable.Cell>
-                        ),
-                      )}
-
-                      {/* Status Column with Background Color */}
-                      <DataTable.Cell
-                        style={{
-                          width: 125,
-                          paddingHorizontal: 5,
-                          borderColor: '#000',
-                          borderWidth: 0.5,
-                          justifyContent: 'center',
-                        }}>
-                        <View
-                          style={{
-                            backgroundColor:
-                              item.status === 'Approved' ? 'green' : 'red',
-                            paddingVertical: 4,
-                            paddingHorizontal: 8,
-                            borderRadius: 5,
-                          }}>
-                          <Text
-                            style={{
-                              color: 'white',
-                              fontSize: 12,
-                              fontWeight: 'bold',
-                            }}>
-                            {item.status}
-                          </Text>
-                        </View>
-                      </DataTable.Cell>
-
-                      {/* Actions Column with Buttons */}
-                      <DataTable.Cell
-                        style={{
-                          width: 125,
-                          paddingHorizontal: 5,
-                          borderColor: '#000',
-                          borderWidth: 0.5,
-                          justifyContent: 'center',
-                        }}>
-                        <View style={styles.tblBtnCtr}>
-                          <TouchableOpacity
-                            style={[
-                              styles.tblActionBtn,
-                              {
-                                backgroundColor: '#007BFF',
-                                marginRight: 5,
-                                flexDirection: 'row',
-                              },
-                            ]}
-                            onPress={() => showLeaveModal(item)}>
-                            {' '}
-                            {/* Pass the leave data */}
-                            <Icon name="eye" size={14} color={'#fff'} />
-                            <Text style={styles.tblBtnTxt}>View</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </DataTable.Cell>
-                    </DataTable.Row>
-                  ))
-                ) : (
-                  <DataTable.Row>
-                    <DataTable.Cell
-                      textStyle={{
-                        color: 'gray',
-                        fontSize: 16,
-                        fontWeight: 'bold',
-                      }}
-                      style={{
-                        width: '100%',
-                        paddingHorizontal: 5,
-                        borderColor: '#000',
-                        borderWidth: 0.5,
-                        justifyContent: 'center',
-                      }}>
-                      No data found
-                    </DataTable.Cell>
-                  </DataTable.Row>
-                )}
-
-                <DataTable.Pagination
-                  page={page}
-                  numberOfPages={Math.ceil(items.length / itemsPerPage)}
-                  onPageChange={page => setPage(page)}
-                  label={`${from + 1}-${to} of ${items.length}`}
-                  numberOfItemsPerPageList={numberOfItemsPerPageList}
-                  numberOfItemsPerPage={itemsPerPage}
-                  onItemsPerPageChange={onItemsPerPageChange}
-                  showFastPaginationControls
-                  selectPageDropdownLabel={'Show Entries'}
-                  theme={{
-                    colors: {
-                      primary: '#000',
-                      elevation: {
-                        level2: '#fff',
-                      },
-                      text: '#616161',
-                      onSurface: '#616161',
+            <ScrollView
+              horizontal
+              style={{flex: 1, padding: 10}}
+              refreshControl={
+                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+              }>
+              {data ? (
+                <RenderHtml
+                  contentWidth={Dimensions.get('window').width}
+                  source={{html: data}}
+                  customHTMLElementModels={customHTMLElementModels}
+                  tagsStyles={{
+                    h4: {
+                      fontSize: 20,
+                      fontWeight: 'bold',
+                      color: '#000',
                     },
-                    dark: false,
-                    roundness: 1,
+                    table: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: '100%',
+                      marginLeft: -10,
+                    },
+                    th: {
+                      backgroundColor: '#f2f2f2',
+                      paddingVertical: 0,
+                      paddingHorizontal: 1,
+                      marginHorizontal: -5,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: 125, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -10,
+                      marginTop: -10,
+                    },
+                    td: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      textAlign: 'center',
+                      width: 100, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -2,
+                      borderBottomColor: 'white',
+                    },
+                    tr: {
+                      backgroundColor: '#fff',
+                      marginLeft: -3,
+                    },
+                    h6: {
+                      marginVertical: 0,
+                      textAlign: 'center',
+                    },
+                    span: {
+                      backgroundColor: 'gray', // Green background (Approved)
+                      color: '#fff', // White text
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 4,
+                      fontSize: 12,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      alignSelf: 'center', // Center the badge
+                    },
+                    center: {
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    },
+                    a: {
+                      backgroundColor: '#3B82F6',
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 5,
+                      color: '#fff',
+                      fontWeight: 'bold',
+                    },
                   }}
                 />
-              </DataTable>
+              ) : null}
             </ScrollView>
           </View>
         </View>

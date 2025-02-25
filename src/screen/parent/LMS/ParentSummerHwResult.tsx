@@ -1,6 +1,8 @@
 import {
   BackHandler,
+  Dimensions,
   Modal,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,10 +13,56 @@ import React, {useEffect, useState} from 'react';
 import NavBar from '../../../components/NavBar';
 import {Image} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {DataTable} from 'react-native-paper';
+import {useUser} from '../../../Ctx/UserContext';
+import axios from 'axios';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLContentModel,
+  HTMLElementModel,
+} from 'react-native-render-html';
 
 const ParentSummerHwResult = ({navigation}: any) => {
+  const {token} = useUser();
   const [isVisible, setIsVisible] = useState(false);
+
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetchstudentsummerhomeworkmarking' +
+            `?_token=${token}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        return response.data.output;
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    } else {
+      throw new Error('User is not authenticated');
+    }
+  };
+
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true, // Fetch new data when screen is focused
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
 
   const showModal = () => {
     setIsVisible(true);
@@ -23,17 +71,8 @@ const ParentSummerHwResult = ({navigation}: any) => {
     setIsVisible(false);
   };
 
-  const [items] = useState([
-    {
-      sr: 1,
-      id: 'GCGS1124S006',
-      name: 'Hibba',
-      className: 'Five',
-      branchName: 'Main Branch',
-    },
-  ]);
-
   useEffect(() => {
+    refetch();
     const backAction = () => {
       navigation.navigate('ParentLMS');
       return true;
@@ -74,150 +113,132 @@ const ParentSummerHwResult = ({navigation}: any) => {
           </View>
 
           {/* Student Details */}
-
-          <ScrollView horizontal>
-            <View style={styles.resultsCtr}>
-              <View style={styles.headingCtr}>
-                <Text style={styles.rsltHeading}>
-                  Gujranwala City Grammar School
+          <View style={styles.resultsCtr}>
+            <View style={styles.headingCtr}>
+              <Text style={styles.rsltHeading}>
+                Gujranwala City Grammar School
+              </Text>
+              <Text style={styles.branchText}>Main Branch</Text>
+            </View>
+            <View style={styles.stdDetails}>
+              <View style={styles.detailsCtr}>
+                <Text style={styles.stdDetailsText}>Parent ID:</Text>
+                <Text style={styles.stdDetailsText}>Father Name:</Text>
+              </View>
+              <View style={styles.detailsCtr}>
+                <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
+                  GCGS1124P006
                 </Text>
-                <Text style={styles.branchText}>Main Branch</Text>
-              </View>
-              <View style={styles.stdDetails}>
-                <View style={styles.detailsCtr}>
-                  <Text style={styles.stdDetailsText}>Parent ID:</Text>
-                  <Text style={styles.stdDetailsText}>Father Name:</Text>
-                </View>
-                <View style={styles.detailsCtr}>
-                  <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
-                    GCGS1124P006
-                  </Text>
-                  <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
-                    Abdullah
-                  </Text>
-                </View>
-              </View>
-              {/* Table */}
-              <View style={styles.tblDataCtr}>
-                <ScrollView horizontal>
-                  <DataTable>
-                    <DataTable.Header>
-                      {[
-                        'Sr#',
-                        'ID',
-                        'Name',
-                        'Class Name',
-                        'Branch Name',
-                        'Action',
-                      ].map((title, index) => (
-                        <DataTable.Title
-                          key={index}
-                          textStyle={{
-                            color: 'black',
-                            fontSize: 14,
-                            fontWeight: 'bold',
-                          }}
-                          style={{
-                            width: index === 0 ? 50 : 110, // Reduced width for the first header
-                            paddingHorizontal: 5,
-                            borderColor: '#000',
-                            borderWidth: 0.5,
-                            backgroundColor: '#F0F0F0',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}>
-                          {title}
-                        </DataTable.Title>
-                      ))}
-                    </DataTable.Header>
-
-                    {items.length > 0 ? (
-                      items.map((item, index) => (
-                        <DataTable.Row key={index}>
-                          {[
-                            item.sr,
-                            item.id,
-                            item.name,
-                            item.className,
-                            item.branchName,
-                          ].map((value, idx) => (
-                            <DataTable.Cell
-                              key={idx}
-                              textStyle={{color: '#000', fontSize: 12}}
-                              style={{
-                                width: idx === 0 ? 50 : 110, // Reduced width for the first cell
-                                paddingHorizontal: 5,
-                                borderColor: '#000',
-                                borderWidth: 0.5,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}>
-                              {value}
-                            </DataTable.Cell>
-                          ))}
-                          <DataTable.Cell
-                            key={'action'}
-                            textStyle={{color: '#000', fontSize: 12}}
-                            style={{
-                              width: 110,
-                              paddingHorizontal: 5,
-                              borderColor: '#000',
-                              borderWidth: 0.5,
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}>
-                            <View
-                              style={{
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}>
-                              {/* Download Button */}
-                              <TouchableOpacity onPress={showModal}>
-                                <View
-                                  style={{
-                                    width: 65,
-                                    height: 30,
-                                    backgroundColor: '#007BFF',
-                                    padding: 5,
-                                    borderRadius: 4,
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-around',
-                                  }}>
-                                  <Icon name="eye" size={16} color="#fff" />
-                                  <Text style={{color: '#fff', fontSize: 12}}>
-                                    View
-                                  </Text>
-                                </View>
-                              </TouchableOpacity>
-                            </View>
-                          </DataTable.Cell>
-                        </DataTable.Row>
-                      ))
-                    ) : (
-                      <DataTable.Row>
-                        <DataTable.Cell
-                          textStyle={{
-                            color: 'gray',
-                            fontSize: 16,
-                            fontWeight: 'bold',
-                          }}
-                          style={{
-                            width: '100%',
-                            paddingHorizontal: 5,
-                            borderColor: '#000',
-                            borderWidth: 0.5,
-                            justifyContent: 'center',
-                          }}>
-                          No data found
-                        </DataTable.Cell>
-                      </DataTable.Row>
-                    )}
-                  </DataTable>
-                </ScrollView>
+                <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
+                  Abdullah
+                </Text>
               </View>
             </View>
-          </ScrollView>
+          </View>
+
+          {/* Table */}
+          <View style={styles.tblDataCtr}>
+            <ScrollView
+              horizontal
+              style={{flex: 1, padding: 10}}
+              refreshControl={
+                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+              }>
+              {data ? (
+                <RenderHtml
+                  contentWidth={Dimensions.get('window').width}
+                  source={{html: data}}
+                  customHTMLElementModels={customHTMLElementModels}
+                  tagsStyles={{
+                    h4: {
+                      fontSize: 20,
+                      fontWeight: 'bold',
+                      color: '#000',
+                      textAlign: 'center',
+                    },
+                    table: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: '100%',
+                      marginLeft: -10,
+                    },
+                    th: {
+                      backgroundColor: '#f2f2f2',
+                      paddingVertical: 0,
+                      paddingHorizontal: 1,
+                      marginHorizontal: -5,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: 125, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -10,
+                      marginTop: -10,
+                    },
+                    td: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      textAlign: 'center',
+                      width: 100, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -2,
+                      borderBottomColor: 'white',
+                    },
+                    tr: {
+                      backgroundColor: '#fff',
+                      marginLeft: -3,
+                    },
+                    h6: {
+                      marginVertical: 0,
+                      textAlign: 'center',
+                    },
+                    span: {
+                      backgroundColor: 'gray', // Green background (Approved)
+                      color: '#fff', // White text
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 4,
+                      fontSize: 12,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      alignSelf: 'center', // Center the badge
+                    },
+                    center: {
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    },
+                    a: {
+                      backgroundColor: 'green',
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 5,
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      textDecorationLine: 'none',
+                    },
+                  }}
+                />
+              ) : (
+                <View style={styles.attendanceCtr}>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: '500',
+                      color: 'rgba(0,0,0,0.6)',
+                      textAlign: 'center',
+                    }}>
+                    No record present in the database!
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
         </View>
       </ScrollView>
 
