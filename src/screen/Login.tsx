@@ -28,12 +28,7 @@ const Login = ({navigation}: any) => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const {
-    setUserName: setUserEmail,
-    setUserRole,
-    userRole,
-    setToken,
-  } = useUser();
+  const {setUserName, setUserRole, userRole, setToken} = useUser();
   const [loading, setLoading] = useState(false);
 
   const togglePasswordVisibility = () => {
@@ -52,10 +47,7 @@ const Login = ({navigation}: any) => {
         {withCredentials: true},
       );
 
-      setUserEmail(email);
-
       const data = response.data;
-      console.log('Data: ', data);
 
       // Get CSRF token from response headers
       const xsrfToken = response.headers['set-cookie']
@@ -65,13 +57,24 @@ const Login = ({navigation}: any) => {
 
       if (xsrfToken) {
         axios.defaults.headers.common['X-XSRF-TOKEN'] = xsrfToken;
-        console.log('XSRF Token:', xsrfToken);
       } else {
         console.log('XSRF Token not found');
       }
 
       if (response.status === 200 && data.status === 200) {
-        setUserRole('Student');
+        const userData = await axios.get(
+          'https://demo.capobrain.com/fetchprofile',
+          {
+            headers: {
+              Authorization: `Bearer ${xsrfToken}`,
+            },
+          },
+        );
+        setUserRole(userData.data.user.role);
+        setUserName(userData.data.user.name);
+      }
+
+      if (response.status === 200 && data.status === 200) {
         setToken(xsrfToken || null);
         if (userRole === 'Student') {
           navigation.navigate('StudentStack');
@@ -79,10 +82,9 @@ const Login = ({navigation}: any) => {
         if (userRole === 'Parent') {
           navigation.navigate('ParentStack');
         }
-        if (userRole === 'teacher') {
+        if (userRole === 'Teacher') {
           navigation.navigate('TeacherStack');
         }
-        console.log('Login successful:', data);
       } else if (data.status === 202) {
         Alert.alert('Login failed', 'Invalid username or password');
         console.log('Login failed:', data);

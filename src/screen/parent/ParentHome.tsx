@@ -12,7 +12,6 @@ import {
 import React, {useCallback, useEffect, useState} from 'react';
 import NavBar from '../../components/NavBar';
 import {TouchableOpacity} from 'react-native';
-import {PieChart} from 'react-native-chart-kit';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
@@ -22,8 +21,6 @@ import RenderHtml, {
   HTMLElementModel,
 } from 'react-native-render-html';
 import {useFocusEffect} from '@react-navigation/native';
-
-const screenWidth = Dimensions.get('window').width;
 
 interface UserData {
   user: {

@@ -1,16 +1,11 @@
 import {Image, StyleSheet, View} from 'react-native';
-import React, {useEffect} from 'react';
+import React from 'react';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 
-const SplashScreen = ({navigation}: any) => {
-  useEffect(() => {
-    setTimeout(() => {
-      navigation.replace('Login');
-    }, 3000);
-  }, [navigation]);
+const SplashScreen = () => {
   return (
     <View style={styles.container}>
       <Image

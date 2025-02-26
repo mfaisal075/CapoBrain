@@ -53,8 +53,7 @@ interface UserData {
 }
 
 const Home = ({navigation}: any) => {
-  const {token, setUserName, setUserRole, userRole, userName, logout} =
-    useUser();
+  const {token, userRole, userName, logout} = useUser();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [menuVisible, setMenuVisible] = useState(false);
 
@@ -73,8 +72,6 @@ const Home = ({navigation}: any) => {
           },
         );
         setUserData((await response).data);
-        setUserName(response.data.user.name);
-        setUserRole(response.data.user.role);
         return response.data.newsoutput;
       } catch (error) {
         console.error('Error fetching data', error);

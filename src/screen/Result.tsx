@@ -45,14 +45,24 @@ interface UserData {
 
 const Result = ({navigation}: any) => {
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState(null);
+  const [value, setValue] = useState<string | null>(null);
   const {token} = useUser();
   const [userData, setUserData] = useState<UserData | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = async (examType: string | null | undefined = null) => {
     if (token) {
       try {
-        const reaponse = await axios.get(
+        let url = 'https://demo.capobrain.com/fetchstd_result';
+        if (examType) {
+          url = `https://demo.capobrain.com/fetchexamtypresult?exam_type=${examType}&id=${userData?.id}&_token=${token}`;
+        }
+
+        const response = await axios.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const details = await axios.get(
           'https://demo.capobrain.com/fetchstd_result',
           {
             headers: {
@@ -60,8 +70,8 @@ const Result = ({navigation}: any) => {
             },
           },
         );
-        setUserData(reaponse.data);
-        return reaponse.data.output;
+        setUserData(details.data);
+        return response.data.output;
       } catch (error) {
         console.error(error);
         throw error;
@@ -72,10 +82,14 @@ const Result = ({navigation}: any) => {
   };
 
   const {data, refetch, isFetching} = useQuery({
-    queryKey: ['tableData'],
-    queryFn: fetchData,
+    queryKey: ['tableData', value], // Include value in the query key
+    queryFn: () => fetchData(value), // Pass the selected exam type to fetchData
     refetchOnWindowFocus: true,
   });
+
+  useEffect(() => {
+    refetch();
+  }, [value, refetch]);
 
   const customHTMLElementModels = {
     center: HTMLElementModel.fromCustomModel({
@@ -89,16 +103,18 @@ const Result = ({navigation}: any) => {
   };
 
   const examItems = [
-    {label: 'Mids', value: 'mids'},
-    {label: 'Annual', value: 'annual'},
-    {label: 'Mid', value: 'mid'},
-    {label: 'Final', value: 'final'},
-    {label: 'MID TERM', value: 'mid_term'},
-    {label: 'ANNUAL TERM', value: 'annual_term'},
-    {label: 'MOCK TEST', value: 'mock_test'},
-    {label: 'Grand Test', value: 'grand_test'},
-    {label: 'December Test', value: 'december_test'},
-    {label: 'Phase Test', value: 'phase_test'},
+    {label: 'Select Exams Type Filter', value: ''},
+    {label: 'Mids', value: 'Mids'},
+    {label: 'Annual', value: 'Annual'},
+    {label: 'Mid', value: 'Mid'},
+    {label: 'Final', value: 'Final'},
+    {label: 'MID TERM', value: 'MID'},
+    {label: 'ANNUAL TERM', value: 'ANNUAL%20TERM'},
+    {label: 'MOCK TEST', value: 'MOCK%20TEST'},
+    {label: 'Grand Test', value: 'Grand%20test'},
+    {label: 'December Test', value: 'december%20test'},
+    {label: 'Phase Test', value: 'phase%20test'},
+    {label: 'Annualism', value: 'Annualism'},
   ];
 
   useEffect(() => {
@@ -115,6 +131,7 @@ const Result = ({navigation}: any) => {
 
     return () => backHandler.remove();
   }, []);
+
   return (
     <View style={styles.container}>
       {/* NavBar */}
@@ -168,6 +185,9 @@ const Result = ({navigation}: any) => {
                   borderColor: '#ccc',
                   borderRadius: 10,
                   height: 180,
+                }}
+                onChangeValue={selectedValue => {
+                  setValue(selectedValue);
                 }}
               />
             </View>
@@ -229,7 +249,6 @@ const Result = ({navigation}: any) => {
                       backgroundColor: '#f2f2f2',
                       paddingVertical: 0,
                       paddingHorizontal: 6,
-                      marginHorizontal: -5,
                       fontWeight: 'bold',
                       textAlign: 'center',
                       borderWidth: 1,
@@ -250,7 +269,9 @@ const Result = ({navigation}: any) => {
                       justifyContent: 'center',
                       marginBottom: -3,
                     },
-                    tr: {},
+                    tr: {
+                      marginTop: 2,
+                    },
                     h6: {
                       marginVertical: 0,
                       textAlign: 'center',

@@ -2,56 +2,96 @@ import {
   Alert,
   BackHandler,
   Dimensions,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import NavBar from '../../components/NavBar';
 import {Image} from 'react-native';
-import {PieChart} from 'react-native-chart-kit';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
+import {useFocusEffect} from '@react-navigation/native';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLContentModel,
+  HTMLElementModel,
+} from 'react-native-render-html';
 
-const screenWidth = Dimensions.get('window').width;
+interface UserData {
+  user: {
+    name: string;
+    user_name: string;
+    role: string;
+    email: string;
+    contact: string;
+    cnic: string;
+  };
+  teacher_account: {
+    acc_payable_amount: string;
+    acc_paid_amount: string;
+    arrears_amount: string;
+  };
+}
 
 const TeacherHome = ({navigation}: any) => {
-  const [newsBtn, setNewsBtn] = useState('1');
+  const {token} = useUser();
+  const [userData, setUserData] = useState<UserData | null>(null);
 
-  //Chart Data
-  const data = [
-    {
-      name: 'Present Students',
-      population: 70,
-      color: '#FFB4A2',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-    {
-      name: 'Absent Students',
-      population: 20,
-      color: '#FED6E3',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-    {
-      name: 'Present Staff',
-      population: 90,
-      color: '#A8EDEA',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-    {
-      name: 'Absent Staff',
-      population: 10,
-      color: '#FF5733',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-  ];
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetchprofile',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        setUserData(response.data);
+        console.log(response.data.newsoutput);
+
+        return response.data.newsoutput;
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    } else {
+      throw new Error('User is not authenticated');
+    }
+  };
+
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true, // Fetch new data when screen is focused
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
 
   useEffect(() => {
+    refetch();
     const backAction = () => {
       Alert.alert('Hold on!', 'Are you sure you want to exit the app?', [
         {
@@ -86,9 +126,9 @@ const TeacherHome = ({navigation}: any) => {
               />
             </View>
             <View style={styles.txtConatiner}>
-              <Text style={styles.nameTxt}>Isra</Text>
-              <Text style={styles.nameTxt}>Teacher</Text>
-              <Text style={styles.nameTxt}>GCGS1124T011</Text>
+              <Text style={styles.nameTxt}>{userData?.user.name}</Text>
+              <Text style={styles.nameTxt}>{userData?.user.role}</Text>
+              <Text style={styles.nameTxt}>{userData?.user.user_name}</Text>
             </View>
           </View>
           <View style={styles.otherDetails}>
@@ -97,28 +137,32 @@ const TeacherHome = ({navigation}: any) => {
                 source={require('../../assets/user.png')}
                 style={styles.otherDetailsIcon}
               />
-              <Text style={styles.otherDetailsText}>Isra</Text>
+              <Text style={styles.otherDetailsText}>{userData?.user.name}</Text>
             </View>
             <View style={styles.otherDetailsContainer}>
               <Image
                 source={require('../../assets/email.png')}
                 style={styles.otherDetailsIcon}
               />
-              <Text style={styles.otherDetailsText}>example123@gmail.com</Text>
+              <Text style={styles.otherDetailsText}>
+                {userData?.user.email ?? '--'}
+              </Text>
             </View>
             <View style={styles.otherDetailsContainer}>
               <Image
                 source={require('../../assets/smartphone.png')}
                 style={styles.otherDetailsIcon}
               />
-              <Text style={styles.otherDetailsText}>+923000200000</Text>
+              <Text style={styles.otherDetailsText}>
+                {userData?.user.contact ?? '--'}
+              </Text>
             </View>
             <View style={styles.otherDetailsContainer}>
               <Image
                 source={require('../../assets/id-card.png')}
                 style={styles.otherDetailsIcon}
               />
-              <Text style={styles.otherDetailsText}>34103-2354635-6</Text>
+              <Text style={styles.otherDetailsText}>{userData?.user.cnic}</Text>
             </View>
           </View>
           <View style={styles.accountStatus}>
@@ -127,14 +171,19 @@ const TeacherHome = ({navigation}: any) => {
             </View>
             <View style={styles.statusDetails}>
               <Text style={styles.statusDetailsText}>
-                Salary Payable: 35000
+                Salary Payable:{' '}
+                {userData?.teacher_account.acc_payable_amount ?? '0'}
               </Text>
             </View>
             <View style={styles.statusDetails}>
-              <Text style={styles.statusDetailsText}>Paid Salary: 35000</Text>
+              <Text style={styles.statusDetailsText}>
+                Paid Salary: {userData?.teacher_account.acc_paid_amount ?? '0'}
+              </Text>
             </View>
             <View style={styles.statusDetails}>
-              <Text style={styles.statusDetailsText}>Inventory: 0</Text>
+              <Text style={styles.statusDetailsText}>
+                Inventory: {userData?.teacher_account.arrears_amount ?? '0'}
+              </Text>
             </View>
           </View>
         </View>
@@ -257,112 +306,32 @@ const TeacherHome = ({navigation}: any) => {
               Latest News & Events & Notices
             </Text>
           </View>
-          <View style={styles.newsBtn}>
-            <View
-              style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-              <TouchableOpacity
-                style={
-                  newsBtn === '1'
-                    ? styles.eventsContainerBtn
-                    : styles.eventsBtnNotSlt
-                }
-                onPress={() => setNewsBtn('1')}>
-                <Text
-                  style={
-                    newsBtn === '1'
-                      ? styles.eventsContainerBtnText
-                      : styles.eventsBtnNotSltText
-                  }>
-                  Science & Technology
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={
-                  newsBtn === '2'
-                    ? styles.eventsContainerBtn1
-                    : styles.eventsBtnNotSlt
-                }
-                onPress={() => setNewsBtn('2')}>
-                <Text
-                  style={
-                    newsBtn === '2'
-                      ? styles.eventsContainerBtnText1
-                      : styles.eventsBtnNotSltText
-                  }>
-                  Join us for [School Name]'s
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <View
-              style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-              <TouchableOpacity
-                style={
-                  newsBtn === '3'
-                    ? [styles.eventsContainerBtn, {width: '100%'}]
-                    : [styles.eventsBtnNotSlt, {width: '100%'}]
-                }
-                onPress={() => setNewsBtn('3')}>
-                <Text
-                  style={
-                    newsBtn === '3'
-                      ? styles.eventsContainerBtnText
-                      : styles.eventsBtnNotSltText
-                  }>
-                  Anual Science & Technology Fair on [Date] to witness exciting
-                  student Innovations!
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={styles.eventsContainer}>
-            <Text style={styles.eventsText}>Iqbal Day 9-Nov-2025</Text>
-            <Text style={styles.eventsText}>Smog Holiday 25-Dec-2025</Text>
-          </View>
-        </View>
-
-        {/* Attendance Conatiner */}
-        <View style={styles.attendanceContainer}>
-          <View style={styles.atdHeadingContainer}>
-            <Text style={styles.statusHeading}>Student & Attendance</Text>
-            <Image
-              source={require('../../assets/information.png')}
-              style={styles.abtOpt}
-            />
-          </View>
-          <View style={styles.atdCount}>
-            <View style={styles.atdCountContainer}>
-              <Text style={styles.atdCountText}>Present Std: 70</Text>
-              <Text style={styles.atdCountText1}>Absent Std: 30</Text>
-            </View>
-            <View style={styles.atdCountContainer}>
-              <Text style={styles.atdCountText}>Present Staff: 70</Text>
-              <Text style={styles.atdCountText1}>Absent Staff: 30</Text>
-            </View>
-          </View>
-          <View style={styles.chartContainer}>
-            <PieChart
-              data={data}
-              width={screenWidth}
-              height={220}
-              chartConfig={{
-                color: () => `rgba(0, 0, 0, 0.5)`,
-              }}
-              accessor="population"
-              backgroundColor="transparent"
-              paddingLeft="15"
-              hasLegend={false}
-            />
-            <View style={styles.labelsContainer}>
-              {data.map((item, index) => (
-                <View key={index} style={styles.labelRow}>
-                  <View
-                    style={[styles.colorBox, {backgroundColor: item.color}]}
-                  />
-                  <Text style={styles.labelText}>{item.name}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
+          <ScrollView
+            style={{flex: 1, padding: 10}}
+            refreshControl={
+              <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+            }>
+            {data ? (
+              <RenderHtml
+                contentWidth={Dimensions.get('window').width}
+                source={{html: data}}
+                customHTMLElementModels={customHTMLElementModels}
+                tagsStyles={{
+                  table: {
+                    width: '100%',
+                  },
+                  tr: {
+                    backgroundColor: '#fff',
+                  },
+                  ul: {},
+                  li: {
+                    fontSize: 16,
+                    color: '#333',
+                  },
+                }}
+              />
+            ) : null}
+          </ScrollView>
         </View>
       </ScrollView>
     </View>
@@ -529,6 +498,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     borderColor: '#3B82F6',
     borderWidth: 0.5,
+    marginBottom: 20,
   },
   newsHeadingContainer: {
     height: 40,
