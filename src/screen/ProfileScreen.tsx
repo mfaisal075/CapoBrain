@@ -52,7 +52,7 @@ interface UserData {
 
 const ProfileScreen = ({navigation}: any) => {
   const [loading, setLoading] = useState(false);
-  const {token} = useUser();
+  const {token, logout} = useUser();
   const [userData, setUserData] = useState<UserData | null>(null);
 
   const fetchProfileData = async () => {
@@ -294,7 +294,7 @@ const ProfileScreen = ({navigation}: any) => {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => navigation.navigate('Login' as never)}>
+        <TouchableOpacity onPress={() => logout()}>
           <View style={styles.btnlog}>
             <View
               style={{
