@@ -2,6 +2,7 @@ import {
   BackHandler,
   Image,
   Modal,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,6 +15,14 @@ import NavBar from '../../components/NavBar';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import DropDownPicker from 'react-native-dropdown-picker';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
+import {Dimensions} from 'react-native';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLContentModel,
+  HTMLElementModel,
+} from 'react-native-render-html';
 
 const TeacherUpload = ({navigation}: any) => {
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
@@ -24,6 +33,45 @@ const TeacherUpload = ({navigation}: any) => {
   const [classValue, setClassValue] = useState(null);
   const [sectionOpen, setSectionOpen] = useState(false);
   const [sectionValue, setSectionValue] = useState(null);
+  const {token} = useUser();
+
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetchteacheruploadmaterial',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        return response.data.output;
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    } else {
+      throw new Error('User is not authenticated');
+    }
+  };
+
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true, // Fetch new data when screen is focused
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
 
   const onChange = ({event, selectedDate}: any) => {
     setShowUploadDatePicker(false); // Hide the picker
@@ -42,6 +90,7 @@ const TeacherUpload = ({navigation}: any) => {
   const branchItems: {label: string; value: string}[] = [];
 
   useEffect(() => {
+    refetch();
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -86,10 +135,70 @@ const TeacherUpload = ({navigation}: any) => {
           </View>
 
           {/* Data Container */}
-          <View style={styles.dataCtr}>
-            <Text style={styles.noDataTxt}>
-              No record present in the database!
-            </Text>
+          <View style={styles.tblDataCtr}>
+            <ScrollView
+              horizontal
+              style={{flex: 1, padding: 10}}
+              refreshControl={
+                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+              }>
+              {data ? (
+                <RenderHtml
+                  contentWidth={Dimensions.get('window').width}
+                  source={{html: data}}
+                  customHTMLElementModels={customHTMLElementModels}
+                  tagsStyles={{
+                    table: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: '100%',
+                      marginLeft: -10,
+                    },
+                    th: {
+                      backgroundColor: '#f2f2f2',
+                      paddingVertical: 0,
+                      paddingHorizontal: 1,
+                      marginHorizontal: -5,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: 125, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -10,
+                      marginTop: -10,
+                    },
+                    td: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      textAlign: 'center',
+                      width: 100, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -3,
+                      borderBottomColor: 'white',
+                    },
+                    tr: {
+                      backgroundColor: '#fff',
+                      marginHorizontal: -3,
+                    },
+                    a: {
+                      backgroundColor: '#3B82F6',
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 5,
+                      color: '#fff',
+                      textDecorationLine: 'none',
+                      fontWeight: 'bold',
+                      fontSize: 12,
+                    },
+                  }}
+                />
+              ) : null}
+            </ScrollView>
           </View>
         </View>
       </ScrollView>

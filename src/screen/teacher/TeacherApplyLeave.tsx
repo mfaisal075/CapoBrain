@@ -1,5 +1,6 @@
 import {
   BackHandler,
+  Dimensions,
   Image,
   Modal,
   ScrollView,
@@ -13,6 +14,14 @@ import NavBar from '../../components/NavBar';
 import {TouchableOpacity} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLContentModel,
+  HTMLElementModel,
+} from 'react-native-render-html';
+import {RefreshControl} from 'react-native';
 
 const TeacherApplyLeave = ({navigation}: any) => {
   const [leaveSubject, setLeaveSubject] = useState('');
@@ -20,6 +29,45 @@ const TeacherApplyLeave = ({navigation}: any) => {
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [leaveModalVisible, setLeaveModalVisible] = useState(false);
+  const {token} = useUser();
+
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetchleave',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        return response.data.output;
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    } else {
+      throw new Error('User is not Authenticated');
+    }
+  };
+
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true, // Fetch new data when screen is focused
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
 
   const onChange = ({event, selectedDate}: any) => {
     setShowDatePicker(false); // Hide the picker
@@ -37,6 +85,7 @@ const TeacherApplyLeave = ({navigation}: any) => {
   };
 
   useEffect(() => {
+    refetch();
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -81,10 +130,93 @@ const TeacherApplyLeave = ({navigation}: any) => {
           </View>
 
           {/* Data Container */}
-          <View style={styles.dataCtr}>
-            <Text style={styles.noDataTxt}>
-              No record present in the database!
-            </Text>
+          <View style={styles.tblDataCtr}>
+            <ScrollView
+              horizontal
+              style={{flex: 1, padding: 10}}
+              refreshControl={
+                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+              }>
+              {data ? (
+                <RenderHtml
+                  contentWidth={Dimensions.get('window').width}
+                  source={{html: data}}
+                  customHTMLElementModels={customHTMLElementModels}
+                  tagsStyles={{
+                    h4: {
+                      fontSize: 20,
+                      fontWeight: 'bold',
+                      color: '#000',
+                    },
+                    table: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: '100%',
+                      marginLeft: -10,
+                    },
+                    th: {
+                      backgroundColor: '#f2f2f2',
+                      paddingVertical: 0,
+                      paddingHorizontal: 1,
+                      marginHorizontal: -5,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: 125, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -10,
+                      marginTop: -10,
+                    },
+                    td: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      textAlign: 'center',
+                      width: 100, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -2,
+                      borderBottomColor: 'white',
+                    },
+                    tr: {
+                      backgroundColor: '#fff',
+                      marginLeft: -3,
+                    },
+                    h6: {
+                      marginVertical: 0,
+                      textAlign: 'center',
+                    },
+                    span: {
+                      backgroundColor: 'gray', // Green background (Approved)
+                      color: '#fff', // White text
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 4,
+                      fontSize: 12,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      alignSelf: 'center', // Center the badge
+                    },
+                    center: {
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    },
+                    a: {
+                      backgroundColor: '#3B82F6',
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 5,
+                      color: '#fff',
+                      fontWeight: 'bold',
+                    },
+                  }}
+                />
+              ) : null}
+            </ScrollView>
           </View>
         </View>
       </ScrollView>

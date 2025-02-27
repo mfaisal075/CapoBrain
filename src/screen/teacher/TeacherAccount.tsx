@@ -1,5 +1,7 @@
 import {
+  Dimensions,
   Image,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,140 +11,59 @@ import {
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import NavBar from '../../components/NavBar';
-import {DataTable} from 'react-native-paper';
 import {BackHandler} from 'react-native';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLElementModel,
+  HTMLContentModel,
+} from 'react-native-render-html';
 
 const TeacherAccount = ({navigation}: any) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [page, setPage] = useState<number>(0);
-  const [numberOfItemsPerPageList] = useState([10, 50, 100]);
-  const [itemsPerPage, onItemsPerPageChange] = useState(
-    numberOfItemsPerPageList[0],
-  );
+  const {token} = useUser();
 
-  const [items] = useState([
-    {
-      sr: 1,
-      date: '14-11-2024',
-      payable: '-2000',
-      inventory: '0',
-      arrears: '0',
-      paidAmount: '0',
-      balance: '-2000',
-      paymentMethod: 'Assign Transport',
-      transactionType: 'Cash',
-    },
-    {
-      sr: 2,
-      date: '14-11-2024',
-      payable: '34166',
-      inventory: '0',
-      arrears: '-2000',
-      paidAmount: '0',
-      balance: '34166',
-      paymentMethod: 'Monthly Salary',
-      transactionType: 'Cash',
-    },
-    {
-      sr: 3,
-      date: '14-11-2024',
-      payable: '34166',
-      inventory: '0',
-      arrears: '0',
-      paidAmount: '34166',
-      balance: '0',
-      paymentMethod: 'Salary Withdraw',
-      transactionType: 'Cash',
-    },
-    {
-      sr: 4,
-      date: '07-12-2024',
-      payable: '35000',
-      inventory: '0',
-      arrears: '0',
-      paidAmount: '0',
-      balance: '35000',
-      paymentMethod: 'Monthly Salary',
-      transactionType: 'Cash',
-    },
-    {
-      sr: 5,
-      date: '03-02-2025',
-      payable: '70000',
-      inventory: '0',
-      arrears: '35000',
-      paidAmount: '0',
-      balance: '70000',
-      paymentMethod: 'Monthly Salary',
-      transactionType: 'Cash',
-    },
-    {
-      sr: 6,
-      date: '06-02-2025',
-      payable: '70000',
-      inventory: '0',
-      arrears: '0',
-      paidAmount: '70000',
-      balance: '0',
-      paymentMethod: 'Salary Withdraw',
-      transactionType: 'Cash',
-    },
-    {
-      sr: 7,
-      date: '06-02-2025',
-      payable: '35000',
-      inventory: '0',
-      arrears: '0',
-      paidAmount: '10000',
-      balance: '45000',
-      paymentMethod: 'Employee Deposite',
-      transactionType: 'Cash',
-    },
-    {
-      sr: 8,
-      date: '06-02-2025',
-      payable: '35000',
-      inventory: '0',
-      arrears: '0',
-      paidAmount: '35000',
-      balance: '0',
-      paymentMethod: 'Salary Withdraw',
-      transactionType: 'Cash',
-    },
-    {
-      sr: 9,
-      date: '06-02-2025',
-      payable: '10000',
-      inventory: '0',
-      arrears: '0',
-      paidAmount: '0',
-      balance: '10000',
-      paymentMethod: 'Salary Update',
-      transactionType: 'Cash',
-    },
-    {
-      sr: 10,
-      date: '06-02-2025',
-      payable: '35000',
-      inventory: '0',
-      arrears: '0',
-      paidAmount: '35000',
-      balance: '0',
-      paymentMethod: 'Salary Withdraw',
-      transactionType: 'Cash',
-    },
-  ]);
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/staffaccountdetails' + `?_token=${token}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
 
-  const filteredItems = items.filter(item =>
-    Object.values(item).some(value =>
-      String(value).toLowerCase().includes(searchQuery.toLowerCase()),
-    ),
-  );
+        return response.data.output;
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    } else {
+      throw new Error('User is not authenticated');
+    }
+  };
 
-  const from = page * itemsPerPage;
-  const to = Math.min((page + 1) * itemsPerPage, items.length);
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true, // Fetch new data when screen is focused
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
 
   useEffect(() => {
+    refetch();
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -153,9 +74,8 @@ const TeacherAccount = ({navigation}: any) => {
       backAction,
     );
 
-    setPage(0);
     return () => backHandler.remove();
-  }, [itemsPerPage]);
+  }, []);
   return (
     <View style={styles.container}>
       <NavBar />
@@ -185,111 +105,68 @@ const TeacherAccount = ({navigation}: any) => {
 
           {/* Table */}
           <View style={styles.tblDataCtr}>
-            <ScrollView horizontal>
-              <DataTable>
-                <DataTable.Header>
-                  {[
-                    'Sr#',
-                    'Date',
-                    'Payable',
-                    'Inventory',
-                    'Arrears',
-                    'Paid Amount',
-                    'Balance',
-                    'Payment Method',
-                    'Transaction Type',
-                  ].map((title, index) => (
-                    <DataTable.Title
-                      key={index}
-                      textStyle={{
-                        color: 'black',
-                        fontSize: 14,
-                        fontWeight: 'bold',
-                      }}
-                      style={{
-                        width: index === 0 ? 50 : 125, // Reduced width for the first header
-                        paddingHorizontal: 5,
-                        borderColor: '#000',
-                        borderWidth: 0.5,
-                        backgroundColor: '#F0F0F0',
-                      }}>
-                      {title}
-                    </DataTable.Title>
-                  ))}
-                </DataTable.Header>
-
-                {filteredItems.length > 0 ? (
-                  filteredItems.slice(from, to).map((item, index) => (
-                    <DataTable.Row key={index}>
-                      {[
-                        item.sr,
-                        item.date,
-                        item.payable,
-                        item.inventory,
-                        item.arrears,
-                        item.paidAmount,
-                        item.balance,
-                        item.paymentMethod,
-                        item.transactionType,
-                      ].map((value, idx) => (
-                        <DataTable.Cell
-                          key={idx}
-                          textStyle={{color: '#000', fontSize: 12}}
-                          style={{
-                            width: idx === 0 ? 50 : 125, // Reduced width for the first cell
-                            paddingHorizontal: 5,
-                            borderColor: '#000',
-                            borderWidth: 0.5,
-                          }}>
-                          {value}
-                        </DataTable.Cell>
-                      ))}
-                    </DataTable.Row>
-                  ))
-                ) : (
-                  <DataTable.Row>
-                    <DataTable.Cell
-                      textStyle={{
-                        color: 'gray',
-                        fontSize: 16,
-                        fontWeight: 'bold',
-                      }}
-                      style={{
-                        width: '100%',
-                        paddingHorizontal: 5,
-                        borderColor: '#000',
-                        borderWidth: 0.5,
-                        justifyContent: 'center',
-                      }}>
-                      No data found
-                    </DataTable.Cell>
-                  </DataTable.Row>
-                )}
-
-                <DataTable.Pagination
-                  page={page}
-                  numberOfPages={Math.ceil(filteredItems.length / itemsPerPage)}
-                  onPageChange={page => setPage(page)}
-                  label={`${from + 1}-${to} of ${filteredItems.length}`}
-                  numberOfItemsPerPageList={numberOfItemsPerPageList}
-                  numberOfItemsPerPage={itemsPerPage}
-                  onItemsPerPageChange={onItemsPerPageChange}
-                  showFastPaginationControls
-                  selectPageDropdownLabel={'Show Entries'}
-                  theme={{
-                    colors: {
-                      primary: '#000',
-                      elevation: {
-                        level2: '#fff',
-                      },
-                      text: '#616161',
-                      onSurface: '#616161',
+            <ScrollView
+              horizontal
+              style={{flex: 1, padding: 10}}
+              refreshControl={
+                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+              }>
+              {data ? (
+                <RenderHtml
+                  contentWidth={Dimensions.get('window').width}
+                  source={{html: data}}
+                  customHTMLElementModels={customHTMLElementModels}
+                  tagsStyles={{
+                    table: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: '100%',
+                      marginLeft: -10,
                     },
-                    dark: false,
-                    roundness: 1,
+                    th: {
+                      backgroundColor: '#f2f2f2',
+                      paddingVertical: 0,
+                      paddingHorizontal: 1,
+                      marginHorizontal: -5,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: 150, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -10,
+                      marginTop: -10,
+                    },
+                    td: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      textAlign: 'center',
+                      width: 125, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -3,
+                      borderBottomColor: 'white',
+                    },
+                    tr: {
+                      backgroundColor: '#fff',
+                      marginHorizontal: -3,
+                    },
+                    a: {
+                      width: 100,
+                      backgroundColor: '#3B82F6',
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 5,
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: 10,
+                    },
                   }}
                 />
-              </DataTable>
+              ) : null}
             </ScrollView>
           </View>
         </View>

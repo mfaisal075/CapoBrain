@@ -20,6 +20,7 @@ import StdCalendar from '../../screen/StdCalendar';
 import StdComplain from '../../screen/StdComplain';
 import StdSports from '../../screen/StdSports';
 import StdUpdate from '../../screen/StdUpdate';
+import ProfileScreen from '../../screen/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,6 +30,11 @@ const StudentStack = () => {
       <Stack.Screen
         name="Home"
         component={Home}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ProfileScreen"
+        component={ProfileScreen}
         options={{headerShown: false}}
       />
       <Stack.Screen

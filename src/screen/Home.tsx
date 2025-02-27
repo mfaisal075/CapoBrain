@@ -8,19 +8,15 @@ import {
   BackHandler,
   ImageBackground,
 } from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Alert} from 'react-native';
 import {useUser} from '../Ctx/UserContext';
 import axios from 'axios';
-import {useQuery} from '@tanstack/react-query';
-import {HTMLContentModel, HTMLElementModel} from 'react-native-render-html';
-import {useFocusEffect} from '@react-navigation/native';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import {RFPercentage} from 'react-native-responsive-fontsize';
-import {Divider, Menu} from 'react-native-paper';
 
 interface UserData {
   cand: {
@@ -53,12 +49,8 @@ interface UserData {
 }
 
 const Home = ({navigation}: any) => {
-  const {token, userRole, userName, logout} = useUser();
+  const {token} = useUser();
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [menuVisible, setMenuVisible] = useState(false);
-
-  const openMenu = () => setMenuVisible(true);
-  const closeMenu = () => setMenuVisible(false);
 
   const fetchProfileData = async () => {
     if (token) {
@@ -81,31 +73,8 @@ const Home = ({navigation}: any) => {
     }
   };
 
-  const {data, refetch, isFetching} = useQuery({
-    queryKey: ['tableData'],
-    queryFn: fetchProfileData,
-    refetchOnWindowFocus: true, // Fetch new data when screen is focused
-  });
-
-  const customHTMLElementModels = {
-    center: HTMLElementModel.fromCustomModel({
-      tagName: 'center',
-      mixedUAStyles: {
-        alignItems: 'center',
-        textAlign: 'center',
-      },
-      contentModel: HTMLContentModel.block,
-    }),
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      refetch();
-    }, [refetch]),
-  );
-
   useEffect(() => {
-    refetch();
+    fetchProfileData();
 
     //Naviagte to Home on back key press
     const backAction = () => {
@@ -131,43 +100,15 @@ const Home = ({navigation}: any) => {
       <View style={styles.header}>
         {/* profile user icon*/}
 
-        <View style={{flexDirection: 'row-reverse', alignItems: 'center'}}>
-          <Menu
-            visible={menuVisible}
-            onDismiss={closeMenu}
-            anchor={
-              <TouchableOpacity style={styles.optContainer} onPress={openMenu}>
-                <Image
-                  source={require('../assets/user.png')}
-                  style={styles.optIcon}
-                />
-              </TouchableOpacity>
-            }>
-            {/* User Info */}
-            <View style={styles.userInfo}>
-              <Image
-                source={require('../assets/user.png')}
-                style={styles.userIcon}
-              />
-              <View>
-                <Text style={styles.userName}>{userName}</Text>
-                {userRole === 'Student' ? (
-                  <Text style={styles.userRole}>Student</Text>
-                ) : userRole === 'Teacher' ? (
-                  <Text style={styles.userRole}>Teacher</Text>
-                ) : (
-                  <Text style={styles.userRole}>Parent</Text>
-                )}
-              </View>
-            </View>
-
-            <Divider />
-            <Menu.Item
-              onPress={() => console.log('Change Password')}
-              title="Change Password"
+        <View style={{position: 'absolute', right: 5, top: 10}}>
+          <TouchableOpacity
+            style={styles.optContainer}
+            onPress={() => navigation.navigate('ProfileScreen')}>
+            <Image
+              source={require('../assets/user.png')}
+              style={styles.optIcon}
             />
-            <Menu.Item onPress={() => logout()} title="Logout" />
-          </Menu>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.std}>
@@ -471,41 +412,6 @@ const Home = ({navigation}: any) => {
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Attendance')}>
-        <View style={styles.attendance}>
-          <Image
-            style={{
-              width: 30,
-              height: 30,
-              marginLeft: hp('2%'),
-              alignSelf: 'center',
-              tintColor: 'white',
-            }}
-            source={require('../assets/attendance.png')}
-          />
-          <Text
-            style={{
-              color: 'white',
-              fontWeight: 'bold',
-              marginLeft: hp('1%'),
-              alignSelf: 'center',
-              fontSize: 20,
-            }}>
-            Attendance
-          </Text>
-          <Image
-            style={{
-              width: 50,
-              height: 50,
-              alignSelf: 'center',
-              tintColor: 'white',
-              marginRight: hp('2%'),
-            }}
-            source={require('../assets/arrowc.png')}
-          />
-        </View>
-      </TouchableOpacity>
-
       <View style={styles.footer}>
         <Text style={{color: '#3b82f6', fontSize: RFPercentage(2)}}>
           Developed with ❤️ by: Technic Mentors
@@ -587,17 +493,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  attendance: {
-    backgroundColor: '#3b82f6',
-    height: 70,
-    width: wp('93%'),
-    marginLeft: hp('2%'),
-    marginRight: hp('2%'),
-    borderRadius: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: hp('1%'),
     marginBottom: hp('5%'),
   },
   footer: {
@@ -655,8 +550,8 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   optIcon: {
-    height: 35,
-    width: 35,
+    height: 40,
+    width: 40,
     resizeMode: 'contain',
     tintColor: '#fff',
     borderRadius: 50,
