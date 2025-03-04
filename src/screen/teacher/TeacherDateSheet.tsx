@@ -1,32 +1,67 @@
 import {
   BackHandler,
+  Dimensions,
+  Image,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import NavBar from '../../components/NavBar';
-import {Dialog, Portal} from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import DropDownPicker from 'react-native-dropdown-picker';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLElementModel,
+  HTMLContentModel,
+} from 'react-native-render-html';
 
 const TeacherDateSheet = ({navigation}: any) => {
-  const [visible, setVisible] = useState(false);
-  const [branchOpen, setBranchOpen] = useState(false);
-  const [classOpen, setClassOpen] = useState(false);
-  const [sectionOpen, setSectionOpen] = useState(false);
-  const [branchValue, setBranchValue] = useState(null);
-  const [classValue, setClassValue] = useState(null);
-  const [sectionValue, setSectionValue] = useState(null);
+  const {token} = useUser();
 
-  const showDialog = () => setVisible(true);
-  const hideDialog = () => setVisible(false);
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetchdatesheet',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        return response.data.output;
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    } else {
+      throw new Error('User is not Authenticated');
+    }
+  };
 
-  const branchItems: {label: string; value: string}[] = [];
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true,
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
 
   useEffect(() => {
+    refetch();
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -53,137 +88,103 @@ const TeacherDateSheet = ({navigation}: any) => {
           <View style={styles.bckBtnCtr}>
             <TouchableOpacity
               style={styles.bckBtn}
-              onPress={() => showDialog()}>
-              <Text style={styles.bckBtnText}>Add Date Sheet</Text>
+              onPress={() => navigation.goBack()}>
+              <Image
+                source={require('../../assets/back.png')}
+                style={[styles.bckBtnIcon, {marginRight: -8}]}
+              />
+              <Image
+                source={require('../../assets/back.png')}
+                style={styles.bckBtnIcon}
+              />
+              <Text style={styles.bckBtnText}>Dashboard</Text>
             </TouchableOpacity>
           </View>
 
           {/* Student Details */}
-
-          <View style={styles.attendanceCtr}>
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: '500',
-                color: 'rgba(0,0,0,0.6)',
-                textAlign: 'center',
-              }}>
-              No record present in the database!
-            </Text>
+          <View style={styles.tblDataCtr}>
+            <ScrollView
+              horizontal
+              style={{flex: 1, padding: 10}}
+              refreshControl={
+                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+              }>
+              {data ? (
+                <RenderHtml
+                  contentWidth={Dimensions.get('window').width}
+                  source={{html: data}}
+                  customHTMLElementModels={customHTMLElementModels}
+                  tagsStyles={{
+                    h4: {
+                      fontSize: 18,
+                      fontWeight: 'bold',
+                      color: '#000',
+                    },
+                    table: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: '100%',
+                      marginLeft: -10,
+                    },
+                    th: {
+                      backgroundColor: '#f2f2f2',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      marginHorizontal: -5,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: 125, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -10,
+                      marginTop: -10,
+                    },
+                    td: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      textAlign: 'center',
+                      width: 100, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -3,
+                      borderBottomColor: 'white',
+                    },
+                    tr: {
+                      backgroundColor: '#fff',
+                    },
+                    a: {
+                      width: 100,
+                      backgroundColor: '#3B82F6',
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 5,
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: 10,
+                    },
+                  }}
+                />
+              ) : (
+                <View style={styles.attendanceCtr}>
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: '500',
+                      color: 'rgba(0,0,0,0.6)',
+                      textAlign: 'center',
+                    }}>
+                    No record present in the database!
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
           </View>
         </View>
       </ScrollView>
-
-      {/* Add Date Sheet Modal */}
-      <Portal>
-        <Dialog
-          visible={visible}
-          onDismiss={hideDialog}
-          style={{backgroundColor: '#fff', borderRadius: 10}}>
-          <Dialog.Title>Add Date Sheet</Dialog.Title>
-          <Dialog.Content style={styles.modalBody}>
-            <TouchableOpacity
-              style={styles.clsIconCtr}
-              onPress={() => hideDialog()}>
-              <Icon name="close" size={26} color={'#000'} />
-            </TouchableOpacity>
-            <View style={styles.addSbjCtr}>
-              <TouchableOpacity style={[styles.bckBtn, {width: 120}]}>
-                <Text style={styles.bckBtnText}>Add Subject</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Dropdown Pickers Conatiner */}
-            <View style={styles.pickerCtr}>
-              <View style={[styles.picker, {marginTop: 10}]}>
-                <Text style={styles.text}>
-                  Branch <Text style={{color: 'red'}}>*</Text>
-                </Text>
-                <DropDownPicker
-                  open={branchOpen}
-                  value={branchValue}
-                  setOpen={setBranchOpen}
-                  setValue={setBranchValue}
-                  placeholder="Select Branch"
-                  items={branchItems}
-                  style={{
-                    borderColor: 'transparent',
-                    backgroundColor: 'transparent',
-                    borderRadius: 10,
-                  }}
-                  dropDownContainerStyle={{
-                    borderColor: '#ccc',
-                    borderRadius: 10,
-                    height: 'auto',
-                  }}
-                />
-              </View>
-              <View style={styles.picker}>
-                <Text style={styles.text}>
-                  Class <Text style={{color: 'red'}}>*</Text>
-                </Text>
-                <DropDownPicker
-                  open={classOpen}
-                  value={classValue}
-                  setOpen={setClassOpen}
-                  setValue={setClassValue}
-                  placeholder="Select Class"
-                  items={branchItems}
-                  style={{
-                    borderColor: 'transparent',
-                    backgroundColor: 'transparent',
-                    borderRadius: 10,
-                  }}
-                  dropDownContainerStyle={{
-                    borderColor: '#ccc',
-                    borderRadius: 10,
-                    height: 'auto',
-                  }}
-                />
-              </View>
-              <View style={styles.picker}>
-                <Text style={styles.text}>
-                  Section <Text style={{color: 'red'}}>*</Text>
-                </Text>
-                <DropDownPicker
-                  open={sectionOpen}
-                  value={sectionValue}
-                  setOpen={setSectionOpen}
-                  setValue={setSectionValue}
-                  placeholder="Select Section"
-                  items={branchItems}
-                  style={{
-                    borderColor: 'transparent',
-                    backgroundColor: 'transparent',
-                    borderRadius: 10,
-                  }}
-                  dropDownContainerStyle={{
-                    borderColor: '#ccc',
-                    borderRadius: 10,
-                    height: 'auto',
-                  }}
-                />
-              </View>
-            </View>
-            <View style={styles.dataCtr}>
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: '500',
-                  color: 'rgba(0,0,0,0.6)',
-                  textAlign: 'center',
-                }}>
-                No record present in the database!
-              </Text>
-            </View>
-          </Dialog.Content>
-          <Dialog.Actions style={{justifyContent: 'center'}}>
-            <TouchableOpacity style={styles.bckBtn}>
-              <Text style={styles.bckBtnText}>Save</Text>
-            </TouchableOpacity>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
     </View>
   );
 };
@@ -223,7 +224,7 @@ const styles = StyleSheet.create({
     paddingRight: 20,
   },
   bckBtn: {
-    backgroundColor: '#28A745',
+    backgroundColor: '#5A6268',
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 5,
@@ -292,5 +293,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     top: -45,
+  },
+  tblDataCtr: {
+    marginTop: 10,
+    height: 'auto',
+    width: '100%',
+    padding: 10,
   },
 });

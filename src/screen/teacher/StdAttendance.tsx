@@ -1,6 +1,7 @@
 import {
   Alert,
   BackHandler,
+  Dimensions,
   Image,
   ScrollView,
   StyleSheet,
@@ -12,13 +13,60 @@ import {
 import React, {useEffect, useState} from 'react';
 import NavBar from '../../components/NavBar';
 import {DataTable} from 'react-native-paper';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLElementModel,
+  HTMLContentModel,
+} from 'react-native-render-html';
+import {RefreshControl} from 'react-native';
 
 const StdAttendance = ({navigation}: any) => {
+  const {token} = useUser();
   const [page, setPage] = useState<number>(0);
   const [numberOfItemsPerPageList] = useState([10, 50, 100]);
   const [itemsPerPage, onItemsPerPageChange] = useState(
     numberOfItemsPerPageList[0],
   );
+
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetch-attendance',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        return response.data.output;
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    } else {
+      throw new Error('User is not Authenticated');
+    }
+  };
+
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true,
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
 
   const [items] = useState([
     {
@@ -237,6 +285,7 @@ const StdAttendance = ({navigation}: any) => {
   const to = Math.min((page + 1) * itemsPerPage, items.length);
 
   useEffect(() => {
+    fetchData();
     const backAction = () => {
       navigation.navigate('TeacherAttendance');
       return true;
@@ -281,169 +330,85 @@ const StdAttendance = ({navigation}: any) => {
 
           {/* Table */}
           <View style={styles.tblDataCtr}>
-            <ScrollView horizontal>
-              <DataTable>
-                <DataTable.Header>
-                  {[
-                    'Sr#',
-                    'Student',
-                    'Class',
-                    'Section',
-                    'Status',
-                    'Date',
-                    'Actions',
-                  ].map((title, index) => (
-                    <DataTable.Title
-                      key={index}
-                      textStyle={{
-                        color: 'black',
-                        fontSize: 14,
-                        fontWeight: 'bold',
-                      }}
-                      style={{
-                        width: index === 0 ? 50 : index === 6 ? 150 : 125, // Adjusted width for Actions column
-                        paddingHorizontal: 5,
-                        borderColor: '#000',
-                        borderWidth: 0.5,
-                        backgroundColor: '#F0F0F0',
-                      }}>
-                      {title}
-                    </DataTable.Title>
-                  ))}
-                </DataTable.Header>
-
-                {items.length > 0 ? (
-                  items.slice(from, to).map((item, index) => (
-                    <DataTable.Row key={index}>
-                      {[
-                        item.sr,
-                        item.student,
-                        item.class,
-                        item.section,
-                        item.status,
-                        item.date,
-                      ].map((value, idx) => (
-                        <DataTable.Cell
-                          key={idx}
-                          textStyle={{color: '#000', fontSize: 12}}
-                          style={{
-                            width: idx === 0 ? 50 : idx === 6 ? 150 : 125, // Adjusted width for Actions column
-                            paddingHorizontal: 5,
-                            borderColor: '#000',
-                            borderWidth: 0.5,
-                          }}>
-                          {value}
-                        </DataTable.Cell>
-                      ))}
-                      <DataTable.Cell
-                        key={'action'}
-                        style={{
-                          width: 150,
-                          paddingHorizontal: 5,
-                          borderColor: '#000',
-                          borderWidth: 0.5,
-                          flexDirection: 'row',
-                          justifyContent: 'space-between',
-                        }}>
-                        {/* Edit Button */}
-                        <TouchableOpacity onPress={() => onEdit(item)}>
-                          <View
-                            style={{
-                              backgroundColor: '#24953D',
-                              paddingVertical: 8,
-                              paddingHorizontal: 10,
-                              borderRadius: 5,
-                              marginRight: 10,
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                            }}>
-                            <Image
-                              source={require('../../assets/pencil.png')}
-                              style={{
-                                height: 12,
-                                width: 12,
-                                marginRight: 5,
-                                tintColor: 'white',
-                              }}
-                            />
-                            <Text style={{color: '#fff', fontSize: 12}}>
-                              Edit
-                            </Text>
-                          </View>
-                        </TouchableOpacity>
-
-                        {/* Delete Button */}
-                        <TouchableOpacity onPress={() => onDelete(item)}>
-                          <View
-                            style={{
-                              backgroundColor: 'red',
-                              paddingVertical: 8,
-                              paddingHorizontal: 4,
-                              borderRadius: 5,
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                            }}>
-                            <Image
-                              source={require('../../assets/bin.png')}
-                              style={{
-                                height: 12,
-                                width: 12,
-                                marginRight: 5,
-                                tintColor: 'white',
-                              }}
-                            />
-                            <Text style={{color: '#fff', fontSize: 12}}>
-                              Delete
-                            </Text>
-                          </View>
-                        </TouchableOpacity>
-                      </DataTable.Cell>
-                    </DataTable.Row>
-                  ))
-                ) : (
-                  <DataTable.Row>
-                    <DataTable.Cell
-                      textStyle={{
-                        color: 'gray',
-                        fontSize: 16,
-                        fontWeight: 'bold',
-                      }}
-                      style={{
-                        width: '100%',
-                        paddingHorizontal: 5,
-                        borderColor: '#000',
-                        borderWidth: 0.5,
-                        justifyContent: 'center',
-                      }}>
-                      No data found
-                    </DataTable.Cell>
-                  </DataTable.Row>
-                )}
-
-                <DataTable.Pagination
-                  page={page}
-                  numberOfPages={Math.ceil(items.length / itemsPerPage)}
-                  onPageChange={page => setPage(page)}
-                  label={`${from + 1}-${to} of ${items.length}`}
-                  numberOfItemsPerPageList={numberOfItemsPerPageList}
-                  numberOfItemsPerPage={itemsPerPage}
-                  onItemsPerPageChange={onItemsPerPageChange}
-                  showFastPaginationControls
-                  selectPageDropdownLabel={'Show Entries'}
-                  theme={{
-                    colors: {
-                      primary: '#000',
-                      elevation: {
-                        level2: '#fff',
-                      },
-                      text: '#616161',
-                      onSurface: '#616161',
+            <ScrollView
+              horizontal
+              style={{flex: 1, padding: 10}}
+              refreshControl={
+                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+              }>
+              {data ? (
+                <RenderHtml
+                  contentWidth={Dimensions.get('window').width}
+                  source={{html: data}}
+                  customHTMLElementModels={customHTMLElementModels}
+                  tagsStyles={{
+                    h4: {
+                      fontSize: 18,
+                      fontWeight: 'bold',
+                      color: '#000',
                     },
-                    dark: false,
-                    roundness: 1,
+                    table: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: '100%',
+                      marginLeft: -10,
+                    },
+                    th: {
+                      backgroundColor: '#f2f2f2',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      marginHorizontal: -5,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: 125, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -10,
+                      marginTop: -10,
+                    },
+                    td: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      textAlign: 'center',
+                      width: 100, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -2,
+                      borderBottomColor: 'white',
+                    },
+                    tr: {
+                      backgroundColor: '#fff',
+                      marginLeft: -3
+                    },
+                    a: {
+                      width: 100,
+                      backgroundColor: '#3B82F6',
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 5,
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: 10,
+                    },
                   }}
                 />
-              </DataTable>
+              ) : (
+                <View style={styles.attendanceCtr}>
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: '500',
+                      color: 'rgba(0,0,0,0.6)',
+                      textAlign: 'center',
+                    }}>
+                    No record present in the database!
+                  </Text>
+                </View>
+              )}
             </ScrollView>
           </View>
         </View>
@@ -528,5 +493,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  attendanceCtr: {
+    height: 300,
+    width: '100%',
+    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

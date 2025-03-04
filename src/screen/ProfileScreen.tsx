@@ -19,6 +19,7 @@ import {Formik} from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
 import {useUser} from '../Ctx/UserContext';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface UserData {
   cand: {
@@ -119,11 +120,20 @@ const ProfileScreen = ({navigation}: any) => {
           backgroundColor: 'white',
         }}>
         <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.replace('Home' as never)}>
+            <Icon
+              name="arrow-left"
+              size={38}
+              color={'#fff'}
+              style={{paddingHorizontal: 10, paddingTop: 15}}
+            />
+          </TouchableOpacity>
           <Image
             style={{
               width: 100,
               height: 100,
-              marginTop: hp('5%'),
+              marginTop: hp('2%'),
+              alignSelf: 'center',
             }}
             source={require('../assets/avatar.png')}
           />
@@ -523,13 +533,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#3b82f6',
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-    alignItems: 'center',
   },
   nameText: {
     color: 'white',
     fontWeight: 'bold',
     marginTop: hp('1%'),
     fontSize: 18,
+    alignSelf: 'center',
   },
   details: {
     marginLeft: hp('2%'),

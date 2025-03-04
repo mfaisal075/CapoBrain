@@ -8,11 +8,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import NavBar from '../../components/NavBar';
 import {Image} from 'react-native';
-import {DataTable} from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
 import {useQuery} from '@tanstack/react-query';
@@ -140,6 +138,7 @@ const TeacherDownload = ({navigation}: any) => {
                       height: 50,
                       justifyContent: 'center',
                       marginBottom: -10,
+                      marginTop: -10
                     },
                     td: {
                       borderWidth: 1,
@@ -154,6 +153,7 @@ const TeacherDownload = ({navigation}: any) => {
                     },
                     tr: {
                       backgroundColor: '#fff',
+                      marginLeft: -3
                     },
                     h6: {
                       marginVertical: 0,

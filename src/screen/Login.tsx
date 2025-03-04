@@ -181,6 +181,7 @@ const Login = ({navigation}: any) => {
           </View>
         </KeyboardAvoidingView>
 
+        {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
             Developed with ❤️ By: Technic Mentors

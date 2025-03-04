@@ -121,7 +121,7 @@ const TeacherHome = ({navigation}: any) => {
           <View style={styles.stdName}>
             <View style={styles.profilePicContainer}>
               <Image
-                source={require('../../assets/user.png')}
+                source={require('../../assets/avatar.png')}
                 style={styles.profilePic}
               />
             </View>

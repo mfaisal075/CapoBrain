@@ -7,16 +7,52 @@ import {
   View,
   FlatList,
   TouchableOpacity,
-  Modal,
+  Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useUser} from '../Ctx/UserContext';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from 'react-native-responsive-screen';
+
+interface Notification {
+  id: string;
+  msg_subject: string;
+  msg_date: string;
+  msg_message: string;
+}
 
 const Std_Notification = ({navigation}: any) => {
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [selectedNotification, setSelectedNotification] = useState<any>(null);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const {token} = useUser();
+
+  const noteColors = [
+    '#FFEB3B',
+    '#FFCDD2',
+    '#C8E6C9',
+    '#BBDEFB',
+    '#E1BEE7',
+    '#EFDCAB',
+    '#FFD180',
+    '#D1C4E9',
+    '#80CBC4',
+    '#FFAB91',
+    '#F48FB1',
+    '#A5D6A7',
+    '#B3E5FC',
+    '#FFF59D',
+    '#FFEB3B',
+    '#FFCDD2',
+    '#C8E6C9',
+    '#BBDEFB',
+    '#E1BEE7',
+    '#EFDCAB',
+  ];
+
+  const getRandomColor = (index: number) => {
+    return noteColors[index % noteColors.length];
+  };
 
   // Fetch notifications from the API
   useEffect(() => {
@@ -55,92 +91,46 @@ const Std_Notification = ({navigation}: any) => {
     return () => backHandler.remove();
   }, [navigation]);
 
-  // Render each notification item
-  const renderNotificationItem = ({item}: {item: any}) => (
-    <TouchableOpacity
-      style={styles.notificationItem}
-      onPress={() => {
-        setSelectedNotification(item);
-        setModalVisible(true);
-      }}>
-      <Text style={styles.notificationTitle}>{item.msg_subject}</Text>
-      <Text style={styles.notificationDate}>{item.msg_date}</Text>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginVertical: 15,
-        }}>
-        <TouchableOpacity
-          style={{padding: 8}}
-          onPress={() => navigation.goBack()}>
+      <Image
+        source={require('../assets/corkboard.png')}
+        style={styles.background}
+      />
+
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={() => navigation.navigate('Home' as never)}>
           <Icon
             name="arrow-left"
-            size={28}
-            color={'#000'}
+            size={34}
+            color={'#fff'}
             style={{marginRight: 10}}
           />
         </TouchableOpacity>
-        <Text style={styles.header}>Notification</Text>
+        <Text style={styles.headerText}>Messages</Text>
       </View>
 
-      {/* List of Notifications */}
       <FlatList
         data={notifications}
-        renderItem={renderNotificationItem}
-        keyExtractor={item => item.id.toString()}
-        contentContainerStyle={styles.listContainer}
-      />
+        keyExtractor={item => item.id}
+        numColumns={2}
+        contentContainerStyle={[styles.listContainer, {marginTop: hp('5%')}]}
+        renderItem={({item, index}) => (
+          <View
+            style={[
+              styles.note,
+              {
+                backgroundColor: getRandomColor(index),
+                transform: [{rotate: `${index % 2 === 0 ? '-3deg' : '3deg'}`}],
+              },
+            ]}>
+            <Text style={styles.title}>{item.msg_subject}</Text>
+            <Text style={styles.message}>{item.msg_message}</Text>
 
-      {/* Modal to Display Notification Details */}
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            {/* Modal Header */}
-            <View style={styles.titleCtr}>
-              <Text style={styles.modalTitle}>Message</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Icon name="close" size={20} color={'#000'} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Notification Content */}
-            <View style={styles.notificationContentContainer}>
-              {/* Subject Row */}
-              <View style={styles.row}>
-                <Text style={styles.boldTxt}>Subject</Text>
-                <Text style={styles.dataTxt}>
-                  {selectedNotification?.msg_subject}
-                </Text>
-              </View>
-
-              {/* Message Row */}
-              <View style={styles.row}>
-                <Text style={styles.boldTxt}>Message</Text>
-                <Text style={styles.dataTxt}>
-                  {selectedNotification?.msg_message}
-                </Text>
-              </View>
-            </View>
-
-            {/* Close Button */}
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}>
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
+            <Text style={styles.date}>{item.msg_date}</Text>
           </View>
-        </View>
-      </Modal>
+        )}
+      />
     </View>
   );
 };
@@ -150,89 +140,68 @@ export default Std_Notification;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#D1D5DB',
-    padding: 16,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    backgroundColor: 'white',
   },
-  header: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#1F2937',
+  background: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   listContainer: {
-    paddingBottom: 20,
+    paddingTop: 30,
+    paddingBottom: 100,
   },
-  notificationItem: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 16,
-    marginVertical: 8,
-    elevation: 2,
+  note: {
+    padding: 15,
+    width: 160,
+    height: 120,
+    margin: 10,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: {width: 4, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
   },
-  notificationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  notificationDate: {
+  title: {
+    fontWeight: 'bold',
     fontSize: 14,
-    color: '#6B7280',
-    marginTop: 4,
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  date: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    fontSize: 12,
+    color: '#555',
   },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 16,
-    width: '90%',
-    maxHeight: '80%',
-  },
-  titleCtr: {
+  headerContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    width: '100%',
+    paddingHorizontal: wp('5%'),
+    paddingVertical: hp('2%'),
+    position: 'absolute',
+    top: hp('2%'),
+    left: 0,
+    zIndex: 1,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1F2937',
+  backButton: {
+    width: 25,
+    height: 25,
+    tintColor: 'white',
   },
-  notificationContentContainer: {
-    marginVertical: 16,
+  headerText: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    color: 'white',
+    marginLeft: wp('3%'),
   },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  boldTxt: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    flex: 1, // Takes 50% of the row
-  },
-  dataTxt: {
-    fontSize: 16,
-    color: '#4B5563',
-    flex: 1, // Takes 50% of the row
-    marginLeft: 8, // Adds spacing between label and data
-  },
-  closeButton: {
-    marginTop: 16,
-    padding: 10,
-    backgroundColor: '#3B82F6',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+  message: {
+    fontSize: 12,
+    color: '#444',
+    marginTop: 5,
   },
 });

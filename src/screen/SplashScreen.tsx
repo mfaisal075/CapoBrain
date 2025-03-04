@@ -1,4 +1,4 @@
-import {Image, StyleSheet, View} from 'react-native';
+import {Image, StyleSheet, View, Text} from 'react-native';
 import React from 'react';
 import {
   widthPercentageToDP as wp,
@@ -19,6 +19,9 @@ const SplashScreen = () => {
           style={styles.logo}
           resizeMode="contain"
         />
+      </View>
+      <View style={styles.versionCtr}>
+        <Text style={styles.version}>Version 1.03.4</Text>
       </View>
     </View>
   );
@@ -45,5 +48,13 @@ const styles = StyleSheet.create({
   logo: {
     width: 180,
     height: 180,
+  },
+  versionCtr: {
+    position: 'absolute',
+    bottom: 10,
+  },
+  version: {
+    fontSize: 16,
+    color: '#fff',
   },
 });

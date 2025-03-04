@@ -99,7 +99,6 @@ const Home = ({navigation}: any) => {
       style={{backgroundColor: 'white'}}>
       <View style={styles.header}>
         {/* profile user icon*/}
-
         <View style={{position: 'absolute', right: 5, top: 10}}>
           <TouchableOpacity
             style={styles.optContainer}
@@ -328,7 +327,7 @@ const Home = ({navigation}: any) => {
                 style={{
                   fontSize: 13,
                 }}>
-                Notification
+                Message
               </Text>
             </View>
           </TouchableOpacity>
@@ -376,6 +375,7 @@ const Home = ({navigation}: any) => {
           </TouchableOpacity>
         </View>
       </View>
+
       {/*news*/}
       <TouchableOpacity onPress={() => navigation.navigate('StdUpdate')}>
         <View style={styles.update}>
@@ -397,7 +397,7 @@ const Home = ({navigation}: any) => {
               alignSelf: 'center',
               fontSize: 20,
             }}>
-            School Updates
+            Announcements
           </Text>
           <Image
             style={{
@@ -412,6 +412,7 @@ const Home = ({navigation}: any) => {
         </View>
       </TouchableOpacity>
 
+      {/* Footer */}
       <View style={styles.footer}>
         <Text style={{color: '#3b82f6', fontSize: RFPercentage(2)}}>
           Developed with ❤️ by: Technic Mentors

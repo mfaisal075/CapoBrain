@@ -1,6 +1,8 @@
 import {
   BackHandler,
+  Dimensions,
   Image,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,37 +13,59 @@ import {
 import React, {useEffect, useState} from 'react';
 import NavBar from '../../components/NavBar';
 import {DataTable} from 'react-native-paper';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLContentModel,
+  HTMLElementModel,
+} from 'react-native-render-html';
 
 const TimeTable = ({navigation}: any) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [page, setPage] = useState<number>(0);
-  const [numberOfItemsPerPageList] = useState([10, 50, 100]);
-  const [itemsPerPage, onItemsPerPageChange] = useState(
-    numberOfItemsPerPageList[0],
-  );
+  const {token} = useUser();
 
-  const [items] = useState([
-    {
-      sr: 1,
-      branch: 'Main Branch',
-      class: 'Play Group',
-      teacher: 'Isra',
-      section: 'A',
-      startTime: '08:00 AM',
-      endTime: '09:00 PM',
-    },
-  ]);
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetchtimetablereport',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        console.log('Fetched Data: ', response.data.output);
 
-  const filteredItems = items.filter(item =>
-    Object.values(item).some(value =>
-      String(value).toLowerCase().includes(searchQuery.toLowerCase()),
-    ),
-  );
+        return response.data.output;
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    } else {
+      throw new Error('User is not authenticated');
+    }
+  };
 
-  const from = page * itemsPerPage;
-  const to = Math.min((page + 1) * itemsPerPage, items.length);
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true, // Fetch new data when screen is focused
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
 
   useEffect(() => {
+    fetchData();
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -52,152 +76,92 @@ const TimeTable = ({navigation}: any) => {
       backAction,
     );
 
-    setPage(0);
     return () => backHandler.remove();
-  }, [itemsPerPage]);
+  }, []);
   return (
     <View style={styles.container}>
       {/* Navbar */}
       <NavBar />
 
-      <View style={styles.accountContainer}>
-        <View style={styles.actHeadingContainer}>
-          <Text style={styles.tblHdCtr}>Time Table</Text>
-        </View>
+      <ScrollView>
+        <View style={styles.accountContainer}>
+          <View style={styles.actHeadingContainer}>
+            <Text style={styles.tblHdCtr}>Time Table</Text>
+          </View>
 
-        {/* Back Button */}
-        <View style={styles.bckBtnCtr}>
-          <TouchableOpacity
-            style={styles.bckBtn}
-            onPress={() => navigation.goBack()}>
-            <Image
-              source={require('../../assets/back.png')}
-              style={[styles.bckBtnIcon, {marginRight: -8}]}
-            />
-            <Image
-              source={require('../../assets/back.png')}
-              style={styles.bckBtnIcon}
-            />
-            <Text style={styles.bckBtnText}>Dashboard</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search..."
-            placeholderTextColor="#888"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-
-        {/* Table */}
-        <View style={styles.tblDataCtr}>
-          <ScrollView horizontal>
-            <DataTable>
-              <DataTable.Header>
-                {[
-                  'Sr#',
-                  'Branch',
-                  'Class',
-                  'Teacher',
-                  'Section',
-                  'Start Time',
-                  'End Time',
-                ].map((title, index) => (
-                  <DataTable.Title
-                    key={index}
-                    textStyle={{
-                      color: 'black',
-                      fontSize: 14,
-                      fontWeight: 'bold',
-                    }}
-                    style={{
-                      width: index === 0 ? 50 : 125, // Reduced width for the first header
-                      paddingHorizontal: 5,
-                      borderColor: '#000',
-                      borderWidth: 0.5,
-                      backgroundColor: '#F0F0F0',
-                    }}>
-                    {title}
-                  </DataTable.Title>
-                ))}
-              </DataTable.Header>
-
-              {filteredItems.length > 0 ? (
-                filteredItems.slice(from, to).map((item, index) => (
-                  <DataTable.Row key={index}>
-                    {[
-                      item.sr,
-                      item.branch,
-                      item.class,
-                      item.teacher,
-                      item.section,
-                      item.startTime,
-                      item.endTime,
-                    ].map((value, idx) => (
-                      <DataTable.Cell
-                        key={idx}
-                        textStyle={{color: '#000', fontSize: 12}}
-                        style={{
-                          width: idx === 0 ? 50 : 125, // Reduced width for the first cell
-                          paddingHorizontal: 5,
-                          borderColor: '#000',
-                          borderWidth: 0.5,
-                        }}>
-                        {value}
-                      </DataTable.Cell>
-                    ))}
-                  </DataTable.Row>
-                ))
-              ) : (
-                <DataTable.Row>
-                  <DataTable.Cell
-                    textStyle={{
-                      color: 'gray',
-                      fontSize: 16,
-                      fontWeight: 'bold',
-                    }}
-                    style={{
-                      width: '100%',
-                      paddingHorizontal: 5,
-                      borderColor: '#000',
-                      borderWidth: 0.5,
-                      justifyContent: 'center',
-                    }}>
-                    No data found
-                  </DataTable.Cell>
-                </DataTable.Row>
-              )}
-
-              <DataTable.Pagination
-                page={page}
-                numberOfPages={Math.ceil(filteredItems.length / itemsPerPage)}
-                onPageChange={page => setPage(page)}
-                label={`${from + 1}-${to} of ${filteredItems.length}`}
-                numberOfItemsPerPageList={numberOfItemsPerPageList}
-                numberOfItemsPerPage={itemsPerPage}
-                onItemsPerPageChange={onItemsPerPageChange}
-                showFastPaginationControls
-                selectPageDropdownLabel={'Show Entries'}
-                theme={{
-                  colors: {
-                    primary: '#000',
-                    elevation: {
-                      level2: '#fff',
-                    },
-                    text: '#616161',
-                    onSurface: '#616161',
-                  },
-                  dark: false,
-                  roundness: 1,
-                }}
+          {/* Back Button */}
+          <View style={styles.bckBtnCtr}>
+            <TouchableOpacity
+              style={styles.bckBtn}
+              onPress={() => navigation.goBack()}>
+              <Image
+                source={require('../../assets/back.png')}
+                style={[styles.bckBtnIcon, {marginRight: -8}]}
               />
-            </DataTable>
-          </ScrollView>
+              <Image
+                source={require('../../assets/back.png')}
+                style={styles.bckBtnIcon}
+              />
+              <Text style={styles.bckBtnText}>Dashboard</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Table */}
+          <View style={styles.tblDataCtr}>
+            <ScrollView
+              horizontal
+              style={{flex: 1, padding: 10}}
+              refreshControl={
+                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+              }>
+              {data ? (
+                <RenderHtml
+                  contentWidth={Dimensions.get('window').width}
+                  source={{html: data}}
+                  customHTMLElementModels={customHTMLElementModels}
+                  tagsStyles={{
+                    table: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: '100%',
+                      marginLeft: -10,
+                    },
+                    th: {
+                      backgroundColor: '#f2f2f2',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      marginHorizontal: -5,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      width: 125, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -10,
+                      marginTop: -2 - 4,
+                    },
+                    td: {
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      paddingVertical: 0,
+                      paddingHorizontal: 6,
+                      textAlign: 'center',
+                      width: 100, // Adjust width as needed
+                      height: 50,
+                      justifyContent: 'center',
+                      marginBottom: -3,
+                    },
+                    tr: {
+                      backgroundColor: '#fff',
+                    },
+                  }}
+                />
+              ) : null}
+            </ScrollView>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 };
@@ -230,7 +194,7 @@ const styles = StyleSheet.create({
   },
   tblDataCtr: {
     marginTop: 10,
-    height: 'auto',
+    height: 'auto', // Set a fixed height for testing
     width: '100%',
     padding: 10,
   },

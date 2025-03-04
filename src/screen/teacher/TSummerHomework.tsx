@@ -6,18 +6,26 @@ import {
   TextInput,
   Modal,
   BackHandler,
+  Dimensions,
+  RefreshControl,
+  ScrollView,
+  Image,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import NavBar from '../../components/NavBar';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
+import {useQuery} from '@tanstack/react-query';
+import RenderHtml, {
+  HTMLContentModel,
+  HTMLElementModel,
+} from 'react-native-render-html';
 
 const TSummerHomework = ({navigation}: any) => {
-  const [classOpen, setClassOpen] = useState(false);
-  const [classValue, setClassValue] = useState(null);
-  const [sectionOpen, setSectionOpen] = useState(false);
-  const [sectionValue, setSectionValue] = useState(null);
+  const {token} = useUser();
   const [hwModalVisible, setHwModalVisible] = useState(false);
   const [branchOpen, setBranchOpen] = useState(false);
   const [branchValue, setBranchValue] = useState(null);
@@ -31,6 +39,44 @@ const TSummerHomework = ({navigation}: any) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [totalMarks, setTotalMarks] = useState('');
   const [desc, setDesc] = useState('');
+
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          `https://demo.capobrain.com/fetchhomework?_token=${token}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        return response.data.output;
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    } else {
+      throw new Error('User is not Authenticated');
+    }
+  };
+
+  const {data, refetch, isFetching} = useQuery({
+    queryKey: ['tableData'],
+    queryFn: fetchData,
+    refetchOnWindowFocus: true,
+  });
+
+  const customHTMLElementModels = {
+    center: HTMLElementModel.fromCustomModel({
+      tagName: 'center',
+      mixedUAStyles: {
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      contentModel: HTMLContentModel.block,
+    }),
+  };
 
   const onChange = ({event, selectedDate}: any) => {
     setShowDatePicker(false); // Hide the picker
@@ -47,9 +93,9 @@ const TSummerHomework = ({navigation}: any) => {
   };
 
   const classItems: {label: string; value: string}[] = [];
-  const sectionItems: {label: string; value: string}[] = [];
 
   useEffect(() => {
+    refetch();
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -66,70 +112,138 @@ const TSummerHomework = ({navigation}: any) => {
     <View style={styles.container}>
       <NavBar />
 
-      <View style={styles.accountContainer}>
-        <View style={styles.actHeadingContainer}>
-          <Text style={styles.tblHdCtr}>Summer Homework List</Text>
-        </View>
+      <ScrollView>
+        <View style={styles.accountContainer}>
+          <View style={styles.actHeadingContainer}>
+            <Text style={styles.tblHdCtr}>Summer Homework List</Text>
+          </View>
 
-        {/* Picker Container */}
-        <View style={styles.pickerCtr}>
-          <View style={[styles.picker, {marginTop: 10}]}>
-            <Text style={styles.text}>Class</Text>
-            <DropDownPicker
-              open={classOpen}
-              value={classValue}
-              setOpen={setClassOpen}
-              setValue={setClassValue}
-              placeholder="Select Class"
-              items={classItems}
-              style={{
-                borderColor: 'transparent',
-                backgroundColor: 'transparent',
-                borderRadius: 10,
-              }}
-              dropDownContainerStyle={{
-                borderColor: '#ccc',
-                borderRadius: 10,
-                height: 'auto',
-                zIndex: 100,
-              }}
-            />
-          </View>
-          <View style={[styles.picker, {marginTop: 20, marginBottom: 20}]}>
-            <Text style={styles.text}>Section</Text>
-            <DropDownPicker
-              open={sectionOpen}
-              value={sectionValue}
-              setOpen={setSectionOpen}
-              setValue={setSectionValue}
-              placeholder="Select Class First"
-              items={sectionItems}
-              style={{
-                borderColor: 'transparent',
-                backgroundColor: 'transparent',
-                borderRadius: 10,
-              }}
-              dropDownContainerStyle={{
-                borderColor: '#ccc',
-                borderRadius: 10,
-                height: 'auto',
-              }}
-            />
+          {/* Data Container */}
+          <View style={styles.dataCtr}>
+            <View style={styles.addHWBtnCtr}>
+              <TouchableOpacity style={styles.addHWBtn} onPress={showDialog}>
+                <Text style={styles.addHWBtnTxt}>Add Summer Home Work</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.bckBtn}
+                onPress={() => navigation.goBack()}>
+                <Image
+                  source={require('../../assets/back.png')}
+                  style={[styles.bckBtnIcon, {marginRight: -8}]}
+                />
+                <Image
+                  source={require('../../assets/back.png')}
+                  style={styles.bckBtnIcon}
+                />
+                <Text style={styles.bckBtnText}>Back</Text>
+              </TouchableOpacity>
+            </View>
+            {/* Table */}
+            <View style={styles.tblDataCtr}>
+              <ScrollView
+                horizontal
+                style={{flex: 1, padding: 10}}
+                refreshControl={
+                  <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+                }>
+                {data ? (
+                  <RenderHtml
+                    contentWidth={Dimensions.get('window').width}
+                    source={{html: data}}
+                    customHTMLElementModels={customHTMLElementModels}
+                    tagsStyles={{
+                      h4: {
+                        fontSize: 20,
+                        fontWeight: 'bold',
+                        color: '#000',
+                        textAlign: 'center',
+                      },
+                      table: {
+                        borderWidth: 1,
+                        borderColor: '#ddd',
+                        width: '100%',
+                        marginLeft: -10,
+                      },
+                      th: {
+                        backgroundColor: '#f2f2f2',
+                        paddingVertical: 0,
+                        paddingHorizontal: 1,
+                        marginHorizontal: -5,
+                        fontWeight: 'bold',
+                        textAlign: 'center',
+                        borderWidth: 1,
+                        borderColor: '#ddd',
+                        width: 145, // Adjust width as needed
+                        height: 50,
+                        justifyContent: 'center',
+                        marginBottom: -10,
+                        marginTop: -10,
+                      },
+                      td: {
+                        borderWidth: 1,
+                        borderColor: '#ddd',
+                        paddingVertical: 0,
+                        paddingHorizontal: 6,
+                        textAlign: 'center',
+                        width: 100, // Adjust width as needed
+                        height: 50,
+                        justifyContent: 'center',
+                        marginBottom: -1,
+                        borderBottomColor: 'white',
+                      },
+                      tr: {
+                        backgroundColor: '#fff',
+                        marginLeft: -3,
+                      },
+                      h6: {
+                        marginVertical: 0,
+                        textAlign: 'center',
+                      },
+                      span: {
+                        backgroundColor: 'gray', // Green background (Approved)
+                        color: '#fff', // White text
+                        paddingHorizontal: 8,
+                        paddingVertical: 4,
+                        borderRadius: 4,
+                        fontSize: 12,
+                        fontWeight: 'bold',
+                        textAlign: 'center',
+                        alignSelf: 'center', // Center the badge
+                      },
+                      center: {
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      },
+                      a: {
+                        backgroundColor: 'green',
+                        paddingHorizontal: 10,
+                        paddingVertical: 5,
+                        borderRadius: 5,
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        textDecorationLine: 'none',
+                      },
+                    }}
+                  />
+                ) : (
+                  <View style={styles.attendanceCtr}>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: '500',
+                        color: 'rgba(0,0,0,0.6)',
+                        textAlign: 'center',
+                      }}>
+                      No record present in the database!
+                    </Text>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
           </View>
         </View>
-
-        {/* Data Container */}
-        <View style={styles.dataCtr}>
-          <View style={styles.addHWBtnCtr}>
-            <TouchableOpacity style={styles.addHWBtn} onPress={showDialog}>
-              <Text style={styles.addHWBtnTxt}>Add Summer Home Work</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.innerDataCtr}>
-            <Text style={styles.noDataTxt}>No record present in database!</Text>
-          </View>
-        </View>
-      </View>
+      </ScrollView>
 
       {/* Modal */}
       <Modal
@@ -398,14 +512,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  bckBtn: {
+    backgroundColor: '#5A6268',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bckBtnText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  bckBtnIcon: {
+    height: 16,
+    width: 16,
+    tintColor: '#fff',
+    marginRight: 5,
+  },
 
   // Picker Container Styling
-  pickerCtr: {
-    height: 'auto',
-    width: '100%',
-    paddingVertical: 5,
-    paddingHorizontal: '5%',
-  },
   picker: {
     height: 40,
     marginTop: 20,
@@ -424,37 +551,26 @@ const styles = StyleSheet.create({
   },
   dataCtr: {
     width: '100%',
-    height: 300,
   },
   addHWBtnCtr: {
-    width: '90%',
+    width: '95%',
     flexDirection: 'row-reverse',
     marginTop: 20,
   },
   addHWBtn: {
-    width: '55%',
+    width: '50%',
     height: 40,
     backgroundColor: '#28A745',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 5,
-    borderRadius: 10,
+    borderRadius: 5,
+    marginLeft: 5
   },
   addHWBtnTxt: {
     fontSize: 12,
     color: '#fff',
     fontWeight: '600',
-  },
-  innerDataCtr: {
-    width: '100%',
-    height: '100%',
-    paddingHorizontal: '5%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  noDataTxt: {
-    fontSize: 18,
-    color: 'gray',
   },
 
   //Modal Styling
@@ -470,11 +586,6 @@ const styles = StyleSheet.create({
     right: 5,
     top: -50,
   },
-  datePickerContainer: {
-    marginTop: 20,
-    marginBottom: 10,
-    width: '80%',
-  },
   saveBtn: {
     backgroundColor: '#28A745',
     paddingHorizontal: 15,
@@ -487,5 +598,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  tblDataCtr: {
+    marginTop: 10,
+    height: 'auto',
+    width: '100%',
+    padding: 10,
+  },
+  attendanceCtr: {
+    height: 'auto',
+    width: '100%',
+    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
