@@ -1,17 +1,39 @@
 import {
   BackHandler,
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect} from 'react';
-import NavBar from '../../components/NavBar';
+import React, {useEffect, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from 'react-native-responsive-screen';
 
 const ParentChat = ({navigation}: any) => {
+  const [messages, setMessages] = useState<
+    {id: number; text: string; sender: 'me' | 'other'}[]
+  >([]);
+  const [inputText, setInputText] = useState('');
+
+  const sendMessage = () => {
+    if (!inputText.trim()) return;
+
+    const newMessage: {id: number; text: string; sender: 'me' | 'other'} = {
+      id: messages.length + 1,
+      text: inputText,
+      sender: 'me',
+    };
+
+    setMessages([...messages, newMessage]);
+    setInputText('');
+  };
+
   useEffect(() => {
     const backAction = () => {
       navigation.goBack();
@@ -26,54 +48,118 @@ const ParentChat = ({navigation}: any) => {
     return () => backHandler.remove();
   }, []);
   return (
-    <View style={styles.container}>
-      <NavBar />
-
-      <View style={styles.accountContainer}>
-        <View style={styles.actHeadingContainer}>
-          {/* Avatar with Online Mark and Name */}
-          <View style={styles.userInfo}>
-            <View style={styles.avatarContainer}>
-              <Image
-                source={require('../../assets/avatar.png')} // Replace with actual avatar image
-                style={styles.avatar}
-              />
-              {/* Online Status */}
-              <View style={styles.onlineMark} />     
-            </View>
-            <View style={styles.userTextContainer}>
-              <Text style={styles.userName}>Abdullah</Text>
-              <Text style={styles.onlineText}>Online</Text>
-            </View>
-          </View>
-
-          {/* Dashboard Button */}
-          <TouchableOpacity
-            style={styles.bckBtn}
-            onPress={() => navigation.goBack()}>
-            <Image
-              source={require('../../assets/back.png')}
-              style={[styles.bckBtnIcon, {marginRight: -8}]}
+    <View style={{flex: 1, backgroundColor: 'white'}}>
+      <ScrollView style={{flex: 1}}>
+        <View
+          style={{
+            backgroundColor: '#3b82f6',
+            flexDirection: 'row',
+            padding: 10,
+            alignItems: 'center',
+          }}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Icon
+              name="arrow-left"
+              size={38}
+              color={'#fff'}
+              style={{paddingHorizontal: 10}}
             />
-            <Image
-              source={require('../../assets/back.png')}
-              style={styles.bckBtnIcon}
-            />
-            <Text style={styles.bckBtnText}>Dashboard</Text>
           </TouchableOpacity>
-        </View>
-      </View>
+          <Image
+            style={{width: 40, height: 40, marginRight: 10,}}
+            source={require('../../assets/avatar.png')}
+          />
 
-      {/* Chat Input Container */}
-      <View style={styles.chatInputContainer}>
+          <View style={{flexDirection: 'column'}}>
+            <Text
+              style={{
+                color: 'white',
+                fontWeight: 'bold',
+              }}>
+              Iftikhar
+            </Text>
+            <Text
+              style={{
+                color: 'white',
+              }}>
+              Online
+            </Text>
+          </View>
+        </View>
+
+        {messages.map(message => (
+          <View
+            key={message.id}
+            style={[
+              styles.messageBubble,
+              message.sender === 'me' ? styles.myMessage : styles.otherMessage,
+            ]}>
+            <Text style={{color: message.sender === 'me' ? 'black' : 'black'}}>
+              Name
+            </Text>
+            <Text style={{color: message.sender === 'me' ? 'white' : 'black'}}>
+              {message.text}
+            </Text>
+            <Text
+              style={{
+                color: message.sender === 'me' ? 'black' : 'black',
+                textAlign: 'right',
+              }}>
+              3:30PM
+            </Text>
+          </View>
+        ))}
+      </ScrollView>
+
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: '#F8F9FA',
+          paddingVertical: 10,
+          paddingHorizontal: 10,
+          borderTopWidth: 1,
+          borderColor: 'gray',
+        }}>
         <TextInput
-          style={styles.textInput}
-          placeholder="Type a message..."
-          placeholderTextColor="#7D7D7D"
-          cursorColor={'#000'}
+          style={{
+            flex: 1,
+            backgroundColor: 'white',
+            borderWidth: 1,
+            borderColor: 'gray',
+            borderRadius: 5,
+            paddingHorizontal: 10,
+            color: 'black',
+            height: hp('6%'),
+          }}
+          placeholder="Type something"
+          placeholderTextColor="gray"
+          value={inputText}
+          onChangeText={setInputText}
         />
-        <TouchableOpacity style={styles.sendButton}>
-          <Icon name="send" size={30} color={'#fff'} />
+
+        <TouchableOpacity onPress={sendMessage}>
+          <View
+            style={{
+              backgroundColor: '#3b82f6',
+              borderRadius: 5,
+              width: 44,
+              height: 36,
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginLeft: 10,
+            }}>
+            <Image
+              style={{
+                width: 25,
+                height: 25,
+                alignSelf: 'center',
+                tintColor: 'white',
+                marginLeft: 5,
+              }}
+              source={require('../../assets/send.png')}
+            />
+          </View>
         </TouchableOpacity>
       </View>
     </View>
@@ -83,113 +169,28 @@ const ParentChat = ({navigation}: any) => {
 export default ParentChat;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#D1D5DB',
-  },
-  accountContainer: {
-    width: '90%',
-    backgroundColor: '#fff',
+  messageBubble: {
+    padding: 10,
     borderRadius: 10,
-    marginTop: 10,
-    marginBottom: 10,
-    marginHorizontal: '5%',
-    padding: 10,
+    marginBottom: 5,
+    maxWidth: '70%',
+    marginTop: 6,
   },
-  actHeadingContainer: {
-    height: 60,
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 10,
+  myMessage: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#3b82f6',
+    marginRight: 10,
   },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatarContainer: {
-    position: 'relative',
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  onlineMark: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 12,
-    height: 12,
-    backgroundColor: 'green',
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  userTextContainer: {
+  otherMessage: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#E0E0E0',
     marginLeft: 10,
   },
-  userName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  onlineText: {
-    fontSize: 12,
-    color: 'green',
-  },
-  bckBtn: {
-    backgroundColor: '#5A6268',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 5,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  bckBtnText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  bckBtnIcon: {
-    height: 16,
-    width: 16,
-    tintColor: '#fff',
-    marginRight: 5,
-  },
-
-  // Chat Input Container
-  chatInputContainer: {
-    height: 80,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 10,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: -2},
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
-  },
-  textInput: {
-    flex: 1,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: '#333',
-    height: 50,
-  },
-  sendButton: {
-    backgroundColor: '#007BFF',
-    padding: 10,
-    borderRadius: 50,
-    marginLeft: 10,
+  backButton: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+    tintColor: 'white',
+    marginLeft: 3,
   },
 });

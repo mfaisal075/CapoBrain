@@ -21,7 +21,7 @@ const SplashScreen = () => {
         />
       </View>
       <View style={styles.versionCtr}>
-        <Text style={styles.version}>Version 1.03.4</Text>
+        <Text style={styles.version}>Version 1.03.8</Text>
       </View>
     </View>
   );

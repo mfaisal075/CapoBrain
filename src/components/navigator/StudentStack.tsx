@@ -21,6 +21,7 @@ import StdComplain from '../../screen/StdComplain';
 import StdSports from '../../screen/StdSports';
 import StdUpdate from '../../screen/StdUpdate';
 import ProfileScreen from '../../screen/ProfileScreen';
+import Feedback from '../../screen/Feedback';
 
 const Stack = createNativeStackNavigator();
 
@@ -121,6 +122,11 @@ const StudentStack = () => {
       <Stack.Screen
         name="StdUpdate"
         component={StdUpdate}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Feedback"
+        component={Feedback}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

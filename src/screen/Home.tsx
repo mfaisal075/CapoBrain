@@ -376,7 +376,7 @@ const Home = ({navigation}: any) => {
         </View>
       </View>
 
-      {/*news*/}
+      {/*Announcement & Feedback*/}
       <TouchableOpacity onPress={() => navigation.navigate('StdUpdate')}>
         <View style={styles.update}>
           <Image
@@ -398,6 +398,41 @@ const Home = ({navigation}: any) => {
               fontSize: 20,
             }}>
             Announcements
+          </Text>
+          <Image
+            style={{
+              width: 50,
+              height: 50,
+              alignSelf: 'center',
+              tintColor: 'white',
+              marginRight: hp('2%'),
+            }}
+            source={require('../assets/arrowc.png')}
+          />
+        </View>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('Feedback' as never)}>
+        <View style={[styles.update, {marginBottom: hp('4%')}]}>
+          <Image
+            style={{
+              width: 30,
+              height: 30,
+              marginLeft: hp('2%'),
+              alignSelf: 'center',
+              tintColor: 'white',
+            }}
+            source={require('../assets/feedback.png')}
+          />
+          <Text
+            style={{
+              color: 'white',
+              fontWeight: 'bold',
+              marginLeft: hp('1%'),
+              alignSelf: 'center',
+              fontSize: 20,
+            }}>
+            Feedback
           </Text>
           <Image
             style={{
@@ -494,7 +529,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: hp('5%'),
+    marginBottom: hp('1%'),
   },
   footer: {
     position: 'absolute',

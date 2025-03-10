@@ -1,8 +1,7 @@
 import {
   BackHandler,
-  Dimensions,
+  FlatList,
   Image,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,16 +9,21 @@ import {
   View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
-import NavBar from '../components/NavBar';
 import DropDownPicker from 'react-native-dropdown-picker';
-import {Avatar} from 'react-native-paper';
 import {useUser} from '../Ctx/UserContext';
 import axios from 'axios';
-import {useQuery} from '@tanstack/react-query';
-import RenderHtml, {
-  HTMLContentModel,
-  HTMLElementModel,
-} from 'react-native-render-html';
+import {heightPercentageToDP as hp} from 'react-native-responsive-screen';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+
+interface TableRow {
+  sr: string | number;
+  subject: string;
+  examType: string;
+  totalMarks: string;
+  obtainMarks: string;
+  percentage: string;
+  grade: string;
+}
 
 interface UserData {
   id: number;
@@ -44,10 +48,54 @@ interface UserData {
 }
 
 const Result = ({navigation}: any) => {
-  const [open, setOpen] = useState(false);
-  const [value, setValue] = useState<string | null>(null);
   const {token} = useUser();
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState<string | null>(null);
+  const originalData: TableRow[] = [
+    {
+      sr: '1',
+      subject: 'Pakistan Studies',
+      examType: 'First Term',
+      totalMarks: '50',
+      obtainMarks: '50',
+      percentage: '100%',
+      grade: 'A+',
+    },
+    {
+      sr: 'Total',
+      subject: '',
+      examType: '',
+      totalMarks: '50',
+      obtainMarks: '50',
+      percentage: '100%',
+      grade: 'A+',
+    },
+  ];
+
+  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+
+  const items = [
+    {label: 'Select Exams Type Filter', value: ''},
+    {label: 'Mids', value: 'Mids'},
+    {label: 'Annual', value: 'Annual'},
+    {label: 'Mid', value: 'Mid'},
+    {label: 'Final', value: 'Final'},
+    {label: 'MID TERM', value: 'MID'},
+    {label: 'ANNUAL TERM', value: 'ANNUAL%20TERM'},
+    {label: 'MOCK TEST', value: 'MOCK%20TEST'},
+    {label: 'Grand Test', value: 'Grand%20test'},
+    {label: 'December Test', value: 'december%20test'},
+    {label: 'Phase Test', value: 'phase%20test'},
+    {label: 'Annualism', value: 'Annualism'},
+  ];
+
+  const studentInfo = [
+    {key: 'Student Name', value: userData?.candidate.cand_name},
+    {key: 'Father Name', value: userData?.parent.par_fathername},
+    {key: 'Class', value: userData?.class.cls_name},
+    {key: 'Section', value: userData?.section.sec_name},
+  ];
 
   const fetchData = async (examType: string | null | undefined = null) => {
     if (token) {
@@ -81,42 +129,6 @@ const Result = ({navigation}: any) => {
     }
   };
 
-  const {data, refetch, isFetching} = useQuery({
-    queryKey: ['tableData', value], // Include value in the query key
-    queryFn: () => fetchData(value), // Pass the selected exam type to fetchData
-    refetchOnWindowFocus: true,
-  });
-
-  useEffect(() => {
-    refetch();
-  }, [value, refetch]);
-
-  const customHTMLElementModels = {
-    center: HTMLElementModel.fromCustomModel({
-      tagName: 'center',
-      mixedUAStyles: {
-        alignItems: 'center',
-        textAlign: 'center',
-      },
-      contentModel: HTMLContentModel.block,
-    }),
-  };
-
-  const examItems = [
-    {label: 'Select Exams Type Filter', value: ''},
-    {label: 'Mids', value: 'Mids'},
-    {label: 'Annual', value: 'Annual'},
-    {label: 'Mid', value: 'Mid'},
-    {label: 'Final', value: 'Final'},
-    {label: 'MID TERM', value: 'MID'},
-    {label: 'ANNUAL TERM', value: 'ANNUAL%20TERM'},
-    {label: 'MOCK TEST', value: 'MOCK%20TEST'},
-    {label: 'Grand Test', value: 'Grand%20test'},
-    {label: 'December Test', value: 'december%20test'},
-    {label: 'Phase Test', value: 'phase%20test'},
-    {label: 'Annualism', value: 'Annualism'},
-  ];
-
   useEffect(() => {
     fetchData();
     const backAction = () => {
@@ -133,156 +145,138 @@ const Result = ({navigation}: any) => {
   }, []);
 
   return (
-    <View style={styles.container}>
-      {/* NavBar */}
-      <NavBar />
-      <ScrollView nestedScrollEnabled>
-        <View style={styles.accountContainer}>
-          <View style={styles.actHeadingContainer}>
-            <Text style={styles.tblHdCtr}>Results</Text>
-          </View>
+    <View style={{backgroundColor: 'white', flex: 1}}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate('Home' as never)}>
+          <Icon
+            name="arrow-left"
+            size={38}
+            color={'#fff'}
+            style={{paddingHorizontal: 10}}
+          />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Results</Text>
+      </View>
 
-          {/* Back Button */}
-          <View style={styles.bckBtnCtr}>
-            <TouchableOpacity
-              style={styles.bckBtn}
-              onPress={() => navigation.goBack()}>
-              <Image
-                source={require('../assets/back.png')}
-                style={[styles.bckBtnIcon, {marginRight: -8}]}
-              />
-              <Image
-                source={require('../assets/back.png')}
-                style={styles.bckBtnIcon}
-              />
-              <Text style={styles.bckBtnText}>Dashboard</Text>
-            </TouchableOpacity>
-          </View>
+      <View
+        style={{flexDirection: 'column', marginTop: 10, marginHorizontal: 10}}>
+        <Text
+          style={{
+            fontSize: 18,
+            textAlign: 'center',
+            marginVertical: 5,
+            fontWeight: '600',
+          }}>
+          {userData?.school.scl_institute_name}
+        </Text>
+        <Text style={{fontSize: 16, textAlign: 'center'}}>
+          {userData?.bra.bra_name}
+        </Text>
+        <View style={styles.examPickerCtr}>
+          <DropDownPicker
+            listMode="SCROLLVIEW"
+            open={open}
+            value={value}
+            setOpen={setOpen}
+            setValue={setValue}
+            placeholder="Select Exams Type Filter"
+            items={items}
+            style={{
+              borderColor: 'transparent',
+              backgroundColor: 'transparent',
+              borderRadius: 10,
+            }}
+            dropDownContainerStyle={{
+              borderColor: '#ccc',
+              borderRadius: 10,
+              height: 180,
+            }}
+            onChangeValue={selectedValue => {
+              setValue(selectedValue);
+            }}
+          />
+        </View>
+      </View>
 
-          {/* Student Details */}
-          <View style={styles.resultsCtr}>
-            <View style={styles.headingCtr}>
-              <Text style={styles.rsltHeading}>
-                {userData?.school.scl_institute_name}
-              </Text>
-              <Text style={styles.branchText}>{userData?.bra.bra_name}</Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginTop: 10,
+          marginBottom: 5,
+        }}>
+        <FlatList
+          data={studentInfo}
+          keyExtractor={item => item.key}
+          renderItem={({item}) => (
+            <View style={styles.infoRow}>
+              <Text style={styles.text}>{item.key}:</Text>
+              <Text style={styles.value}>{item.value}</Text>
             </View>
-            <View style={styles.examPickerCtr}>
-              <DropDownPicker
-                listMode="SCROLLVIEW"
-                open={open}
-                value={value}
-                setOpen={setOpen}
-                setValue={setValue}
-                placeholder="Select Exams Type Filter"
-                items={examItems}
-                style={{
-                  borderColor: 'transparent',
-                  backgroundColor: 'transparent',
-                  borderRadius: 10,
-                }}
-                dropDownContainerStyle={{
-                  borderColor: '#ccc',
-                  borderRadius: 10,
-                  height: 180,
-                }}
-                onChangeValue={selectedValue => {
-                  setValue(selectedValue);
-                }}
-              />
-            </View>
-            <View style={styles.stdDetails}>
-              <View style={styles.detailsCtr}>
-                <Text style={styles.stdDetailsText}>Student Name:</Text>
-                <Text style={styles.stdDetailsText}>Father Name:</Text>
-                <Text style={styles.stdDetailsText}>Class:</Text>
-                <Text style={styles.stdDetailsText}>Section:</Text>
-              </View>
-              <View style={styles.detailsCtr}>
-                <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
-                  {userData?.candidate.cand_name}
-                </Text>
-                <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
-                  {userData?.parent.par_fathername}
-                </Text>
-                <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
-                  {userData?.class.cls_name}
-                </Text>
-                <Text style={[styles.stdDetailsText, {fontWeight: '500'}]}>
-                  {userData?.section.sec_name}
-                </Text>
-              </View>
-              <View style={styles.picCtr}>
-                <Avatar.Image
-                  size={90}
-                  source={require('../assets/avatar.png')}
-                />
-              </View>
-            </View>
-          </View>
+          )}
+        />
 
-          <View style={styles.tblDataCtr}>
-            <ScrollView
-              horizontal
-              style={{flex: 1, padding: 10}}
-              refreshControl={
-                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
-              }>
-              {data ? (
-                <RenderHtml
-                  contentWidth={Dimensions.get('window').width}
-                  source={{html: data}}
-                  customHTMLElementModels={customHTMLElementModels}
-                  tagsStyles={{
-                    h4: {
-                      fontSize: 20,
-                      fontWeight: 'bold',
-                      color: '#000',
-                    },
-                    table: {
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      width: '100%',
-                      marginLeft: -10,
-                    },
-                    th: {
-                      backgroundColor: '#f2f2f2',
-                      paddingVertical: 0,
-                      paddingHorizontal: 6,
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      width: 100, // Adjust width as needed
-                      height: 50,
-                      justifyContent: 'center',
-                      marginBottom: -10,
-                    },
-                    td: {
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      paddingVertical: 0,
-                      paddingHorizontal: 6,
-                      textAlign: 'center',
-                      width: 100, // Adjust width as needed
-                      height: 50,
-                      justifyContent: 'center',
-                      marginBottom: -3,
-                    },
-                    tr: {
-                      marginTop: 2,
-                    },
-                    h6: {
-                      marginVertical: 0,
-                      textAlign: 'center',
-                    },
-                  }}
-                />
-              ) : null}
-            </ScrollView>
-          </View>
+        <Image
+          style={styles.studentImage}
+          source={require('../assets/avatar.png')}
+        />
+      </View>
+
+      {/* Table */}
+      <ScrollView
+        horizontal
+        style={{marginBottom: hp('5%')}}
+        contentContainerStyle={{flexGrow: 0.8}}>
+        <View>
+          <FlatList
+            style={styles.flatList}
+            data={tableData}
+            nestedScrollEnabled
+            keyExtractor={(item, index) =>
+              item.sr ? item.sr.toString() : index.toString()
+            }
+            ListHeaderComponent={() => (
+              <View style={styles.row}>
+                {[
+                  'Sr#',
+                  'Subject',
+                  'Exam Type',
+                  'Total Marks',
+                  'Obtain Marks',
+                  'Percentage',
+                  'Grade',
+                ].map(header => (
+                  <Text key={header} style={[styles.column, styles.headTable]}>
+                    {header}
+                  </Text>
+                ))}
+              </View>
+            )}
+            renderItem={({item, index}) => (
+              <View
+                style={[
+                  styles.row,
+                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                ]}>
+                <Text style={styles.column}>{item.sr}</Text>
+                <Text style={styles.column}>{item.subject}</Text>
+                <Text style={styles.column}>{item.examType}</Text>
+                <Text style={styles.column}>{item.totalMarks}</Text>
+                <Text style={styles.column}>{item.obtainMarks}</Text>
+                <Text style={styles.column}>{item.percentage}</Text>
+                <Text style={styles.column}>{item.grade}</Text>
+              </View>
+            )}
+          />
         </View>
       </ScrollView>
+      <View style={{bottom: hp('2%')}}>
+        <Text style={styles.label}>Teacher Review for Student:</Text>
+        <Text style={styles.valueText}>
+          Outstanding performance! Continue to excel.
+        </Text>
+      </View>
     </View>
   );
 };
@@ -290,86 +284,78 @@ const Result = ({navigation}: any) => {
 export default Result;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#D1D5DB',
-  },
-  accountContainer: {
-    height: 'auto',
-    width: '90%',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    marginTop: 10,
-    marginBottom: 10,
-    marginHorizontal: '5%',
-  },
-  actHeadingContainer: {
-    height: 50,
-    width: '100%',
-    justifyContent: 'center',
-    paddingLeft: 20,
-  },
-  tblHdCtr: {
-    fontSize: 18,
+  text: {
     fontWeight: 'bold',
+    width: '50%',
   },
-  bckBtnCtr: {
-    height: 50,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    paddingRight: 20,
+  value: {
+    width: '50%',
   },
-  bckBtn: {
-    backgroundColor: '#5A6268',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 5,
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  bckBtnText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  bckBtnIcon: {
-    height: 16,
-    width: 16,
-    tintColor: '#fff',
-    marginRight: 5,
-  },
-  attendanceCtr: {
-    height: 'auto',
-    width: '100%',
-    padding: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  // Results Styles
-  resultsCtr: {
-    width: 'auto',
-    height: 'auto',
-  },
-  headingCtr: {
-    paddingHorizontal: 20,
     paddingVertical: 10,
-    justifyContent: 'center',
+    backgroundColor: '#3b82f6',
   },
-  rsltHeading: {
+  backButton: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+    tintColor: 'white',
+    marginLeft: 10,
+  },
+  headerText: {
     textAlign: 'center',
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'rgba(0,0,0,0.6)',
-  },
-  branchText: {
+    flex: 1,
     fontSize: 20,
-    fontWeight: '500',
-    color: 'rgba(0,0,0,0.6)',
-    marginLeft: 30,
-    marginTop: 15,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  dropdown: {
+    borderWidth: 1,
+    borderColor: '#d5d5d9',
+    borderRadius: 5,
+    minHeight: 30,
+    marginLeft: 20,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+    marginLeft: 20,
+    marginBottom: 5,
+  },
+  studentImage: {
+    width: 80,
+    height: 80,
+    alignSelf: 'center',
+    marginRight: 20,
+  },
+  flatList: {
+    margin: 10,
+    flex: 1,
+  },
+  row: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+  },
+  column: {
+    width: 100,
+    padding: 5,
     textAlign: 'center',
+  },
+  headTable: {
+    fontWeight: 'bold',
+    backgroundColor: '#3b82f6',
+    color: 'white',
+  },
+  label: {
+    fontWeight: 'bold',
+    marginLeft: hp('1%'),
+  },
+  valueText: {
+    marginLeft: hp('1%'),
   },
   examPickerCtr: {
     width: '90%',
@@ -380,38 +366,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
     borderWidth: 1,
-  },
-  stdDetails: {
-    width: '100%',
-    height: 'auto',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginTop: 10,
-  },
-  detailsCtr: {
-    width: '35%',
-    height: 'auto',
-    flexDirection: 'column',
-    marginTop: 10,
-  },
-  stdDetailsText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 8,
-  },
-  picCtr: {
-    width: '30%',
-    height: 'auto',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tblDataCtr: {
-    marginTop: 10,
-    marginBottom: 20,
-    height: 'auto',
-    width: '100%',
-    padding: 10,
+    marginBottom: 5,
   },
 });

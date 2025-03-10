@@ -1,8 +1,6 @@
 import {
-  BackHandler,
-  Dimensions,
+  FlatList,
   Image,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,165 +8,42 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {useUser} from '../../Ctx/UserContext';
-import axios from 'axios';
+import React, {useState} from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
-import {FlatList} from 'react-native';
+import Modal from 'react-native-modal';
+import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 type TableRow = {
   sr: string;
+  studentId: string;
   student: string;
+  branch: string;
   class: string;
   section: string;
-  status: string;
-  date: string;
+  action: string;
 };
 
-const ParentAttendance = ({navigation}: any) => {
-  const {token} = useUser();
+const Feedback = ({navigation}: any) => {
+  const itemz = [
+    {label: 'Feedback', value: 1},
+    {label: 'Review', value: 2},
+  ];
+  const [isOpn, setIsOpn] = useState(false);
+
   const [isOpen, setIsOpen] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
 
   const originalData: TableRow[] = [
     {
       sr: '1',
+      studentId: 'GCGS1124S001',
       student: 'Ayesha Zumar',
-      class: 'Nursery',
+      branch: 'Main Branch',
+      class: 'Five',
       section: 'A',
-      status: 'Present',
-      date: '14-11-2024',
-    },
-    {
-      sr: '2',
-      student: 'Nayab Fatimah',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '14-11-2024',
-    },
-    {
-      sr: '3',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '16-11-2024',
-    },
-    {
-      sr: '4',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '16-11-2024',
-    },
-    {
-      sr: '5',
-      student: 'Nayab Fatimah',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '18-11-2024',
-    },
-    {
-      sr: '6',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '19-11-2024',
-    },
-    {
-      sr: '7',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '20-11-2024',
-    },
-    {
-      sr: '8',
-      student: 'Nayab Fatimah',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '21-11-2024',
-    },
-    {
-      sr: '9',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '22-11-2024',
-    },
-    {
-      sr: '10',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '23-11-2024',
-    },
-    {
-      sr: '11',
-      student: 'Nayab Fatimah',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '24-11-2024',
-    },
-    {
-      sr: '12',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '26-11-2024',
-    },
-    {
-      sr: '13',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '28-11-2024',
-    },
-    {
-      sr: '14',
-      student: 'Nayab Fatimah',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '30-11-2024',
-    },
-    {
-      sr: '15',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '1-12-2024',
-    },
-    {
-      sr: '16',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '4-12-2024',
-    },
-    {
-      sr: '17',
-      student: 'Nayab Fatimah',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '14-12-2024',
+      action: '',
     },
   ];
 
@@ -195,6 +70,7 @@ const ParentAttendance = ({navigation}: any) => {
     }
   };
 
+  const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(tableData.length / entriesPerPage);
 
   const handlePageChange = (page: number) => {
@@ -207,50 +83,22 @@ const ParentAttendance = ({navigation}: any) => {
     (currentPage - 1) * entriesPerPage,
     currentPage * entriesPerPage,
   );
+  {
+    /*view modal*/
+  }
+  const [isModalVisi, setModalVisi] = useState(false);
 
-  const fetchData = async () => {
-    if (token) {
-      try {
-        const response = await axios.get(
-          'https://demo.capobrain.com/fetchchildrenattendance',
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-        // setUserData(response.data);
-
-        return response.data.output;
-      } catch (error) {
-        console.error('Error fetching data', error);
-        throw error; // Ensure the error is thrown so useQuery can handle it
-      }
-    } else {
-      console.log('User is not authenticated');
-      throw new Error('User is not authenticated');
-    }
+  const toggleModl = () => {
+    setModalVisi(!isModalVisi);
   };
-
-  useEffect(() => {
-    fetchData();
-    const backAction = () => {
-      navigation.goBack();
-      return true;
-    };
-
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction,
-    );
-
-    return () => backHandler.remove();
-  }, []);
-
   return (
-    <View style={{backgroundColor: 'white', flex: 1}}>
+    <View
+      style={{
+        backgroundColor: 'white',
+        flex: 1,
+      }}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.navigate('Home' as never)}>
           <Icon
             name="arrow-left"
             size={38}
@@ -258,15 +106,26 @@ const ParentAttendance = ({navigation}: any) => {
             style={{paddingHorizontal: 10}}
           />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Attendance</Text>
+        <Text style={styles.headerText}>Feedback</Text>
       </View>
 
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: 10,
-        }}>
+      <View style={{width: 150, marginTop: 10}}>
+        <DropDownPicker
+          items={itemz}
+          open={isOpn}
+          setOpen={setIsOpn}
+          value={entriesPerPage}
+          setValue={callback => {
+            setEntriesPerPage(prev =>
+              typeof callback === 'function' ? callback(prev) : callback,
+            );
+          }}
+          maxHeight={200}
+          placeholder="Feedback"
+          style={styles.dropdown}
+        />
+      </View>
+      <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
         <View style={{width: 80, marginTop: 9}}>
           <DropDownPicker
             items={items}
@@ -306,15 +165,19 @@ const ParentAttendance = ({navigation}: any) => {
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
-                {['Sr#', 'Student', 'Class', 'Section', 'Status', 'Date'].map(
-                  header => (
-                    <Text
-                      key={header}
-                      style={[styles.column, styles.headTable]}>
-                      {header}
-                    </Text>
-                  ),
-                )}
+                {[
+                  'Sr#',
+                  'Student ID',
+                  'Student',
+                  'Branch',
+                  'Class',
+                  'Section',
+                  'Action',
+                ].map(header => (
+                  <Text key={header} style={[styles.column, styles.headTable]}>
+                    {header}
+                  </Text>
+                ))}
               </View>
             )}
             renderItem={({item, index}) => (
@@ -324,11 +187,19 @@ const ParentAttendance = ({navigation}: any) => {
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
                 <Text style={styles.column}>{item.sr}</Text>
+                <Text style={styles.column}>{item.studentId}</Text>
                 <Text style={styles.column}>{item.student}</Text>
+                <Text style={styles.column}>{item.branch}</Text>
                 <Text style={styles.column}>{item.class}</Text>
                 <Text style={styles.column}>{item.section}</Text>
-                <Text style={styles.column}>{item.status}</Text>
-                <Text style={styles.column}>{item.date}</Text>
+                <TouchableOpacity
+                  style={styles.iconContainer}
+                  onPress={toggleModl}>
+                  <Image
+                    style={styles.actionIcon}
+                    source={require('../assets/visible.png')}
+                  />
+                </TouchableOpacity>
               </View>
             )}
           />
@@ -353,11 +224,109 @@ const ParentAttendance = ({navigation}: any) => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* View Modal */}
+      <Modal isVisible={isModalVisi}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'white',
+            width: 'auto',
+            maxHeight: 300,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: '#6C757D',
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              margin: 20,
+            }}>
+            <Text style={{color: '#6C757D', fontSize: 18}}>
+              Feedback Detail
+            </Text>
+
+            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
+              <Text style={{color: '#6C757D'}}>✖</Text>
+            </TouchableOpacity>
+          </View>
+          <View
+            style={{
+              height: 1,
+              backgroundColor: 'gray',
+              width: wp('90%'),
+            }}
+          />
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              margin: 10,
+            }}>
+            <View
+              style={{
+                flexDirection: 'row',
+              }}>
+              <Text style={styles.lblText}>Name</Text>
+              <Text style={styles.valueText}>Ayesha Zumar</Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                marginRight: 50,
+              }}>
+              <Text style={styles.lblText}>Class</Text>
+              <Text style={styles.valueText}>Nursery</Text>
+            </View>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              margin: 10,
+            }}>
+            <View
+              style={{
+                flexDirection: 'row',
+              }}>
+              <Text style={styles.lblText}>Section</Text>
+              <Text style={styles.valueText}>A</Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                marginRight: 20,
+              }}>
+              <Text style={styles.lblText}>Added By</Text>
+              <Text style={styles.valueText}>Teacher</Text>
+            </View>
+          </View>
+
+          <View
+            style={{
+              marginLeft: 10,
+              marginTop: 10,
+              flexDirection: 'row',
+            }}>
+            <Text style={styles.lblText}>Date</Text>
+            <Text style={styles.valueText}>06-03-2025</Text>
+          </View>
+          <View
+            style={{
+              marginLeft: 10,
+              marginTop: 10,
+            }}>
+            <Text style={styles.lblText}>Feedback:</Text>
+            <Text style={styles.valueText}>Intelligent Student</Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
 
-export default ParentAttendance;
+export default Feedback;
 
 const styles = StyleSheet.create({
   container: {
@@ -386,7 +355,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
   },
   column: {
-    width: 140,
+    width: 130,
     padding: 5,
     textAlign: 'center',
   },
@@ -443,5 +412,24 @@ const styles = StyleSheet.create({
   flatList: {
     margin: 10,
     flex: 1,
+  },
+  lblText: {
+    fontWeight: 'bold',
+    marginRight: 10,
+  },
+  valueText: {
+    marginRight: 10,
+  },
+  iconContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 100,
+    height: 30,
+  },
+  actionIcon: {
+    width: 20,
+    height: 20,
+    tintColor: '#3b82f6',
+    marginLeft: 15,
   },
 });

@@ -1,8 +1,7 @@
 import {
   BackHandler,
-  Dimensions,
+  FlatList,
   Image,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,15 +9,14 @@ import {
   View,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
-import NavBar from '../components/NavBar';
 import {useUser} from '../Ctx/UserContext';
 import axios from 'axios';
-import {useQuery} from '@tanstack/react-query';
-import RenderHtml, {
-  HTMLContentModel,
-  HTMLElementModel,
-} from 'react-native-render-html';
-import {useFocusEffect} from '@react-navigation/native';
+import {TextInput} from 'react-native';
+import DropDownPicker from 'react-native-dropdown-picker';
+import Modal from 'react-native-modal';
+import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
+// import YoutubePlayer from 'react-native-youtube-iframe';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface Item {
   sr: number;
@@ -29,9 +27,90 @@ interface Item {
   action: string;
 }
 
+type TableRow = {
+  sr: string;
+  branch: string;
+  class: string;
+  subject: string;
+  action: string;
+};
+
 const LMS = ({navigation}: any) => {
-  const [items] = useState<Item[]>([]);
+  // const [items] = useState<Item[]>([]);
   const {token} = useUser();
+
+  const originalData: TableRow[] = [
+    {
+      sr: '1',
+      branch: 'Main Branch',
+      class: 'Three',
+      subject: 'English',
+      action: '',
+    },
+  ];
+  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const items = [
+    {label: '10', value: 10},
+    {label: '25', value: 25},
+    {label: '50', value: 50},
+    {label: '100', value: 100},
+  ];
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    if (text.trim() === '') {
+      setTableData(originalData);
+    } else {
+      const filtered = originalData.filter(item =>
+        Object.values(item).some(value =>
+          String(value).toLowerCase().includes(text.toLowerCase()),
+        ),
+      );
+      setTableData(filtered);
+    }
+  };
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(tableData.length / entriesPerPage);
+
+  const handlePageChange = (page: number) => {
+    if (page > 0 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const currentEntries = tableData.slice(
+    (currentPage - 1) * entriesPerPage,
+    currentPage * entriesPerPage,
+  );
+
+  {
+    /*view modal*/
+  }
+  const [isModalVisi, setModalVisi] = useState(false);
+
+  const toggleModl = () => {
+    setModalVisi(!isModalVisi);
+  };
+  const [playing, setPlaying] = useState(false);
+
+  const onStateChange = useCallback((state: string) => {
+    if (state === 'ended') {
+      setPlaying(false);
+    }
+  }, []);
+
+  const studentInfo = [
+    {key: 'Class', value: 'Three'},
+    {key: 'Section', value: 'A'},
+    {key: 'Subject', value: 'English'},
+    {key: 'Date', value: '2025-02-26'},
+  ];
 
   const fetchData = async () => {
     if (token) {
@@ -55,30 +134,8 @@ const LMS = ({navigation}: any) => {
     }
   };
 
-  const {data, refetch, isFetching} = useQuery({
-    queryKey: ['tableData'],
-    queryFn: fetchData,
-    refetchOnWindowFocus: true, // Fetch new data when screen is focused
-  });
-
-  const customHTMLElementModels = {
-    center: HTMLElementModel.fromCustomModel({
-      tagName: 'center',
-      mixedUAStyles: {
-        alignItems: 'center',
-        textAlign: 'center',
-      },
-      contentModel: HTMLContentModel.block,
-    }),
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      refetch();
-    }, [refetch]),
-  );
-
   useEffect(() => {
+    fetchData();
     const backAction = () => {
       navigation.navigate('Home');
       return true;
@@ -92,157 +149,360 @@ const LMS = ({navigation}: any) => {
     return () => backHandler.remove();
   }, []);
   return (
-    <View style={styles.container}>
-      {/* NavBar */}
-      <NavBar />
-      <ScrollView>
-        <View style={styles.accountContainer}>
-          <View style={styles.actHeadingContainer}>
-            <Text style={styles.tblHdCtr}>Lecture</Text>
-          </View>
+    <View style={{backgroundColor: 'white', flex: 1}}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate('Home' as never)}>
+          <Icon
+            name="arrow-left"
+            size={38}
+            color={'#fff'}
+            style={{paddingHorizontal: 10}}
+          />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Lecture</Text>
+      </View>
 
-          {/* Buttons Container  */}
-          <View style={styles.bckBtnCtr}>
-            <TouchableOpacity
-              style={styles.bckBtn}
-              onPress={() => navigation.navigate('Home')}>
-              <Image
-                source={require('../assets/back.png')}
-                style={[styles.bckBtnIcon, {marginRight: -8}]}
-              />
-              <Image
-                source={require('../assets/back.png')}
-                style={styles.bckBtnIcon}
-              />
-              <Text style={styles.bckBtnText}>Dashboard</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.bckBtn, {backgroundColor: '#3B82F6'}]}
-              onPress={() => navigation.navigate('SummerHomework')}>
-              <Text style={styles.bckBtnText}>Summer Homework</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.bckBtn,
-                {backgroundColor: '#3B82F6', marginTop: 10},
-              ]}
-              onPress={() => navigation.navigate('SummerHomeworkResult')}>
-              <Text style={styles.bckBtnText}>Summer Homework Result</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.bckBtn,
-                {backgroundColor: '#3B82F6', marginTop: 10},
-              ]}
-              onPress={() => navigation.navigate('LibraryBooks')}>
-              <Text style={styles.bckBtnText}>Library Books</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.bckBtn,
-                {backgroundColor: '#3B82F6', marginTop: 10},
-              ]}
-              onPress={() => navigation.navigate('StudentDiary')}>
-              <Text style={styles.bckBtnText}>Daily Diary</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.bckBtn,
-                {backgroundColor: '#3B82F6', marginTop: 10},
-              ]}
-              onPress={() => navigation.navigate('DateSheet')}>
-              <Text style={styles.bckBtnText}>Date Sheet</Text>
-            </TouchableOpacity>
-          </View>
+      {/**buttons row */}
+      <View
+        style={{
+          flexDirection: 'column',
+          marginLeft: 62,
+          marginBottom: 20,
+          alignItems: 'flex-end',
+        }}>
+        <View style={{flexDirection: 'row'}}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('SummerHomework' as never)}>
+            <View
+              style={{
+                width: 160,
+                height: 30,
+                backgroundColor: '#0069D9',
+                marginTop: 10,
+                borderRadius: 5,
+                marginRight: 10,
+              }}>
+              <Text
+                style={{
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: 15,
+                  textAlign: 'center',
+                  marginTop: 3,
+                }}>
+                Summer HomeWork
+              </Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('SummerHomeworkResult' as never)
+            }>
+            <View
+              style={{
+                width: 200,
+                height: 30,
+                backgroundColor: '#0069D9',
+                marginTop: 10,
+                borderRadius: 5,
+                marginRight: 10,
+              }}>
+              <Text
+                style={{
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: 15,
+                  textAlign: 'center',
+                  marginTop: 3,
+                }}>
+                Summer HomeWork Result
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
 
-          {/* Table */}
-          <View style={{width: '100%'}}>
-            <ScrollView
-              horizontal
-              style={{flex: 1, padding: 10}}
-              refreshControl={
-                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
-              }>
-              {data ? (
-                <RenderHtml
-                  contentWidth={Dimensions.get('window').width}
-                  source={{html: data}}
-                  customHTMLElementModels={customHTMLElementModels}
-                  tagsStyles={{
-                    h4: {
-                      fontSize: 20,
-                      fontWeight: 'bold',
-                      color: '#000',
-                    },
-                    table: {
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      width: '100%',
-                      marginLeft: -10,
-                    },
-                    th: {
-                      backgroundColor: '#f2f2f2',
-                      paddingVertical: 0,
-                      paddingHorizontal: 6,
-                      marginHorizontal: -5,
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      width: 100, // Adjust width as needed
-                      height: 50,
-                      justifyContent: 'center',
-                      marginBottom: -10,
-                    },
-                    td: {
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      paddingVertical: 0,
-                      paddingHorizontal: 6,
-                      textAlign: 'center',
-                      width: 90, // Adjust width as needed
-                      height: 50,
-                      justifyContent: 'center',
-                      marginBottom: -3,
-                    },
-                    tr: {
-                      backgroundColor: '#fff',
-                    },
-                    h6: {
-                      marginVertical: 0,
-                      textAlign: 'center',
-                    },
-                    span: {
-                      backgroundColor: '#28a745', // Green background (Approved)
-                      color: '#fff', // White text
-                      paddingHorizontal: 8,
-                      paddingVertical: 4,
-                      borderRadius: 4,
-                      fontSize: 12,
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                      alignSelf: 'center', // Center the badge
-                    },
-                    center: {
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    },
-                    a: {
-                      backgroundColor: '#3B82F6',
-                      paddingHorizontal: 10,
-                      paddingVertical: 5,
+        <View
+          style={{
+            flexDirection: 'row',
+          }}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('LibraryBooks' as never)}>
+            <View
+              style={{
+                width: 110,
+                height: 30,
+                backgroundColor: '#0069D9',
+                marginTop: 10,
+                borderRadius: 5,
+                marginRight: 10,
+              }}>
+              <Text
+                style={{
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: 15,
+                  textAlign: 'center',
+                  marginTop: 3,
+                }}>
+                Library Books
+              </Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('DateSheet' as never)}>
+            <View
+              style={{
+                width: 90,
+                height: 30,
+                backgroundColor: '#0069D9',
+                marginTop: 10,
+                borderRadius: 5,
+                marginRight: 10,
+              }}>
+              <Text
+                style={{
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: 15,
+                  textAlign: 'center',
+                  marginTop: 3,
+                }}>
+                Date Sheet
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('StudentDiary' as never)}>
+            <View
+              style={{
+                width: 90,
+                height: 30,
+                backgroundColor: '#0069D9',
+                marginTop: 10,
+                borderRadius: 5,
+                marginRight: 10,
+              }}>
+              <Text
+                style={{
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: 15,
+                  textAlign: 'center',
+                  marginTop: 3,
+                }}>
+                Daily Diary
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          marginTop: 10,
+        }}>
+        <View style={{width: 80, marginTop: 9}}>
+          <DropDownPicker
+            items={items}
+            open={isOpen}
+            setOpen={setIsOpen}
+            value={entriesPerPage}
+            setValue={callback => {
+              setEntriesPerPage(prev =>
+                typeof callback === 'function' ? callback(prev) : callback,
+              );
+            }}
+            maxHeight={200}
+            placeholder=""
+            style={styles.dropdown}
+          />
+        </View>
+
+        <View style={styles.container}>
+          <TextInput
+            style={styles.input}
+            placeholder="Search..."
+            placeholderTextColor={'gray'}
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+        </View>
+      </View>
+
+      {/**table */}
+
+      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
+        <View>
+          <FlatList
+            style={{
+              margin: 10,
+              flex: 1,
+            }}
+            scrollEnabled={true}
+            data={currentEntries}
+            keyExtractor={(item, index) => index.toString()}
+            ListHeaderComponent={() => (
+              <View style={styles.row}>
+                <Text
+                  style={[
+                    styles.column,
+                    styles.headTable,
+                    {width: 100},
+                    {padding: 1},
+                  ]}>
+                  Sr#
+                </Text>
+                <Text
+                  style={[
+                    styles.column,
+                    styles.headTable,
+                    {width: 100},
+                    {padding: 1},
+                  ]}>
+                  Branch
+                </Text>
+                <Text
+                  style={[
+                    styles.column,
+                    styles.headTable,
+                    {width: 100},
+                    {padding: 1},
+                  ]}>
+                  Class
+                </Text>
+                <Text
+                  style={[
+                    styles.column,
+                    styles.headTable,
+                    {width: 100},
+                    {padding: 1},
+                  ]}>
+                  Subject
+                </Text>
+                <Text
+                  style={[
+                    styles.column,
+                    styles.headTable,
+                    {width: 100},
+                    {padding: 1},
+                  ]}>
+                  Action
+                </Text>
+              </View>
+            )}
+            renderItem={({item, index}) => (
+              <View
+                style={[
+                  styles.row,
+                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                ]}>
+                <Text style={[styles.column, {width: 100}, {padding: 5}]}>
+                  {item.sr}
+                </Text>
+                <Text style={[styles.column, {width: 100}, {padding: 5}]}>
+                  {item.branch}
+                </Text>
+                <Text style={[styles.column, {width: 100}, {padding: 5}]}>
+                  {item.class}
+                </Text>
+                <Text style={[styles.column, {width: 100}, {padding: 5}]}>
+                  {item.subject}
+                </Text>
+                <TouchableOpacity
+                  style={styles.iconContainer}
+                  onPress={toggleModl}>
+                  <Image
+                    style={styles.actionIcon}
+                    source={require('../assets/visible.png')}
+                  />
+                </TouchableOpacity>
+                <Modal isVisible={isModalVisi}>
+                  <View
+                    style={{
+                      flex: 1,
+                      backgroundColor: 'white',
+                      width: 'auto',
+                      maxHeight: 600,
                       borderRadius: 5,
-                      color: '#fff',
-                      fontWeight: 'bold',
-                    },
-                  }}
-                />
-              ) : null}
-            </ScrollView>
-          </View>
+                      borderWidth: 1,
+                      borderColor: '#6C757D',
+                    }}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        margin: 20,
+                      }}>
+                      <Text style={{color: '#6C757D', fontSize: 18}}>
+                        Show Lecture Detail
+                      </Text>
+
+                      <TouchableOpacity
+                        onPress={() => setModalVisi(!isModalVisi)}>
+                        <Text style={{color: '#6C757D'}}>✖</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <View
+                      style={{
+                        height: 1,
+                        backgroundColor: 'gray',
+                        width: wp('90%'),
+                      }}
+                    />
+
+                    {/* <YoutubePlayer
+                      height={200}
+                      play={playing}
+                      videoId="HACa4b02mu8?si=M4Xh4mFZFyNjCv2Q"
+                      onChangeState={onStateChange}
+                    /> */}
+                    <View style={styles.border}>
+                      <Text style={styles.branch}>Main Branch</Text>
+                      <View style={styles.details}>
+                        <FlatList
+                          data={studentInfo}
+                          keyExtractor={item => item.key}
+                          renderItem={({item}) => (
+                            <View style={styles.infoRow}>
+                              <Text style={styles.text}>{item.key}:</Text>
+                              <Text style={styles.value}>{item.value}</Text>
+                            </View>
+                          )}
+                        />
+                      </View>
+                    </View>
+
+                    <View style={styles.border}>
+                      <Text>Abc</Text>
+                    </View>
+                  </View>
+                </Modal>
+              </View>
+            )}
+          />
         </View>
       </ScrollView>
+
+      <View style={styles.pagination}>
+        <Text>
+          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
+          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
+          {tableData.length} entries
+        </Text>
+        <View style={styles.paginationButtons}>
+          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
+            <Text style={styles.paginationText}>Previous</Text>
+          </TouchableOpacity>
+          <View style={styles.pageNumber}>
+            <Text style={styles.pageText}>{currentPage}</Text>
+          </View>
+          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
+            <Text style={styles.paginationText}>Next</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 };
@@ -251,62 +511,137 @@ export default LMS;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#D1D5DB',
-  },
-  accountContainer: {
-    height: 'auto',
-    width: '90%',
     backgroundColor: '#fff',
-    borderRadius: 10,
-    marginTop: 10,
-    marginBottom: 10,
-    marginHorizontal: '5%',
+    marginTop: 12,
+    width: 90,
+    height: 30,
+    marginRight: 15,
   },
-  actHeadingContainer: {
-    height: 50,
-    width: '100%',
-    justifyContent: 'center',
-    paddingLeft: 20,
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 4,
+    marginBottom: 5,
+    borderRadius: 4,
   },
-  tblHdCtr: {
-    fontSize: 18,
+  item: {
+    borderBottomColor: '#ccc',
+  },
+  row: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+  },
+  column: {
+    width: '33.33%',
+    textAlign: 'center',
+  },
+  headTable: {
     fontWeight: 'bold',
+    backgroundColor: '#3b82f6',
+    color: 'white',
   },
-  tblDataCtr: {
-    marginTop: 10,
-    height: 'auto',
-    width: '100%',
-    padding: 10,
-  },
-  bckBtnCtr: {
-    height: 'auto',
-    width: '100%',
-    justifyContent: 'flex-start', // Align buttons to the right
-    flexDirection: 'row-reverse', // Reverse the direction of the buttons
-    alignItems: 'center',
-    paddingRight: 20,
-    flexWrap: 'wrap',
-  },
-  bckBtn: {
-    backgroundColor: '#5A6268',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 5,
+
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 10, // Add margin to the left to space out buttons
-    marginTop: 10, // Add margin to the top to space out buttons in the next row
+    paddingVertical: 10,
+    backgroundColor: '#3b82f6',
   },
-  bckBtnText: {
-    color: '#fff',
-    fontSize: 12,
+  backButton: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+    tintColor: 'white',
+    marginLeft: 10,
+  },
+  headerText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    flex: 1,
+    textAlign: 'center',
+  },
+  iconContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 60,
+    height: 30,
+  },
+  actionIcon: {
+    width: 20,
+    height: 20,
+    tintColor: '#3b82f6',
+    marginLeft: 40,
+  },
+  lblText: {
+    fontWeight: 'bold',
+    marginRight: 10,
+  },
+  valueText: {
+    marginRight: 10,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  branch: {
+    textAlign: 'center',
+    marginVertical: 10,
     fontWeight: 'bold',
   },
-  bckBtnIcon: {
-    height: 16,
-    width: 16,
-    tintColor: '#fff',
-    marginRight: 5,
+  details: {
+    marginTop: 10,
+  },
+  border: {
+    borderWidth: 1,
+    margin: 5,
+    padding: 5,
+    borderColor: 'gray',
+    borderRadius: 5,
+  },
+  text: {
+    marginLeft: 15,
+  },
+  value: {
+    marginLeft: 10,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  dropdown: {
+    borderWidth: 1,
+    borderColor: '#d5d5d9',
+    borderRadius: 5,
+    minHeight: 30,
+    marginLeft: 10,
+  },
+  pagination: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    margin: 10,
+  },
+  paginationButtons: {
+    flexDirection: 'row',
+  },
+  paginationText: {
+    fontWeight: 'bold',
+  },
+  pageNumber: {
+    width: 22,
+    height: 22,
+    backgroundColor: '#3b82f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+    marginRight: 10,
+  },
+  pageText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });

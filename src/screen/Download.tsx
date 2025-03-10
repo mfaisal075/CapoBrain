@@ -1,8 +1,6 @@
 import {
   BackHandler,
-  Dimensions,
   Image,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,17 +8,97 @@ import {
   View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
-import NavBar from '../components/NavBar';
 import axios from 'axios';
-import {useQuery} from '@tanstack/react-query';
-import RenderHtml, {
-  HTMLContentModel,
-  HTMLElementModel,
-} from 'react-native-render-html';
 import {useUser} from '../Ctx/UserContext';
+import {FlatList} from 'react-native';
+import {TextInput} from 'react-native';
+import DropDownPicker from 'react-native-dropdown-picker';
+import {heightPercentageToDP as hp} from 'react-native-responsive-screen';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+
+const srNumber: number = 5;
+const row = {
+  sr: srNumber.toString(),
+};
+
+interface TableRow {
+  sr: string | number;
+  class: string;
+  section: string;
+  title: string;
+  date: string;
+  action: string;
+}
 
 const Download = ({navigation}: any) => {
   const {token} = useUser();
+  const [downloadData, setDownloadData] = useState<TableRow[]>([
+    {
+      sr: 1,
+      class: 'Three',
+      section: 'A',
+      title: 'BB',
+      date: '07-12-2024',
+      action: '',
+    },
+    {
+      sr: 2,
+      class: 'Three',
+      section: 'A',
+      title: 'Algebra',
+      date: '07-12-2024',
+      action: '',
+    },
+    {
+      sr: 3,
+      class: 'Three',
+      section: 'A',
+      title: 'Algebra',
+      date: '31-12-2024',
+      action: '',
+    },
+  ]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredDownloadData, setFilteredDownloadData] =
+    useState(downloadData);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const items = [
+    {label: '10', value: 10},
+    {label: '25', value: 25},
+    {label: '50', value: 50},
+    {label: '100', value: 100},
+  ];
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    setCurrentPage(1);
+    if (text === '') {
+      setFilteredDownloadData(downloadData);
+    } else {
+      const filtered = downloadData.filter(item =>
+        Object.values(item).some(value =>
+          String(value).toLowerCase().includes(text.toLowerCase()),
+        ),
+      );
+      setFilteredDownloadData(filtered);
+    }
+  };
+
+  const totalPages = Math.ceil(filteredDownloadData.length / entriesPerPage);
+
+  const handlePageChange = (page: number) => {
+    if (page > 0 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const currentEntries = filteredDownloadData.slice(
+    (currentPage - 1) * entriesPerPage,
+    currentPage * entriesPerPage,
+  );
 
   const fetchData = async () => {
     if (token) {
@@ -45,25 +123,8 @@ const Download = ({navigation}: any) => {
     }
   };
 
-  const {data, refetch, isFetching} = useQuery({
-    queryKey: ['tableData'],
-    queryFn: fetchData,
-    refetchOnWindowFocus: true, // Fetch new data when screen is focused
-  });
-
-  const customHTMLElementModels = {
-    center: HTMLElementModel.fromCustomModel({
-      tagName: 'center',
-      mixedUAStyles: {
-        alignItems: 'center',
-        textAlign: 'center',
-      },
-      contentModel: HTMLContentModel.block,
-    }),
-  };
-
   useEffect(() => {
-    refetch();
+    fetchData();
     const backAction = () => {
       navigation.navigate('Home');
       return true;
@@ -78,122 +139,145 @@ const Download = ({navigation}: any) => {
   }, []);
 
   return (
-    <View style={styles.container}>
-      {/* NavBar */}
-      <NavBar />
-      <ScrollView>
-        <View style={styles.accountContainer}>
-          <View style={styles.actHeadingContainer}>
-            <Text style={styles.tblHdCtr}>Download Material</Text>
-          </View>
+    <View style={{backgroundColor: 'white', flex: 1}}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate('Home' as never)}>
+          <Icon
+            name="arrow-left"
+            size={38}
+            color={'#fff'}
+            style={{paddingHorizontal: 10}}
+          />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Download Material</Text>
+      </View>
 
-          {/* Back Button */}
-          <View style={styles.bckBtnCtr}>
-            <TouchableOpacity
-              style={styles.bckBtn}
-              onPress={() => navigation.goBack()}>
-              <Image
-                source={require('../assets/back.png')}
-                style={[styles.bckBtnIcon, {marginRight: -8}]}
-              />
-              <Image
-                source={require('../assets/back.png')}
-                style={styles.bckBtnIcon}
-              />
-              <Text style={styles.bckBtnText}>Dashboard</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Table */}
-          <View style={styles.tblDataCtr}>
-            <ScrollView
-              horizontal
-              style={{flex: 1, padding: 10}}
-              refreshControl={
-                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
-              }>
-              {data ? (
-                <RenderHtml
-                  contentWidth={Dimensions.get('window').width}
-                  source={{html: data}}
-                  customHTMLElementModels={customHTMLElementModels}
-                  tagsStyles={{
-                    h4: {
-                      fontSize: 20,
-                      fontWeight: 'bold',
-                      color: '#000',
-                    },
-                    table: {
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      width: '100%',
-                      marginLeft: -10,
-                    },
-                    th: {
-                      backgroundColor: '#f2f2f2',
-                      paddingVertical: 0,
-                      paddingHorizontal: 6,
-                      marginHorizontal: -5,
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      width: 100, // Adjust width as needed
-                      height: 50,
-                      justifyContent: 'center',
-                      marginBottom: -10,
-                    },
-                    td: {
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      paddingVertical: 0,
-                      paddingHorizontal: 6,
-                      textAlign: 'center',
-                      width: 90, // Adjust width as needed
-                      height: 50,
-                      justifyContent: 'center',
-                      marginBottom: -3,
-                    },
-                    tr: {
-                      backgroundColor: '#fff',
-                    },
-                    h6: {
-                      marginVertical: 0,
-                      textAlign: 'center',
-                    },
-                    span: {
-                      backgroundColor: '#28a745', // Green background (Approved)
-                      color: '#fff', // White text
-                      paddingHorizontal: 8,
-                      paddingVertical: 4,
-                      borderRadius: 4,
-                      fontSize: 12,
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                      alignSelf: 'center', // Center the badge
-                    },
-                    center: {
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    },
-                    a: {
-                      backgroundColor: 'green',
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                      borderRadius: 5,
-                      color: '#fff',
-                      textDecorationLine: 'none',
-                      fontWeight: 'bold',
-                      fontSize: 12,
-                    },
-                  }}
-                />
-              ) : null}
-            </ScrollView>
+      <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+        <View style={{flexDirection: 'row'}}>
+          <View style={{width: 80, marginTop: 9}}>
+            <DropDownPicker
+              items={items}
+              open={isOpen}
+              setOpen={setIsOpen}
+              value={entriesPerPage}
+              setValue={val => val && setEntriesPerPage(val)}
+              maxHeight={200}
+              placeholder=""
+              style={{
+                borderWidth: 1,
+                borderColor: '#d5d5d9',
+                borderRadius: 5,
+                minHeight: 30,
+                marginLeft: hp('1%'),
+              }}
+            />
           </View>
         </View>
+
+        <View style={styles.container}>
+          <TextInput
+            style={styles.input}
+            placeholder="Search..."
+            placeholderTextColor={'gray'}
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+          <FlatList
+            data={filteredDownloadData}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({item}) => (
+              <Text style={styles.item}>{item.title}</Text>
+            )}
+          />
+        </View>
+      </View>
+
+      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
+        <View>
+          <FlatList
+            style={{margin: 10, flex: 1}}
+            data={currentEntries}
+            keyExtractor={(item, index) => index.toString()}
+            ListHeaderComponent={() => (
+              <View style={styles.row}>
+                <Text style={[styles.column, styles.headTable, {width: 100}]}>
+                  Sr#
+                </Text>
+                <Text style={[styles.column, styles.headTable, {width: 150}]}>
+                  Class
+                </Text>
+                <Text style={[styles.column, styles.headTable, {width: 150}]}>
+                  Section
+                </Text>
+                <Text style={[styles.column, styles.headTable, {width: 200}]}>
+                  Title
+                </Text>
+                <Text style={[styles.column, styles.headTable, {width: 150}]}>
+                  Date
+                </Text>
+                <Text style={[styles.column, styles.headTable, {width: 150}]}>
+                  Actions
+                </Text>
+              </View>
+            )}
+            renderItem={({item, index}) => (
+              <View
+                style={[
+                  styles.row,
+                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                ]}>
+                <Text style={[styles.column, {width: 100}]}>{item.sr}</Text>
+                <Text style={[styles.column, {width: 150}]}>{item.class}</Text>
+                <Text style={[styles.column, {width: 150}]}>
+                  {item.section}
+                </Text>
+                <Text style={[styles.column, {width: 200}]}>{item.title}</Text>
+                <Text style={[styles.column, {width: 150}]}>{item.date}</Text>
+                <TouchableOpacity style={styles.iconContainer}>
+                  <Image
+                    style={styles.actionIcon}
+                    source={require('../assets/dpd.png')}
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
+          />
+        </View>
       </ScrollView>
+
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          margin: 10,
+        }}>
+        <Text>
+          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
+          {Math.min(currentPage * entriesPerPage, downloadData.length)} of{' '}
+          {downloadData.length} entries
+        </Text>
+        <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
+            <Text style={{fontWeight: 'bold'}}>Previous</Text>
+          </TouchableOpacity>
+          <View
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: 2,
+              backgroundColor: '#3b82f6',
+              marginLeft: 10,
+              marginRight: 10,
+            }}>
+            <Text style={{textAlign: 'center', color: 'white'}}>
+              {currentPage}
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
+            <Text style={{fontWeight: 'bold'}}>Next</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 };
@@ -202,59 +286,65 @@ export default Download;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#D1D5DB',
-  },
-  accountContainer: {
-    height: 'auto',
-    width: '90%',
     backgroundColor: '#fff',
-    borderRadius: 10,
-    marginTop: 10,
-    marginBottom: 10,
-    marginHorizontal: '5%',
+    marginTop: 12,
+    width: 90,
+    height: 30,
+    marginRight: 10,
   },
-  actHeadingContainer: {
-    height: 50,
-    width: '100%',
-    justifyContent: 'center',
-    paddingLeft: 20,
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 4,
+    marginBottom: 5,
+    borderRadius: 4,
   },
-  tblHdCtr: {
-    fontSize: 18,
+  item: {
+    borderBottomColor: '#ccc',
+  },
+  row: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+  },
+  column: {
+    width: '33.33%',
+    textAlign: 'center',
+  },
+  headTable: {
     fontWeight: 'bold',
+    backgroundColor: '#3b82f6',
+    color: 'white',
   },
-  tblDataCtr: {
-    marginTop: 10,
-    marginBottom: 20,
-    height: 'auto',
-    width: '100%',
-    padding: 10,
-  },
-  bckBtnCtr: {
-    height: 50,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    paddingRight: 20,
-  },
-  bckBtn: {
-    backgroundColor: '#5A6268',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 5,
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 10,
+    backgroundColor: '#3b82f6',
   },
-  bckBtnText: {
-    color: '#fff',
-    fontSize: 14,
+  backButton: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+    tintColor: 'white',
+    marginLeft: 10,
+  },
+  headerText: {
+    fontSize: 20,
     fontWeight: 'bold',
+    color: 'white',
+    flex: 1,
+    textAlign: 'center',
   },
-  bckBtnIcon: {
-    height: 16,
-    width: 16,
-    tintColor: '#fff',
-    marginRight: 5,
+  iconContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 100,
+    height: 30,
+  },
+  actionIcon: {
+    width: 20,
+    height: 20,
+    tintColor: '#3b82f6',
   },
 });

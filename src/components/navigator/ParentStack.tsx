@@ -16,6 +16,11 @@ import ParentHomeWork from '../../screen/parent/ParentHomeWork';
 import ParentApplyLeave from '../../screen/parent/ParentApplyLeave';
 import ParentDownload from '../../screen/parent/ParentDownload';
 import ParentChat from '../../screen/parent/ParentChat';
+import ParentProfile from '../../screen/parent/ParentProfile';
+import ParentAnnouncement from '../../screen/parent/ParentAnnouncement';
+import ParentComplain from '../../screen/parent/ParentComplain';
+import ParentCalendar from '../../screen/parent/ParentCalendar';
+import ParentMessages from '../../screen/parent/ParentMessages';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,6 +30,11 @@ const ParentStack = () => {
       <Stack.Screen
         name="ParentHome"
         component={ParentHome}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ParentProfile"
+        component={ParentProfile}
         options={{headerShown: false}}
       />
       <Stack.Screen
@@ -95,6 +105,26 @@ const ParentStack = () => {
       <Stack.Screen
         name="ParentChat"
         component={ParentChat}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ParentAnnouncement"
+        component={ParentAnnouncement}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ParentComplain"
+        component={ParentComplain}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ParentCalendar"
+        component={ParentCalendar}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ParentMessages"
+        component={ParentMessages}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

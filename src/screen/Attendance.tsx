@@ -1,24 +1,16 @@
 import {
   BackHandler,
-  Dimensions,
-  RefreshControl,
+  FlatList,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
-import NavBar from '../components/NavBar';
-import {Image} from 'react-native';
+import React, {useEffect, useState} from 'react';
 import {useUser} from '../Ctx/UserContext';
 import axios from 'axios';
-import {useQuery} from '@tanstack/react-query';
-import RenderHtml, {
-  HTMLContentModel,
-  HTMLElementModel,
-} from 'react-native-render-html';
-import {useFocusEffect} from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface UserData {
   applicant: {
@@ -32,9 +24,25 @@ interface UserData {
   };
 }
 
+interface TableRow {
+  sr: string;
+  status: string;
+  date: string;
+}
+
 const Attendance = ({navigation}: any) => {
   const {token} = useUser();
   const [userData, setUserData] = useState<UserData | null>(null);
+  const originalData: TableRow[] = [
+    {sr: '1', status: 'Present', date: '03-02-2025'},
+  ];
+  const studentInfo = [
+    {key: 'Student', value: userData?.applicant.cand_name},
+    {key: 'Class', value: userData?.class.cls_name},
+    {key: 'Section', value: userData?.section.sec_name},
+  ];
+
+  const [tableData, setTableData] = useState<TableRow[]>(originalData);
 
   const fetchData = async () => {
     if (token) {
@@ -63,30 +71,8 @@ const Attendance = ({navigation}: any) => {
     }
   };
 
-  const {data, refetch, isFetching} = useQuery({
-    queryKey: ['tableData'],
-    queryFn: fetchData,
-    refetchOnWindowFocus: true, // Fetch new data when screen is focused
-  });
-
-  const customHTMLElementModels = {
-    center: HTMLElementModel.fromCustomModel({
-      tagName: 'center',
-      mixedUAStyles: {
-        alignItems: 'center',
-        textAlign: 'center',
-      },
-      contentModel: HTMLContentModel.block,
-    }),
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      refetch();
-    }, [refetch]),
-  );
-
   useEffect(() => {
+    fetchData();
     // Hardware Back Press
     const backAction = () => {
       navigation.goBack();
@@ -102,115 +88,63 @@ const Attendance = ({navigation}: any) => {
   }, []);
 
   return (
-    <View style={styles.container}>
-      {/* NavBar */}
-      <NavBar />
-      <ScrollView>
-        <View style={styles.accountContainer}>
-          <View style={styles.actHeadingContainer}>
-            <Text style={styles.tblHdCtr}>Student Attendance</Text>
-          </View>
+    <View style={{backgroundColor: 'white', flex: 1}}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate('Home' as never)}>
+          <Icon
+            name="arrow-left"
+            size={38}
+            color={'#fff'}
+            style={{paddingHorizontal: 10}}
+          />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Student Attendance</Text>
+      </View>
 
-          {/* Back Button */}
-          <View style={styles.bckBtnCtr}>
-            <TouchableOpacity
-              style={styles.bckBtn}
-              onPress={() => navigation.goBack()}>
-              <Image
-                source={require('../assets/back.png')}
-                style={[styles.bckBtnIcon, {marginRight: -8}]}
-              />
-              <Image
-                source={require('../assets/back.png')}
-                style={styles.bckBtnIcon}
-              />
-              <Text style={styles.bckBtnText}>Dashboard</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Student Details */}
-          <ScrollView horizontal>
-            <View style={styles.stdDtls}>
-              <View style={styles.headingCtr}>
-                <Text style={styles.heading}>Student Name</Text>
-              </View>
-              <View style={styles.headingCtr}>
-                <Text style={styles.simpleText}>
-                  {userData?.applicant.cand_name}
-                </Text>
-              </View>
-              <View style={styles.headingCtr}>
-                <Text style={styles.heading}>Class</Text>
-              </View>
-              <View style={styles.headingCtr}>
-                <Text style={styles.simpleText}>
-                  {userData?.class.cls_name}
-                </Text>
-              </View>
-              <View style={styles.headingCtr}>
-                <Text style={styles.heading}>Section</Text>
-              </View>
-              <View style={styles.headingCtr}>
-                <Text style={styles.simpleText}>
-                  {userData?.section.sec_name}
-                </Text>
-              </View>
+      <View style={{margin: 10}}>
+        <FlatList
+          data={studentInfo}
+          keyExtractor={item => item.key}
+          renderItem={({item}) => (
+            <View style={styles.infoRow}>
+              <Text style={styles.text}>{item.key}:</Text>
+              <Text style={styles.value}>{item.value}</Text>
             </View>
-          </ScrollView>
+          )}
+        />
+      </View>
 
-          {/* Table */}
-          <View style={styles.tblDataCtr}>
-            <ScrollView
-              horizontal
-              style={{flex: 1, padding: 10}}
-              refreshControl={
-                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
-              }>
-              {data ? (
-                <RenderHtml
-                  contentWidth={Dimensions.get('window').width}
-                  source={{html: data}}
-                  customHTMLElementModels={customHTMLElementModels}
-                  tagsStyles={{
-                    table: {
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      width: '100%',
-                      marginLeft: -10,
-                    },
-                    th: {
-                      backgroundColor: '#f2f2f2',
-                      paddingVertical: 0,
-                      paddingHorizontal: 6,
-                      marginHorizontal: -5,
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      width: 125, // Adjust width as needed
-                      height: 50,
-                      justifyContent: 'center',
-                      marginBottom: -10,
-                    },
-                    td: {
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      paddingVertical: 0,
-                      paddingHorizontal: 6,
-                      textAlign: 'center',
-                      width: 100, // Adjust width as needed
-                      height: 50,
-                      justifyContent: 'center',
-                      marginBottom: -3,
-                    },
-                    tr: {
-                      backgroundColor: '#fff',
-                    },
-                  }}
-                />
-              ) : null}
-            </ScrollView>
-          </View>
+      {/* Table */}
+      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
+        <View>
+          <FlatList
+            style={styles.flatList}
+            data={tableData}
+            nestedScrollEnabled
+            keyExtractor={(item, index) =>
+              item.sr ? item.sr.toString() : index.toString()
+            }
+            ListHeaderComponent={() => (
+              <View style={styles.row}>
+                {['Sr#', 'Status', 'Date'].map(header => (
+                  <Text key={header} style={[styles.column, styles.headTable]}>
+                    {header}
+                  </Text>
+                ))}
+              </View>
+            )}
+            renderItem={({item, index}) => (
+              <View
+                style={[
+                  styles.row,
+                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                ]}>
+                <Text style={styles.column}>{item.sr}</Text>
+                <Text style={styles.column}>{item.status}</Text>
+                <Text style={styles.column}>{item.date}</Text>
+              </View>
+            )}
+          />
         </View>
       </ScrollView>
     </View>
@@ -220,85 +154,59 @@ const Attendance = ({navigation}: any) => {
 export default Attendance;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#D1D5DB',
-  },
-  accountContainer: {
-    height: 'auto',
-    width: '90%',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    marginTop: 10,
-    marginBottom: 10,
-    marginHorizontal: '5%',
-  },
-  actHeadingContainer: {
-    height: 50,
-    width: '100%',
-    justifyContent: 'center',
-    paddingLeft: 20,
-  },
-  tblHdCtr: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  bckBtnCtr: {
-    height: 50,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    paddingRight: 20,
-  },
-  bckBtn: {
-    backgroundColor: '#5A6268',
-    paddingHorizontal: 15,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 10,
-    borderRadius: 5,
-    flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: '#3b82f6',
   },
-  bckBtnText: {
-    color: '#fff',
-    fontSize: 14,
+  backButton: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+    tintColor: 'white',
+    marginLeft: 10,
+  },
+  headerText: {
+    fontSize: 20,
     fontWeight: 'bold',
-  },
-  bckBtnIcon: {
-    height: 16,
-    width: 16,
-    tintColor: '#fff',
-    marginRight: 5,
-  },
-  stdDtls: {
-    height: 50,
-    marginHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 10,
-  },
-  headingCtr: {
-    height: '100%',
-    width: 'auto',
-    borderWidth: 0.5,
-    borderColor: 'gray',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-  },
-  heading: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: 'white',
+    flex: 1,
     textAlign: 'center',
   },
-  simpleText: {
-    fontSize: 16,
-    fontWeight: 'normal',
+  row: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+  },
+  column: {
+    width: 125,
+    padding: 5,
     textAlign: 'center',
   },
-  tblDataCtr: {
-    marginTop: 10,
-    height: 'auto',
-    width: '100%',
+  headTable: {
+    fontWeight: 'bold',
+    backgroundColor: '#3b82f6',
+    color: 'white',
+  },
+  flatList: {
+    margin: 10,
+    flex: 1,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  text: {
+    fontWeight: 'bold',
+    marginLeft: 15,
+    padding: 5,
+    textAlign: 'center',
+  },
+  value: {
+    padding: 5,
+    marginLeft: 10,
+    textAlign: 'center',
   },
 });
