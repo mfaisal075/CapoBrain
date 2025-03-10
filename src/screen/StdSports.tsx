@@ -35,16 +35,15 @@ const StdSports = ({navigation}: any) => {
             },
           },
         );
-
         setSports(response.data.sports);
       } catch (error) {
         console.log(error);
-        throw error;
       }
     } else {
-      throw new Error('User is not Authenticated');
+      console.log('User is not Authenticated');
     }
   };
+
   useEffect(() => {
     fetchData();
     const backAction = () => {

@@ -15,7 +15,7 @@ import {TextInput} from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Modal from 'react-native-modal';
 import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
-// import YoutubePlayer from 'react-native-youtube-iframe';
+import YoutubePlayer from 'react-native-youtube-iframe';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface Item {
@@ -175,18 +175,18 @@ const LMS = ({navigation}: any) => {
             onPress={() => navigation.navigate('SummerHomework' as never)}>
             <View
               style={{
-                width: 160,
+                width: 150,
                 height: 30,
                 backgroundColor: '#0069D9',
                 marginTop: 10,
                 borderRadius: 5,
-                marginRight: 10,
+                marginRight: 2,
               }}>
               <Text
                 style={{
                   color: 'white',
                   fontWeight: 'bold',
-                  fontSize: 15,
+                  fontSize: 14,
                   textAlign: 'center',
                   marginTop: 3,
                 }}>
@@ -211,7 +211,7 @@ const LMS = ({navigation}: any) => {
                 style={{
                   color: 'white',
                   fontWeight: 'bold',
-                  fontSize: 15,
+                  fontSize: 14,
                   textAlign: 'center',
                   marginTop: 3,
                 }}>
@@ -240,7 +240,7 @@ const LMS = ({navigation}: any) => {
                 style={{
                   color: 'white',
                   fontWeight: 'bold',
-                  fontSize: 15,
+                  fontSize: 14,
                   textAlign: 'center',
                   marginTop: 3,
                 }}>
@@ -263,7 +263,7 @@ const LMS = ({navigation}: any) => {
                 style={{
                   color: 'white',
                   fontWeight: 'bold',
-                  fontSize: 15,
+                  fontSize: 14,
                   textAlign: 'center',
                   marginTop: 3,
                 }}>
@@ -287,7 +287,7 @@ const LMS = ({navigation}: any) => {
                 style={{
                   color: 'white',
                   fontWeight: 'bold',
-                  fontSize: 15,
+                  fontSize: 14,
                   textAlign: 'center',
                   marginTop: 3,
                 }}>
@@ -452,12 +452,12 @@ const LMS = ({navigation}: any) => {
                       }}
                     />
 
-                    {/* <YoutubePlayer
+                    <YoutubePlayer
                       height={200}
                       play={playing}
                       videoId="HACa4b02mu8?si=M4Xh4mFZFyNjCv2Q"
                       onChangeState={onStateChange}
-                    /> */}
+                    />
                     <View style={styles.border}>
                       <Text style={styles.branch}>Main Branch</Text>
                       <View style={styles.details}>

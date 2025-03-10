@@ -13,7 +13,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
-// import RNPrint from 'react-native-print';
+import RNPrint from 'react-native-print';
 import {heightPercentageToDP as hp} from 'react-native-responsive-screen';
 
 interface UserData {
@@ -61,36 +61,36 @@ const SummerHomeWorkResult = ({navigation}: any) => {
 
   const [tableData, setTableData] = useState<TableRow[]>(originalData);
 
-  // const silentPrint = async () => {
-  //   if (!selectedPrinter) {
-  //     Alert.alert('Error', 'Must select printer first');
-  //     return;
-  //   }
+  const silentPrint = async () => {
+    if (!selectedPrinter) {
+      Alert.alert('Error', 'Must select printer first');
+      return;
+    }
 
-  //   await RNPrint.print({
-  //     printerURL: selectedPrinter.url,
-  //     html: '<h1>Silent Print</h1>',
-  //   });
-  // };
+    await RNPrint.print({
+      printerURL: selectedPrinter.url,
+      html: '<h1>Silent Print</h1>',
+    });
+  };
 
-  // const printPDF = async () => {
-  //   try {
-  //     const results = await RNHTMLtoPDF.convert({
-  //       html: '<h1>Summer Homework Result</h1><p>No record present in the database!</p>',
-  //       fileName: 'Summer_Homework_Result',
-  //       base64: false,
-  //     });
+  const printPDF = async () => {
+    try {
+      const results = await RNHTMLtoPDF.convert({
+        html: '<h1>Summer Homework Result</h1><p>No record present in the database!</p>',
+        fileName: 'Summer_Homework_Result',
+        base64: false,
+      });
 
-  //     if (results.filePath) {
-  //       await RNPrint.print({filePath: results.filePath});
-  //     } else {
-  //       Alert.alert('Error', 'Failed to generate PDF');
-  //     }
-  //   } catch (error) {
-  //     console.error('PDF Generation Error:', error);
-  //     Alert.alert('Error', 'Something went wrong while generating the PDF.');
-  //   }
-  // };
+      if (results.filePath) {
+        await RNPrint.print({filePath: results.filePath});
+      } else {
+        Alert.alert('Error', 'Failed to generate PDF');
+      }
+    } catch (error) {
+      console.error('PDF Generation Error:', error);
+      Alert.alert('Error', 'Something went wrong while generating the PDF.');
+    }
+  };
   const studentInfo = [
     {key: 'Student Name', value: userData?.student.cand_name},
     {key: 'Father Name', value: userData?.parent.par_fathername},
@@ -204,7 +204,7 @@ const SummerHomeWorkResult = ({navigation}: any) => {
           />
         </View>
       </ScrollView>
-      <TouchableOpacity onPress={() => {}}>
+      <TouchableOpacity onPress={() => printPDF()}>
         <View style={styles.printButton}>
           <Icon name="printer" size={18} color={'#fff'} />
           <Text style={styles.printText}>Print</Text>

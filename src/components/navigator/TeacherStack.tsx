@@ -16,6 +16,9 @@ import TeacherTodos from '../../screen/teacher/TeacherTodos';
 import TeacherDownload from '../../screen/teacher/TeacherDownload';
 import TeacherUpload from '../../screen/teacher/TeacherUpload';
 import TeacherDateSheet from '../../screen/teacher/TeacherDateSheet';
+import TeacherProfile from '../../screen/teacher/TeacherProfile';
+import TeacherAnnouncement from '../../screen/teacher/TeacherAnnouncement';
+import TeacherFeedback from '../../screen/teacher/TeacherFeedback';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,6 +28,11 @@ const TeacherStack = () => {
       <Stack.Screen
         name="TeacherHome"
         component={TeacherHome}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="TeacherProfile"
+        component={TeacherProfile}
         options={{headerShown: false}}
       />
       <Stack.Screen
@@ -95,6 +103,16 @@ const TeacherStack = () => {
       <Stack.Screen
         name="TeacherDateSheet"
         component={TeacherDateSheet}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="TeacherAnnouncement"
+        component={TeacherAnnouncement}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="TeacherFeedback"
+        component={TeacherFeedback}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

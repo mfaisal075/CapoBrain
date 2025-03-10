@@ -378,6 +378,7 @@ const ParentAccount = ({navigation}: any) => {
 
   useEffect(() => {
     balanceFetch();
+    fetchData();
     const backAction = () => {
       navigation.goBack();
       return true;

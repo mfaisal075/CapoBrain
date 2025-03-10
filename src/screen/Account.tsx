@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
   TextInput,
+  KeyboardAvoidingView,
 } from 'react-native';
 import {useUser} from '../Ctx/UserContext';
 import axios from 'axios';
@@ -15,7 +16,7 @@ import {FlatList} from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Modal from 'react-native-modal';
 import ViewShot from 'react-native-view-shot';
-// import RNPrint from 'react-native-print';
+import RNPrint from 'react-native-print';
 import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -79,10 +80,10 @@ const Account = ({navigation}: any) => {
     setModalVisible(!isModalVisible);
   };
 
-  // const captureAndPrint = async () => {
-  //   const uri = await viewShotRef.current.capture();
-  //   await RNPrint.print({filePath: uri});
-  // };
+  const captureAndPrint = async () => {
+    const uri = await viewShotRef.current.capture();
+    await RNPrint.print({filePath: uri});
+  };
 
   const originalData: TableRow[] = [
     {
@@ -307,7 +308,7 @@ const Account = ({navigation}: any) => {
               <Text style={styles.value}>{item.value}</Text>
             </View>
           )}
-        />{' '}
+        />
       </View>
 
       <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
@@ -534,14 +535,14 @@ const Account = ({navigation}: any) => {
                 </TouchableOpacity>
               </View>
             )}
-          />{' '}
+          />
         </View>
       </ScrollView>
 
       <View style={styles.pagination}>
         <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
-          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
+          Showing {(currentPage - 1) * entriesPerPage + 1} to
+          {Math.min(currentPage * entriesPerPage, tableData.length)} of
           {tableData.length} entries
         </Text>
         <View style={styles.paginationButtons}>
@@ -559,165 +560,150 @@ const Account = ({navigation}: any) => {
 
       {/* Modal */}
       <Modal isVisible={isModalVisible}>
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: 'white',
-            width: 'auto',
-            maxHeight: 'auto',
-            borderRadius: 5,
-            borderWidth: 1,
-            borderColor: '#6C757D',
-          }}>
-          <ViewShot ref={viewShotRef}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                margin: 20,
-              }}>
-              <Text style={{color: '#6C757D', fontSize: 18}}>Fee Challan</Text>
-
-              <TouchableOpacity
-                onPress={() => setModalVisible(!isModalVisible)}>
-                <Text style={{color: '#6C757D'}}>✖</Text>
-              </TouchableOpacity>
-            </View>
-            <View
-              style={{
-                flexDirection: 'column',
-                borderWidth: 1,
-                borderColor: '#6C757D',
-              }}
-            />
-
-            <Text
-              style={{
-                marginTop: 20,
-                textAlign: 'center',
-                fontSize: 18,
-              }}>
-              Gujranwala City Grammar School
-            </Text>
-            <Text
-              style={{
-                marginTop: 10,
-                textAlign: 'center',
-                fontSize: 16,
-              }}>
-              Main Branch
-            </Text>
-            <Text
-              style={{
-                marginTop: 10,
-                marginLeft: 10,
-              }}>
-              Issue Date 07-12-2024
-            </Text>
-
-            <FlatList
-              data={studentInfo}
-              keyExtractor={item => item.key}
-              renderItem={({item}) => (
-                <View style={styles.infoRow}>
-                  <Text style={[styles.text, styles.column, styles.withBorder]}>
-                    {item.key}:
-                  </Text>
-                  <Text style={[styles.value, styles.column]}>
-                    {item.value}
-                  </Text>
-                </View>
-              )}
-            />
-            <FlatList
-              data={balanceInfo}
-              keyExtractor={item => item.key}
-              style={{
-                marginTop: 10,
-              }}
-              renderItem={({item}) => (
-                <View style={styles.infoRow}>
-                  <Text style={[styles.text, styles.column, styles.withBorder]}>
-                    {item.key}:
-                  </Text>
-                  <Text style={[styles.value, styles.column]}>
-                    {item.value}
-                  </Text>
-                </View>
-              )}
-            />
-
-            <FlatList
-              data={accountInfo}
-              keyExtractor={item => item.key}
-              style={{
-                marginTop: 10,
-              }}
-              renderItem={({item}) => (
-                <View style={styles.infoRow}>
-                  <Text style={[styles.text, styles.column, styles.withBorder]}>
-                    {item.key}:
-                  </Text>
-                  <Text style={[styles.value, styles.column]}>
-                    {item.value}
-                  </Text>
-                </View>
-              )}
-            />
-
-            <View
-              style={{
-                flexDirection: 'column',
-                marginTop: 15,
-                marginLeft: 10,
-                marginRight: 10,
-              }}>
-              <Text
-                style={{
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                }}>
-                Accountant Sign/Stamp _________
-              </Text>
-              <Text
-                style={{
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                }}>
-                Submit Date__________
-              </Text>
-            </View>
-            <TouchableOpacity onPress={() => {}}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  backgroundColor: '#218838',
-                  borderRadius: 5,
-                  borderWidth: 1,
-                  width: 60,
-                  height: 30,
-                  alignSelf: 'center',
-                  marginTop: 20,
-                  marginBottom: 10,
-                }}>
-                <Icon
-                  name="printer"
-                  size={18}
-                  color={'#fff'}
-                  style={{alignSelf: 'center', marginRight: 4}}
-                />
-                <Text
+        <KeyboardAvoidingView behavior="padding" style={{flex: 1}}>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: 'white',
+              borderRadius: 5,
+              borderWidth: 1,
+              borderColor: '#6C757D',
+            }}>
+            {/* Make Scrollable Content */}
+            <ScrollView
+              contentContainerStyle={{flexGrow: 1, paddingBottom: 20}}
+              nestedScrollEnabled={true} // Fix for FlatList inside ScrollView
+              showsVerticalScrollIndicator={false}>
+              <ViewShot ref={viewShotRef}>
+                <View
                   style={{
-                    color: 'white',
-                    textAlign: 'center',
-                    marginTop: 5,
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    margin: 20,
                   }}>
-                  Print
+                  <Text style={{color: '#6C757D', fontSize: 18}}>
+                    Fee Challan
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setModalVisible(!isModalVisible)}>
+                    <Text style={{color: '#6C757D'}}>✖</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Text
+                  style={{marginTop: 20, textAlign: 'center', fontSize: 18}}>
+                  Gujranwala City Grammar School
                 </Text>
-              </View>
-            </TouchableOpacity>
-          </ViewShot>
-        </View>
+                <Text
+                  style={{marginTop: 10, textAlign: 'center', fontSize: 16}}>
+                  Main Branch
+                </Text>
+                <Text style={{marginTop: 10, marginLeft: 10}}>
+                  Issue Date 07-12-2024
+                </Text>
+
+                {/* Student Info */}
+                <FlatList
+                  scrollEnabled={false}
+                  data={studentInfo}
+                  keyExtractor={item => item.key}
+                  renderItem={({item}) => (
+                    <View style={styles.infoRow}>
+                      <Text
+                        style={[styles.text, styles.column, styles.withBorder]}>
+                        {item.key}:
+                      </Text>
+                      <Text style={[styles.value, styles.column]}>
+                        {item.value}
+                      </Text>
+                    </View>
+                  )}
+                />
+
+                {/* Balance Info */}
+                <FlatList
+                  scrollEnabled={false}
+                  data={balanceInfo}
+                  keyExtractor={item => item.key}
+                  style={{marginTop: 10}}
+                  renderItem={({item}) => (
+                    <View style={styles.infoRow}>
+                      <Text
+                        style={[styles.text, styles.column, styles.withBorder]}>
+                        {item.key}:
+                      </Text>
+                      <Text style={[styles.value, styles.column]}>
+                        {item.value}
+                      </Text>
+                    </View>
+                  )}
+                />
+
+                {/* Account Info */}
+                <FlatList
+                  scrollEnabled={false}
+                  data={accountInfo}
+                  keyExtractor={item => item.key}
+                  style={{marginTop: 10}}
+                  renderItem={({item}) => (
+                    <View style={styles.infoRow}>
+                      <Text
+                        style={[styles.text, styles.column, styles.withBorder]}>
+                        {item.key}:
+                      </Text>
+                      <Text style={[styles.value, styles.column]}>
+                        {item.value}
+                      </Text>
+                    </View>
+                  )}
+                />
+
+                <View
+                  style={{
+                    flexDirection: 'column',
+                    marginTop: 15,
+                    marginLeft: 10,
+                    marginRight: 10,
+                  }}>
+                  <Text style={{fontWeight: 'bold', textAlign: 'center'}}>
+                    Accountant Sign/Stamp _________
+                  </Text>
+                  <Text style={{fontWeight: 'bold', textAlign: 'center'}}>
+                    Submit Date__________
+                  </Text>
+                </View>
+              </ViewShot>
+
+              {/* Print Button */}
+              <TouchableOpacity onPress={() => captureAndPrint()}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    backgroundColor: '#218838',
+                    borderRadius: 5,
+                    borderWidth: 1,
+                    width: 80,
+                    height: 35,
+                    alignSelf: 'center',
+                    marginTop: 20,
+                    marginBottom: 10,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  <Icon
+                    name="printer"
+                    size={18}
+                    color={'#fff'}
+                    style={{marginRight: 4}}
+                  />
+                  <Text style={{color: 'white', textAlign: 'center'}}>
+                    Print
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

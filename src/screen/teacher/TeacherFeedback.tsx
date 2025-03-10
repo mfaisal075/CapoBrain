@@ -1,5 +1,4 @@
 import {
-  BackHandler,
   FlatList,
   Image,
   ScrollView,
@@ -14,40 +13,61 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import Modal from 'react-native-modal';
 import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
 
 type TableRow = {
   sr: string;
-  studentId: string;
-  student: string;
   branch: string;
   class: string;
   section: string;
+  date: string;
+  feedbackby: string;
   action: string;
 };
 
-const Feedback = ({navigation}: any) => {
+interface UserData {
+  feedback: {
+    id: number;
+    feed_feedback: string;
+    feed_feedbackby: string;
+    feed_date: string;
+    cls_name: string;
+    sec_name: string;
+    bra_name: string;
+  };
+}
+
+const TeacherFeedback = ({navigation}: any) => {
+  const {token} = useUser();
+  const [isOpn, setIsOpn] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isModalVisi, setModalVisi] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [userData, setUserData] = useState<UserData | null>(null);
+
+  const toggleModl = () => {
+    setModalVisi(!isModalVisi);
+  };
+
   const itemz = [
     {label: 'Feedback', value: 1},
     {label: 'Review', value: 2},
   ];
-  const [isOpn, setIsOpn] = useState(false);
-
-  const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const originalData: TableRow[] = [
     {
       sr: '1',
-      studentId: 'GCGS1124S001',
-      student: 'Ayesha Zumar',
       branch: 'Main Branch',
-      class: 'Five',
+      class: 'Ten',
       section: 'A',
+      date: '10-03-2025',
+      feedbackby: 'Principle',
       action: '',
     },
   ];
-
   const [tableData, setTableData] = useState<TableRow[]>(originalData);
 
   const items = [
@@ -71,7 +91,6 @@ const Feedback = ({navigation}: any) => {
     }
   };
 
-  const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(tableData.length / entriesPerPage);
 
   const handlePageChange = (page: number) => {
@@ -84,27 +103,30 @@ const Feedback = ({navigation}: any) => {
     (currentPage - 1) * entriesPerPage,
     currentPage * entriesPerPage,
   );
-  {
-    /*view modal*/
-  }
-  const [isModalVisi, setModalVisi] = useState(false);
 
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetchportalreviewandfeedback',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        setUserData(response.data);
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    } else {
+      throw new Error('User is not Authenticated');
+    }
   };
 
   useEffect(() => {
-    const backAction = () => {
-      navigation.goBack();
-      return true;
-    };
-
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction,
-    );
-
-    return () => backHandler.remove();
+    fetchData();
   }, []);
 
   return (
@@ -114,7 +136,7 @@ const Feedback = ({navigation}: any) => {
         flex: 1,
       }}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('Home' as never)}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon
             name="arrow-left"
             size={38}
@@ -169,7 +191,6 @@ const Feedback = ({navigation}: any) => {
           />
         </View>
       </View>
-
       {/* Table */}
       <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
         <View>
@@ -183,11 +204,11 @@ const Feedback = ({navigation}: any) => {
               <View style={styles.row}>
                 {[
                   'Sr#',
-                  'Student ID',
-                  'Student',
                   'Branch',
                   'Class',
                   'Section',
+                  'Date',
+                  'FeedBack By',
                   'Action',
                 ].map(header => (
                   <Text key={header} style={[styles.column, styles.headTable]}>
@@ -203,17 +224,17 @@ const Feedback = ({navigation}: any) => {
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
                 <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.studentId}</Text>
-                <Text style={styles.column}>{item.student}</Text>
                 <Text style={styles.column}>{item.branch}</Text>
                 <Text style={styles.column}>{item.class}</Text>
                 <Text style={styles.column}>{item.section}</Text>
+                <Text style={styles.column}>{item.date}</Text>
+                <Text style={styles.column}>{item.feedbackby}</Text>
                 <TouchableOpacity
                   style={styles.iconContainer}
                   onPress={toggleModl}>
                   <Image
                     style={styles.actionIcon}
-                    source={require('../assets/visible.png')}
+                    source={require('../../assets/visible.png')}
                   />
                 </TouchableOpacity>
               </View>
@@ -241,7 +262,7 @@ const Feedback = ({navigation}: any) => {
         </View>
       </View>
 
-      {/* View Modal */}
+      {/* Modal */}
       <Modal isVisible={isModalVisi}>
         <View
           style={{
@@ -284,16 +305,16 @@ const Feedback = ({navigation}: any) => {
               style={{
                 flexDirection: 'row',
               }}>
-              <Text style={styles.lblText}>Name</Text>
-              <Text style={styles.valueText}>Ayesha Zumar</Text>
+              <Text style={styles.lblText}>Teacher Name:</Text>
+              <Text style={styles.valueText}>Ahmad</Text>
             </View>
             <View
               style={{
                 flexDirection: 'row',
-                marginRight: 50,
+                marginRight: 66,
               }}>
-              <Text style={styles.lblText}>Class</Text>
-              <Text style={styles.valueText}>Nursery</Text>
+              <Text style={styles.lblText}>Class:</Text>
+              <Text style={styles.valueText}>Ten</Text>
             </View>
           </View>
           <View
@@ -306,16 +327,40 @@ const Feedback = ({navigation}: any) => {
               style={{
                 flexDirection: 'row',
               }}>
-              <Text style={styles.lblText}>Section</Text>
+              <Text style={styles.lblText}>Section:</Text>
               <Text style={styles.valueText}>A</Text>
             </View>
             <View
               style={{
                 flexDirection: 'row',
+              }}>
+              <Text style={styles.lblText}>Branch:</Text>
+              <Text style={styles.valueText}>Main Branch</Text>
+            </View>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              margin: 10,
+            }}>
+            <View
+              style={{
+                marginTop: 10,
+                flexDirection: 'row',
+              }}>
+              <Text style={styles.lblText}>Added By:</Text>
+              <Text style={styles.valueText}>Principle</Text>
+            </View>
+            <View
+              style={{
+                marginLeft: 10,
+                marginTop: 10,
+                flexDirection: 'row',
                 marginRight: 20,
               }}>
-              <Text style={styles.lblText}>Added By</Text>
-              <Text style={styles.valueText}>Teacher</Text>
+              <Text style={styles.lblText}>Date:</Text>
+              <Text style={styles.valueText}>10-03-2025</Text>
             </View>
           </View>
 
@@ -323,18 +368,9 @@ const Feedback = ({navigation}: any) => {
             style={{
               marginLeft: 10,
               marginTop: 10,
-              flexDirection: 'row',
-            }}>
-            <Text style={styles.lblText}>Date</Text>
-            <Text style={styles.valueText}>06-03-2025</Text>
-          </View>
-          <View
-            style={{
-              marginLeft: 10,
-              marginTop: 10,
             }}>
             <Text style={styles.lblText}>Feedback:</Text>
-            <Text style={styles.valueText}>Intelligent Student</Text>
+            <Text style={styles.valueText}>Excellent Teacher</Text>
           </View>
         </View>
       </Modal>
@@ -342,7 +378,7 @@ const Feedback = ({navigation}: any) => {
   );
 };
 
-export default Feedback;
+export default TeacherFeedback;
 
 const styles = StyleSheet.create({
   container: {
@@ -439,13 +475,13 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 100,
+    width: 60,
     height: 30,
   },
   actionIcon: {
     width: 20,
     height: 20,
     tintColor: '#3b82f6',
-    marginLeft: 15,
+    marginLeft: 70,
   },
 });
