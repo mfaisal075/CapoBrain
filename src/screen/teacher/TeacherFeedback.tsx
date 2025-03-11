@@ -1,4 +1,5 @@
 import {
+  BackHandler,
   FlatList,
   Image,
   ScrollView,
@@ -26,14 +27,55 @@ type TableRow = {
   action: string;
 };
 
-interface UserData {
+interface FeedbackData {
+  id: number;
+  feed_feedback: string;
+  feed_feedbackby: string;
+  feed_date: string;
+  cls_name: string;
+  sec_name: string;
+  bra_name: string;
+}
+
+interface ReviewData {
+  id: number;
+  staff_id: string;
+  bra_name: string;
+  app_name: string;
+}
+
+interface FeedBackDetails {
+  employee: {
+    app_name: string;
+  };
+  class: {
+    cls_name: string;
+  };
+  section: {
+    sec_name: string;
+  };
+  branch: {
+    bra_name: string;
+  };
   feedback: {
-    id: number;
-    feed_feedback: string;
     feed_feedbackby: string;
     feed_date: string;
-    cls_name: string;
-    sec_name: string;
+    feed_feedback: string;
+  };
+}
+
+interface ReviewDetails {
+  staff: {
+    app_name: string;
+    staff_id: string;
+  };
+  school: {
+    scl_institute_name: string;
+  };
+  added_by: {
+    name: string;
+  };
+  branch: {
     bra_name: string;
   };
 }
@@ -46,29 +88,21 @@ const TeacherFeedback = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalVisi, setModalVisi] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [userData, setUserData] = useState<UserData | null>(null);
-
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
-  };
+  const [feedbackData, setFeedbackData] = useState<FeedbackData[]>([]);
+  const [reviewData, setReviewData] = useState<ReviewData[]>([]);
+  const [type, setType] = useState('Feedback');
+  const [feedbackDetail, setFeedbackDetail] = useState<FeedBackDetails | null>(
+    null,
+  );
+  const [reviewDetails, setReviewDetails] = useState<ReviewDetails | null>(
+    null,
+  );
 
   const itemz = [
-    {label: 'Feedback', value: 1},
-    {label: 'Review', value: 2},
+    {label: 'Feedback', value: 'Feedback'},
+    {label: 'Review', value: 'Review'},
   ];
-
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      branch: 'Main Branch',
-      class: 'Ten',
-      section: 'A',
-      date: '10-03-2025',
-      feedbackby: 'Principle',
-      action: '',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [tableData, setTableData] = useState<FeedbackData[]>([]);
 
   const items = [
     {label: '10', value: 10},
@@ -80,9 +114,11 @@ const TeacherFeedback = ({navigation}: any) => {
   const handleSearch = (text: string) => {
     setSearchQuery(text);
     if (text.trim() === '') {
-      setTableData(originalData);
+      if (type === 'Feedback') {
+        setTableData(feedbackData);
+      }
     } else {
-      const filtered = originalData.filter(item =>
+      const filtered = feedbackData.filter(item =>
         Object.values(item).some(value =>
           String(value).toLowerCase().includes(text.toLowerCase()),
         ),
@@ -108,14 +144,20 @@ const TeacherFeedback = ({navigation}: any) => {
     if (token) {
       try {
         const response = await axios.get(
-          'https://demo.capobrain.com/fetchportalreviewandfeedback',
+          'https://demo.capobrain.com/fetchportalreviewandfeedback' +
+            `?feedbackandreview=${type}&_token=${token}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           },
         );
-        setUserData(response.data);
+        if (type === 'Feedback') {
+          setFeedbackData(response.data.feedback);
+        }
+        if (type === 'Review') {
+          setReviewData(response.data.staffreview);
+        }
       } catch (error) {
         console.log(error);
         throw error;
@@ -125,9 +167,26 @@ const TeacherFeedback = ({navigation}: any) => {
     }
   };
 
+  const Info = [
+    {key: 'Staff ID', value: reviewDetails?.staff.staff_id},
+    {key: 'Staff Name', value: reviewDetails?.staff.app_name},
+    {key: 'Review By', value: reviewDetails?.added_by.name},
+  ];
+
   useEffect(() => {
     fetchData();
-  }, []);
+    const backAction = () => {
+      navigation.goBack();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, [type]);
 
   return (
     <View
@@ -152,11 +211,11 @@ const TeacherFeedback = ({navigation}: any) => {
           items={itemz}
           open={isOpn}
           setOpen={setIsOpn}
-          value={entriesPerPage}
+          value={type}
           setValue={callback => {
-            setEntriesPerPage(prev =>
-              typeof callback === 'function' ? callback(prev) : callback,
-            );
+            const newType =
+              typeof callback === 'function' ? callback(type) : callback;
+            setType(newType);
           }}
           maxHeight={200}
           placeholder="Feedback"
@@ -194,52 +253,140 @@ const TeacherFeedback = ({navigation}: any) => {
       {/* Table */}
       <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
         <View>
-          <FlatList
-            style={styles.flatList}
-            data={currentEntries}
-            keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
-            }
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                {[
-                  'Sr#',
-                  'Branch',
-                  'Class',
-                  'Section',
-                  'Date',
-                  'FeedBack By',
-                  'Action',
-                ].map(header => (
-                  <Text key={header} style={[styles.column, styles.headTable]}>
-                    {header}
-                  </Text>
-                ))}
-              </View>
-            )}
-            renderItem={({item, index}) => (
-              <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.branch}</Text>
-                <Text style={styles.column}>{item.class}</Text>
-                <Text style={styles.column}>{item.section}</Text>
-                <Text style={styles.column}>{item.date}</Text>
-                <Text style={styles.column}>{item.feedbackby}</Text>
-                <TouchableOpacity
-                  style={styles.iconContainer}
-                  onPress={toggleModl}>
-                  <Image
-                    style={styles.actionIcon}
-                    source={require('../../assets/visible.png')}
-                  />
-                </TouchableOpacity>
-              </View>
-            )}
-          />
+          {type === 'Feedback' ? (
+            <FlatList
+              style={styles.flatList}
+              data={feedbackData}
+              keyExtractor={(item, index) =>
+                item.id ? item.id.toString() : index.toString()
+              }
+              ListHeaderComponent={() => (
+                <View style={styles.row}>
+                  {[
+                    'Sr#',
+                    'Branch',
+                    'Class',
+                    'Section',
+                    'Date',
+                    'FeedBack By',
+                    'Action',
+                  ].map(header => (
+                    <Text
+                      key={header}
+                      style={[styles.column, styles.headTable]}>
+                      {header}
+                    </Text>
+                  ))}
+                </View>
+              )}
+              renderItem={({item, index}) => (
+                <View
+                  style={[
+                    styles.row,
+                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                  ]}>
+                  <Text style={styles.column}>{index + 1}</Text>
+                  <Text style={styles.column}>{item.bra_name}</Text>
+                  <Text style={styles.column}>{item.cls_name}</Text>
+                  <Text style={styles.column}>{item.sec_name}</Text>
+                  <Text style={styles.column}>{item.feed_date}</Text>
+                  <Text style={styles.column}>{item.feed_feedbackby}</Text>
+                  <TouchableOpacity
+                    style={styles.iconContainer}
+                    onPress={() => {
+                      const handleViewFeedback = async (id: number) => {
+                        try {
+                          const response = await axios.get(
+                            `https://demo.capobrain.com/showfeedback?id=${id}&_token=${token}`,
+                            {
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                              },
+                            },
+                          );
+
+                          setFeedbackDetail(response.data);
+
+                          setModalVisi(true);
+                          // You can set the state here to pass the data to the modal
+                          // setFeedbackDetail(feedbackDetail);
+                        } catch (error) {
+                          console.log(error);
+                        }
+                      };
+
+                      handleViewFeedback(item.id);
+                    }}>
+                    <Image
+                      style={styles.actionIcon}
+                      source={require('../../assets/visible.png')}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+          ) : (
+            <FlatList
+              style={styles.flatList}
+              data={reviewData}
+              keyExtractor={(item, index) =>
+                item.id ? item.id.toString() : index.toString()
+              }
+              ListHeaderComponent={() => (
+                <View style={styles.row}>
+                  {['Sr#', 'Branch', 'Staff ID', 'Staff Name', 'Action'].map(
+                    header => (
+                      <Text
+                        key={header}
+                        style={[styles.column, styles.headTable]}>
+                        {header}
+                      </Text>
+                    ),
+                  )}
+                </View>
+              )}
+              renderItem={({item, index}) => (
+                <View
+                  style={[
+                    styles.row,
+                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                  ]}>
+                  <Text style={styles.column}>{index + 1}</Text>
+                  <Text style={styles.column}>{item.bra_name}</Text>
+                  <Text style={styles.column}>{item.staff_id}</Text>
+                  <Text style={styles.column}>{item.app_name}</Text>
+                  <TouchableOpacity
+                    style={styles.iconContainer}
+                    onPress={() => {
+                      const handleViewReview = async (id: number) => {
+                        try {
+                          const response = await axios.get(
+                            `https://demo.capobrain.com/staffreviewshow?id=${id}&_token=${token}`,
+                            {
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                              },
+                            },
+                          );
+
+                          setReviewDetails(response.data);
+                          setModalVisi(true);
+                        } catch (error) {
+                          console.log(error);
+                        }
+                      };
+
+                      handleViewReview(item.id);
+                    }}>
+                    <Image
+                      style={styles.actionIcon}
+                      source={require('../../assets/visible.png')}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+          )}
         </View>
       </ScrollView>
 
@@ -264,115 +411,259 @@ const TeacherFeedback = ({navigation}: any) => {
 
       {/* Modal */}
       <Modal isVisible={isModalVisi}>
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: 'white',
-            width: 'auto',
-            maxHeight: 300,
-            borderRadius: 5,
-            borderWidth: 1,
-            borderColor: '#6C757D',
-          }}>
+        {type === 'Feedback' ? (
           <View
             style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 20,
+              flex: 1,
+              backgroundColor: 'white',
+              width: 'auto',
+              maxHeight: 300,
+              borderRadius: 5,
+              borderWidth: 1,
+              borderColor: '#6C757D',
             }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>
-              Feedback Detail
-            </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                margin: 20,
+              }}>
+              <Text style={{color: '#6C757D', fontSize: 18}}>
+                Feedback Detail
+              </Text>
 
-            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
-            </TouchableOpacity>
-          </View>
-          <View
-            style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 10,
-            }}>
+              <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
+                <Text style={{color: '#6C757D'}}>✖</Text>
+              </TouchableOpacity>
+            </View>
+            <View
+              style={{
+                height: 1,
+                backgroundColor: 'gray',
+                width: wp('90%'),
+              }}
+            />
             <View
               style={{
                 flexDirection: 'row',
+                justifyContent: 'space-between',
+                margin: 10,
               }}>
-              <Text style={styles.lblText}>Teacher Name:</Text>
-              <Text style={styles.valueText}>Ahmad</Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                }}>
+                <Text style={styles.lblText}>Teacher Name:</Text>
+                <Text style={styles.valueText}>
+                  {feedbackDetail?.employee.app_name}
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  marginRight: 66,
+                }}>
+                <Text style={styles.lblText}>Class:</Text>
+                <Text style={styles.valueText}>
+                  {feedbackDetail?.class.cls_name}
+                </Text>
+              </View>
             </View>
             <View
               style={{
                 flexDirection: 'row',
-                marginRight: 66,
+                justifyContent: 'space-between',
+                margin: 10,
               }}>
-              <Text style={styles.lblText}>Class:</Text>
-              <Text style={styles.valueText}>Ten</Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                }}>
+                <Text style={styles.lblText}>Section:</Text>
+                <Text style={styles.valueText}>
+                  {feedbackDetail?.section.sec_name}
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                }}>
+                <Text style={styles.lblText}>Branch:</Text>
+                <Text style={styles.valueText}>
+                  {feedbackDetail?.branch.bra_name}
+                </Text>
+              </View>
             </View>
-          </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 10,
-            }}>
             <View
               style={{
                 flexDirection: 'row',
+                justifyContent: 'space-between',
+                margin: 10,
               }}>
-              <Text style={styles.lblText}>Section:</Text>
-              <Text style={styles.valueText}>A</Text>
+              <View
+                style={{
+                  marginTop: 10,
+                  flexDirection: 'row',
+                }}>
+                <Text style={styles.lblText}>Added By:</Text>
+                <Text style={styles.valueText}>
+                  {feedbackDetail?.feedback.feed_feedbackby}
+                </Text>
+              </View>
+              <View
+                style={{
+                  marginLeft: 10,
+                  marginTop: 10,
+                  flexDirection: 'row',
+                  marginRight: 20,
+                }}>
+                <Text style={styles.lblText}>Date:</Text>
+                <Text style={styles.valueText}>
+                  {feedbackDetail?.feedback.feed_date}
+                </Text>
+              </View>
             </View>
-            <View
-              style={{
-                flexDirection: 'row',
-              }}>
-              <Text style={styles.lblText}>Branch:</Text>
-              <Text style={styles.valueText}>Main Branch</Text>
-            </View>
-          </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 10,
-            }}>
-            <View
-              style={{
-                marginTop: 10,
-                flexDirection: 'row',
-              }}>
-              <Text style={styles.lblText}>Added By:</Text>
-              <Text style={styles.valueText}>Principle</Text>
-            </View>
+
             <View
               style={{
                 marginLeft: 10,
                 marginTop: 10,
-                flexDirection: 'row',
-                marginRight: 20,
               }}>
-              <Text style={styles.lblText}>Date:</Text>
-              <Text style={styles.valueText}>10-03-2025</Text>
+              <Text style={styles.lblText}>Feedback:</Text>
+              <Text style={styles.valueText}>
+                {feedbackDetail?.feedback.feed_feedback}
+              </Text>
             </View>
           </View>
-
+        ) : (
           <View
             style={{
-              marginLeft: 10,
-              marginTop: 10,
+              flex: 1,
+              backgroundColor: 'white',
+              width: 'auto',
+              maxHeight: 'auto',
+              borderRadius: 5,
+              borderWidth: 1,
+              borderColor: '#6C757D',
             }}>
-            <Text style={styles.lblText}>Feedback:</Text>
-            <Text style={styles.valueText}>Excellent Teacher</Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                margin: 20,
+              }}>
+              <Text style={{color: '#6C757D', fontSize: 18}}>
+                Show Staff Review Details
+              </Text>
+
+              <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
+                <Text style={{color: '#6C757D'}}>✖</Text>
+              </TouchableOpacity>
+            </View>
+            <View
+              style={{
+                height: 1,
+                backgroundColor: 'gray',
+                width: wp('90%'),
+              }}
+            />
+
+            <Text
+              style={{
+                textAlign: 'center',
+                fontWeight: 'bold',
+                marginTop: 10,
+              }}>
+              {reviewDetails?.school.scl_institute_name}
+            </Text>
+            <Text
+              style={{
+                textAlign: 'center',
+              }}>
+              {reviewDetails?.branch.bra_name}
+            </Text>
+
+            <FlatList
+              contentContainerStyle={{paddingBottom: 10}}
+              style={{flexGrow: 0, marginTop: 10}}
+              data={Info || []}
+              keyExtractor={(item, index) =>
+                item?.key ? item.key.toString() : index.toString()
+              }
+              renderItem={({item}) => {
+                if (!item) return null;
+                return (
+                  <View style={styles.infoRow}>
+                    <Text style={styles.text}>{item.key}:</Text>
+                    <Text style={styles.value}>{item.value}</Text>
+                  </View>
+                );
+              }}
+            />
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                marginLeft: 10,
+                marginTop: 15,
+              }}>
+              <Text style={styles.lblText}>
+                Effective teaching methods & engagement?
+              </Text>
+              <Text style={styles.valueText}>2</Text>
+            </View>
+
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                marginLeft: 10,
+                marginTop: 6,
+              }}>
+              <Text style={styles.lblText}>
+                Is the teaching staff up-to-date with modern teaching methods
+                and technology?
+              </Text>
+              <Text style={styles.valueText}>4</Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                marginLeft: 10,
+                marginTop: 6,
+              }}>
+              <Text style={styles.lblText}>Innovative tech integration?</Text>
+              <Text style={styles.valueText}>2</Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                marginLeft: 10,
+                marginTop: 6,
+              }}>
+              <Text style={styles.lblText}>
+                How do students perform academically under the guidance of the
+                teaching staff??
+              </Text>
+              <Text style={styles.valueText}>2</Text>
+            </View>
+
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                marginLeft: 10,
+                marginTop: 6,
+              }}>
+              <Text style={styles.lblText}>
+                Positive classroom climate & rapport?
+              </Text>
+              <Text style={styles.valueText}>3</Text>
+            </View>
           </View>
-        </View>
+        )}
       </Modal>
     </View>
   );
@@ -483,5 +774,17 @@ const styles = StyleSheet.create({
     height: 20,
     tintColor: '#3b82f6',
     marginLeft: 70,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  text: {
+    fontWeight: 'bold',
+    marginLeft: 15,
+  },
+  value: {
+    marginLeft: 10,
   },
 });

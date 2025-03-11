@@ -322,7 +322,7 @@ const TeacherHome = ({navigation}: any) => {
         {/* 3rd Row */}
         <View style={styles.iconRow}>
           <TouchableOpacity
-            onPress={() => navigation.navigate('TeacherMessage' as never)}>
+            onPress={() => navigation.navigate('TeacherMessages' as never)}>
             <View style={styles.iconContainer}>
               <Image
                 style={{

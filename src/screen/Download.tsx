@@ -21,43 +21,18 @@ const row = {
   sr: srNumber.toString(),
 };
 
-interface TableRow {
-  sr: string | number;
-  class: string;
-  section: string;
-  title: string;
-  date: string;
-  action: string;
+interface DownloadData {
+  id: number;
+  cls_name: string;
+  sec_name: string;
+  file_date: string;
+  file_title: string;
+  file_notes: string;
 }
 
 const Download = ({navigation}: any) => {
   const {token} = useUser();
-  const [downloadData, setDownloadData] = useState<TableRow[]>([
-    {
-      sr: 1,
-      class: 'Three',
-      section: 'A',
-      title: 'BB',
-      date: '07-12-2024',
-      action: '',
-    },
-    {
-      sr: 2,
-      class: 'Three',
-      section: 'A',
-      title: 'Algebra',
-      date: '07-12-2024',
-      action: '',
-    },
-    {
-      sr: 3,
-      class: 'Three',
-      section: 'A',
-      title: 'Algebra',
-      date: '31-12-2024',
-      action: '',
-    },
-  ]);
+  const [downloadData, setDownloadData] = useState<DownloadData[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredDownloadData, setFilteredDownloadData] =
     useState(downloadData);
@@ -104,7 +79,7 @@ const Download = ({navigation}: any) => {
     if (token) {
       try {
         const response = await axios.get(
-          'https://demo.capobrain.com/files_fetchstdfiles',
+          `https://demo.capobrain.com/files_fetchstdfiles?_token=${token}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -112,8 +87,8 @@ const Download = ({navigation}: any) => {
           },
         );
 
-        // Return the "output" field for the table
-        return response.data.output;
+        setDownloadData(response.data.files);
+        setFilteredDownloadData(response.data.files);
       } catch (error) {
         console.error('Error fetching data', error);
         throw error; // Ensure the error is thrown so useQuery can handle it
@@ -186,7 +161,7 @@ const Download = ({navigation}: any) => {
             data={filteredDownloadData}
             keyExtractor={(item, index) => index.toString()}
             renderItem={({item}) => (
-              <Text style={styles.item}>{item.title}</Text>
+              <Text style={styles.item}>{item.file_title}</Text>
             )}
           />
         </View>
@@ -226,14 +201,22 @@ const Download = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={[styles.column, {width: 100}]}>{item.sr}</Text>
-                <Text style={[styles.column, {width: 150}]}>{item.class}</Text>
+                <Text style={[styles.column, {width: 100}]}>{index + 1}</Text>
                 <Text style={[styles.column, {width: 150}]}>
-                  {item.section}
+                  {item.cls_name}
                 </Text>
-                <Text style={[styles.column, {width: 200}]}>{item.title}</Text>
-                <Text style={[styles.column, {width: 150}]}>{item.date}</Text>
-                <TouchableOpacity style={styles.iconContainer}>
+                <Text style={[styles.column, {width: 150}]}>
+                  {item.sec_name}
+                </Text>
+                <Text style={[styles.column, {width: 200}]}>
+                  {item.file_title}
+                </Text>
+                <Text style={[styles.column, {width: 150}]}>
+                  {item.file_date}
+                </Text>
+                <TouchableOpacity
+                  style={styles.iconContainer}
+                  onPress={() => {}}>
                   <Image
                     style={styles.actionIcon}
                     source={require('../assets/dpd.png')}

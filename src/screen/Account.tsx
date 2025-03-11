@@ -66,6 +66,25 @@ interface AccountData {
   };
 }
 
+interface AccountInfo {
+  id: number;
+  transaction_id: string;
+  stuacc_date: string;
+  monthlyfee_receivable: string;
+  transport_received: string;
+  inventory_received: string;
+  arrears_amount: string;
+  miscfee_receivable: string;
+  stuacc_payable: string;
+  stuacc_paid_amount: string;
+  stuacc_balance: string;
+  stuacc_payment_method: string;
+  monthly_fee: string;
+  transportation_fee: string;
+  inventory_amount: string;
+  voucher_id: string;
+}
+
 const Account = ({navigation}: any) => {
   const {token} = useUser();
   const [searchQuery, setSearchQuery] = useState('');
@@ -75,6 +94,7 @@ const Account = ({navigation}: any) => {
   const [currentPage, setCurrentPage] = useState(1);
   const viewShotRef = useRef<any>(null);
   const [accoutData, setAccountData] = useState<AccountData | null>(null);
+  const [accountDetails, setAccountDestails] = useState<AccountInfo[]>([]);
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -218,7 +238,7 @@ const Account = ({navigation}: any) => {
     if (token) {
       try {
         const response = await axios.get(
-          'https://demo.capobrain.com/fetchstd_account',
+          `https://demo.capobrain.com/fetchstd_account?_token=${token}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -226,7 +246,7 @@ const Account = ({navigation}: any) => {
           },
         );
 
-        return response.data.output;
+        setAccountDestails(response.data.accounts);
       } catch (error) {
         console.error('Error fetching data', error);
         throw error; // Ensure the error is thrown so useQuery can handle it
@@ -347,9 +367,9 @@ const Account = ({navigation}: any) => {
               margin: 10,
               flex: 1,
             }}
-            data={currentEntries}
+            data={accountDetails}
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -479,54 +499,54 @@ const Account = ({navigation}: any) => {
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
                 <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                  {item.sr}
+                  {index + 1}
                 </Text>
                 <Text style={[styles.column, {width: 150}, {padding: 5}]}>
-                  {item.transaction}
+                  {item.transaction_id}
                 </Text>
                 <Text style={[styles.column, {width: 150}, {padding: 5}]}>
-                  {item.date}
+                  {item.stuacc_date}
                 </Text>
                 <Text style={[styles.column, {width: 200}, {padding: 5}]}>
-                  {item.fee}
+                  {item.monthly_fee}
                 </Text>
                 <Text style={[styles.column, {width: 150}, {padding: 5}]}>
-                  {item.transport}
+                  {item.transportation_fee}
                 </Text>
                 <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                  {item.inventory}
+                  {item.inventory_amount}
                 </Text>
                 <Text style={[styles.column, {width: 150}, {padding: 5}]}>
-                  {item.arrears}
+                  {item.arrears_amount}
                 </Text>
                 <Text style={[styles.column, {width: 150}, {padding: 5}]}>
-                  {item.others}
+                  {item.miscfee_receivable}
                 </Text>
                 <Text style={[styles.column, {width: 200}, {padding: 5}]}>
-                  {item.payable}
+                  {item.stuacc_payable}
                 </Text>
                 <Text style={[styles.column, {width: 150}, {padding: 5}]}>
-                  {item.paid}
+                  {item.stuacc_paid_amount}
                 </Text>
                 <Text style={[styles.column, {width: 150}, {padding: 5}]}>
-                  {item.balance}
+                  {item.stuacc_balance}
                 </Text>
                 <Text style={[styles.column, {width: 200}, {padding: 5}]}>
-                  {item.transactionType}
+                  {item.stuacc_payment_method}
                 </Text>
 
                 <TouchableOpacity
                   onPress={
-                    item.action === 'Payable Voucher'
+                    item.voucher_id === 'Payable Voucher'
                       ? toggleModal
                       : (null as unknown as undefined)
                   }
-                  disabled={item.action === 'Not Available'}>
+                  disabled={item.voucher_id === null}>
                   <View style={styles.iconContainer}>
                     <Image
                       style={styles.statusIcon}
                       source={
-                        item.action === 'Not Available'
+                        item.voucher_id === null
                           ? require('../assets/rejected.png')
                           : require('../assets/payable.png')
                       }

@@ -24,25 +24,22 @@ interface UserData {
   };
 }
 
-interface TableRow {
-  sr: string;
-  status: string;
-  date: string;
+interface AttendanceData {
+  id: number;
+  std_attendance_status: string;
+  std_date: string;
 }
 
 const Attendance = ({navigation}: any) => {
   const {token} = useUser();
   const [userData, setUserData] = useState<UserData | null>(null);
-  const originalData: TableRow[] = [
-    {sr: '1', status: 'Present', date: '03-02-2025'},
-  ];
+  const [attendanceData, setAttendanceData] = useState<AttendanceData[]>([]);
+
   const studentInfo = [
     {key: 'Student', value: userData?.applicant.cand_name},
     {key: 'Class', value: userData?.class.cls_name},
     {key: 'Section', value: userData?.section.sec_name},
   ];
-
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
 
   const fetchData = async () => {
     if (token) {
@@ -56,7 +53,7 @@ const Attendance = ({navigation}: any) => {
           },
         );
 
-        // Set user data for student details
+        setAttendanceData(response.data.attendances);
         setUserData(response.data);
 
         // Return the "output" field for the table
@@ -119,10 +116,10 @@ const Attendance = ({navigation}: any) => {
         <View>
           <FlatList
             style={styles.flatList}
-            data={tableData}
+            data={attendanceData}
             nestedScrollEnabled
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -139,9 +136,9 @@ const Attendance = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.status}</Text>
-                <Text style={styles.column}>{item.date}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.std_attendance_status}</Text>
+                <Text style={styles.column}>{item.std_date}</Text>
               </View>
             )}
           />

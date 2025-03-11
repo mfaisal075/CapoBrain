@@ -72,46 +72,54 @@ const StdSports = ({navigation}: any) => {
         <Text style={styles.headerText}>Sports Notification</Text>
       </View>
 
-      <FlatList
-        data={sports}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => (
-          <View style={styles.card}>
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              <View style={styles.circle}>
-                <Image
-                  style={{
-                    width: 20,
-                    height: 20,
-                    tintColor: 'white',
-                    alignSelf: 'center',
-                  }}
-                  source={require('../assets/9.png')}
-                />
-              </View>
+      {sports.length === 0 ? (
+        <View>
+          <Text style={{textAlign: 'center', marginTop: 20}}>
+            No data found in the database.
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={sports}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => (
+            <View style={styles.card}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <View style={styles.circle}>
+                  <Image
+                    style={{
+                      width: 20,
+                      height: 20,
+                      tintColor: 'white',
+                      alignSelf: 'center',
+                    }}
+                    source={require('../assets/9.png')}
+                  />
+                </View>
 
-              <View style={{marginLeft: 10}}>
-                <View style={{flexDirection: 'row'}}>
-                  <Text style={styles.label}>Sports Category: </Text>
-                  <Text style={styles.value}>{item.sport_name}</Text>
-                </View>
-                <View style={{flexDirection: 'row'}}>
-                  <Text style={styles.label}>Sport Name: </Text>
-                  <Text style={styles.value}>{item.sport_name}</Text>
-                </View>
-                <View style={{flexDirection: 'row'}}>
-                  <Text style={styles.label}>Date: </Text>
-                  <Text style={styles.value}>{item.date}</Text>
-                </View>
-                <View style={{flexDirection: 'row'}}>
-                  <Text style={styles.label}>Time: </Text>
-                  <Text style={styles.value}>{item.time}</Text>
+                <View style={{marginLeft: 10}}>
+                  <View style={{flexDirection: 'row'}}>
+                    <Text style={styles.label}>Sports Category: </Text>
+                    <Text style={styles.value}>{item.sport_name}</Text>
+                  </View>
+                  <View style={{flexDirection: 'row'}}>
+                    <Text style={styles.label}>Sport Name: </Text>
+                    <Text style={styles.value}>{item.sport_name}</Text>
+                  </View>
+                  <View style={{flexDirection: 'row'}}>
+                    <Text style={styles.label}>Date: </Text>
+                    <Text style={styles.value}>{item.date}</Text>
+                  </View>
+                  <View style={{flexDirection: 'row'}}>
+                    <Text style={styles.label}>Time: </Text>
+                    <Text style={styles.value}>{item.time}</Text>
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
-        )}
-      />
+          )}
+        />
+      )}
     </View>
   );
 };
