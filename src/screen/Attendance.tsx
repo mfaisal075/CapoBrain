@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   },
   column: {
     width: 125,
-    padding: 5,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 5,
+    marginTop: 2,
   },
   text: {
     fontWeight: 'bold',

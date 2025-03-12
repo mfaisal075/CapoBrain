@@ -31,6 +31,14 @@ type TableRow = {
   action: string;
 };
 
+interface DailyDiary {
+  id: number;
+  cls_name: string;
+  sec_name: string;
+  sub_name: string;
+  date: string;
+}
+
 const StudentDiary = ({navigation}: any) => {
   const {token} = useUser();
   const [startDate, setStartDate] = useState(new Date());
@@ -57,52 +65,9 @@ const StudentDiary = ({navigation}: any) => {
     setEndDate(currentDate);
   };
 
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      class: 'Three(A)',
-      subject: 'English',
-      date: '07-03-2025',
-      action: '',
-    },
-    {
-      sr: '2',
-      class: 'Three(A)',
-      subject: 'Urdu',
-      date: '07-03-2025',
-      action: '',
-    },
-    {
-      sr: '3',
-      class: 'Three(A)',
-      subject: 'Math',
-      date: '07-03-2025',
-      action: '',
-    },
-    {
-      sr: '4',
-      class: 'Three(A)',
-      subject: 'Pakistan Studies',
-      date: '07-03-2025',
-      action: '',
-    },
-    {
-      sr: '5',
-      class: 'Three(A)',
-      subject: 'Science',
-      date: '07-03-2025',
-      action: '',
-    },
-    {
-      sr: '6',
-      class: 'Three(A)',
-      subject: 'Islamiyat',
-      date: '07-03-2025',
-      action: '',
-    },
-  ];
+  const originalData: DailyDiary[] = [];
 
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [tableData, setTableData] = useState<DailyDiary[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -150,15 +115,21 @@ const StudentDiary = ({navigation}: any) => {
     if (token) {
       try {
         const response = await axios.get(
-          'https://demo.capobrain.com/fetchstudentdiary',
+          `https://demo.capobrain.com/fetchstudentdiary?from=${
+            startDate.toISOString().split('T')[0]
+          }&to=${endDate.toISOString().split('T')[0]}&_token=${token}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           },
         );
-        return response.data;
-      } catch (error) {}
+
+        setTableData(response.data.dailydiary);
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
     }
   };
 
@@ -175,7 +146,7 @@ const StudentDiary = ({navigation}: any) => {
     );
 
     return () => backHandler.remove();
-  }, []);
+  }, [startDate, endDate]);
   return (
     <View
       style={{
@@ -347,7 +318,7 @@ const StudentDiary = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -364,9 +335,9 @@ const StudentDiary = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.class}</Text>
-                <Text style={styles.column}>{item.subject}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.cls_name}</Text>
+                <Text style={styles.column}>{item.sub_name}</Text>
                 <Text style={styles.column}>{item.date}</Text>
                 <TouchableOpacity
                   style={styles.iconContainer}

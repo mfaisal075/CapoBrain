@@ -184,13 +184,13 @@ const Download = ({navigation}: any) => {
                 <Text style={[styles.column, styles.headTable, {width: 150}]}>
                   Section
                 </Text>
-                <Text style={[styles.column, styles.headTable, {width: 200}]}>
+                <Text style={[styles.column, styles.headTable, {width: 150}]}>
                   Title
                 </Text>
                 <Text style={[styles.column, styles.headTable, {width: 150}]}>
                   Date
                 </Text>
-                <Text style={[styles.column, styles.headTable, {width: 150}]}>
+                <Text style={[styles.column, styles.headTable, {width: 100}]}>
                   Actions
                 </Text>
               </View>
@@ -208,7 +208,7 @@ const Download = ({navigation}: any) => {
                 <Text style={[styles.column, {width: 150}]}>
                   {item.sec_name}
                 </Text>
-                <Text style={[styles.column, {width: 200}]}>
+                <Text style={[styles.column, {width: 150}]}>
                   {item.file_title}
                 </Text>
                 <Text style={[styles.column, {width: 150}]}>
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   },
   column: {
     width: '33.33%',
-    textAlign: 'center',
+    textAlign:'center'
   },
   headTable: {
     fontWeight: 'bold',
@@ -322,13 +322,14 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 100,
-    height: 30,
+    width: 30,
+    height: 20,
   },
   actionIcon: {
-    width: 20,
-    height: 20,
+    width: 15,
+    height: 15,
     tintColor: '#3b82f6',
-    marginLeft: 40,
+    top:-1,
+    marginLeft: 70
   },
 });

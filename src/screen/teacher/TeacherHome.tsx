@@ -218,7 +218,7 @@ const TeacherHome = ({navigation}: any) => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate('TeacherHomeWork' as never)}>
+            onPress={() => navigation.navigate('TeacherHomework' as never)}>
             <View style={styles.iconContainer}>
               <Image
                 style={{
@@ -266,7 +266,7 @@ const TeacherHome = ({navigation}: any) => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate('TeacherLibraryBooks' as never)}>
+            onPress={() => navigation.navigate('LibraryBook' as never)}>
             <View style={styles.iconContainer}>
               <Image
                 style={{
@@ -287,7 +287,7 @@ const TeacherHome = ({navigation}: any) => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate('TeacherTodo' as never)}>
+            onPress={() => navigation.navigate('TeacherTodos' as never)}>
             <View style={styles.iconContainer}>
               <Image
                 style={{
@@ -406,7 +406,7 @@ const TeacherHome = ({navigation}: any) => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate('TeacherLessonPlan' as never)}>
+            onPress={() => navigation.navigate('LessonPlan' as never)}>
             <View style={styles.iconContainer}>
               <Image
                 style={{

@@ -171,16 +171,16 @@ const LMS = ({navigation}: any) => {
           alignItems: 'flex-end',
         }}>
         <View style={{flexDirection: 'row'}}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('SummerHomework' as never)}>
+        <TouchableOpacity
+            onPress={() => navigation.navigate('LibraryBooks' as never)}>
             <View
               style={{
-                width: 150,
+                width: 110,
                 height: 30,
                 backgroundColor: '#0069D9',
                 marginTop: 10,
                 borderRadius: 5,
-                marginRight: 2,
+                marginRight: 10,
               }}>
               <Text
                 style={{
@@ -190,17 +190,18 @@ const LMS = ({navigation}: any) => {
                   textAlign: 'center',
                   marginTop: 3,
                 }}>
-                Summer HomeWork
+                Library Books
               </Text>
             </View>
           </TouchableOpacity>
+
           <TouchableOpacity
             onPress={() =>
               navigation.navigate('SummerHomeworkResult' as never)
             }>
             <View
               style={{
-                width: 200,
+                width: 195,
                 height: 30,
                 backgroundColor: '#0069D9',
                 marginTop: 10,
@@ -225,39 +226,17 @@ const LMS = ({navigation}: any) => {
           style={{
             flexDirection: 'row',
           }}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('LibraryBooks' as never)}>
-            <View
-              style={{
-                width: 110,
-                height: 30,
-                backgroundColor: '#0069D9',
-                marginTop: 10,
-                borderRadius: 5,
-                marginRight: 10,
-              }}>
-              <Text
-                style={{
-                  color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: 14,
-                  textAlign: 'center',
-                  marginTop: 3,
-                }}>
-                Library Books
-              </Text>
-            </View>
-          </TouchableOpacity>
+        
           <TouchableOpacity
             onPress={() => navigation.navigate('DateSheet' as never)}>
             <View
               style={{
-                width: 90,
+                width: 85,
                 height: 30,
                 backgroundColor: '#0069D9',
                 marginTop: 10,
                 borderRadius: 5,
-                marginRight: 10,
+                marginRight: 5,
               }}>
               <Text
                 style={{
@@ -276,12 +255,12 @@ const LMS = ({navigation}: any) => {
             onPress={() => navigation.navigate('StudentDiary' as never)}>
             <View
               style={{
-                width: 90,
+                width: 85,
                 height: 30,
                 backgroundColor: '#0069D9',
                 marginTop: 10,
                 borderRadius: 5,
-                marginRight: 10,
+                marginRight: 5,
               }}>
               <Text
                 style={{
@@ -295,7 +274,32 @@ const LMS = ({navigation}: any) => {
               </Text>
             </View>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('SummerHomework' as never)}>
+            <View
+              style={{
+                width: 150,
+                height: 30,
+                backgroundColor: '#0069D9',
+                marginTop: 10,
+                borderRadius: 5,
+                marginRight: 2,
+              }}>
+              <Text
+                style={{
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: 14,
+                  textAlign: 'center',
+                  marginTop: 3,
+                }}>
+                Summer HomeWork
+              </Text>
+            </View>
+          </TouchableOpacity>
         </View>
+
       </View>
       <View
         style={{

@@ -2,7 +2,6 @@ import {
   BackHandler,
   FlatList,
   Image,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,17 +10,19 @@ import {
   View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
-import NavBar from '../../components/NavBar';
 import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
-import {useQuery} from '@tanstack/react-query';
-import RenderHtml, {
-  HTMLContentModel,
-  HTMLElementModel,
-} from 'react-native-render-html';
-import {Dimensions} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DropDownPicker from 'react-native-dropdown-picker';
+
+interface Books {
+  id: number;
+  issue_bk_date: string;
+  issue_bk_return_date: string;
+  issue_bk_status: string;
+  bk_name: string;
+  issue_bk_quantity_no: string;
+}
 
 const LibraryBooks = ({navigation}: any) => {
   const {token} = useUser();
@@ -30,33 +31,7 @@ const LibraryBooks = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  type TableRow = {
-    sr: string;
-    book: string;
-    quantity: string;
-    status: string;
-    issueDate: string;
-    returnDate: string;
-  };
-
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      book: 'Physics Key Book',
-      quantity: '1',
-      status: 'Issue',
-      issueDate: '07-03-2025',
-      returnDate: '08-03-2025',
-    },
-    {
-      sr: '2',
-      book: 'Chemistry Key Book',
-      quantity: '1',
-      status: 'Issue',
-      issueDate: '07-03-2025',
-      returnDate: '09-03-2025',
-    },
-  ];
+  const originalData: Books[] = [];
 
   const items = [
     {label: '10', value: 10},
@@ -65,7 +40,7 @@ const LibraryBooks = ({navigation}: any) => {
     {label: '100', value: 100},
   ];
 
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [tableData, setTableData] = useState<Books[]>(originalData);
   const totalPages = Math.ceil(tableData.length / entriesPerPage);
 
   const handleSearch = (text: string) => {
@@ -105,7 +80,7 @@ const LibraryBooks = ({navigation}: any) => {
           },
         );
 
-        return response.data.output;
+        setTableData(response.data.studentlibrarybooks);
       } catch (error) {
         console.error('Error fetching data', error);
         throw error; // Ensure the error is thrown so useQuery can handle it
@@ -116,24 +91,8 @@ const LibraryBooks = ({navigation}: any) => {
     }
   };
 
-  const {data, refetch, isFetching} = useQuery({
-    queryKey: ['tableData'],
-    queryFn: fetchData,
-    refetchOnWindowFocus: true, // Fetch new data when screen is focused
-  });
-
-  const customHTMLElementModels = {
-    center: HTMLElementModel.fromCustomModel({
-      tagName: 'center',
-      mixedUAStyles: {
-        alignItems: 'center',
-        textAlign: 'center',
-      },
-      contentModel: HTMLContentModel.block,
-    }),
-  };
-
   useEffect(() => {
+    fetchData();
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -204,7 +163,7 @@ const LibraryBooks = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -228,21 +187,21 @@ const LibraryBooks = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.book}</Text>
-                <Text style={styles.column}>{item.quantity}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.bk_name}</Text>
+                <Text style={styles.column}>{item.issue_bk_quantity_no}</Text>
                 <View style={styles.iconContainer}>
                   <Image
                     style={styles.statusIcon}
                     source={
-                      item.status === 'Issue'
+                      item.issue_bk_status === 'Issue'
                         ? require('../../assets/approved.png')
                         : require('../../assets/rejected.png')
                     }
                   />
                 </View>
-                <Text style={styles.column}>{item.issueDate}</Text>
-                <Text style={styles.column}>{item.returnDate}</Text>
+                <Text style={styles.column}>{item.issue_bk_date}</Text>
+                <Text style={styles.column}>{item.issue_bk_return_date}</Text>
               </View>
             )}
           />

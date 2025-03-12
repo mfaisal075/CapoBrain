@@ -1,54 +1,178 @@
 import {
   BackHandler,
-  Dimensions,
   Image,
-  Modal,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  TextInput,
+  FlatList,
 } from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
-import NavBar from '../../components/NavBar';
-import {TextInput} from 'react-native-paper';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import React, {useEffect, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import DropDownPicker from 'react-native-dropdown-picker';
 import {useUser} from '../../Ctx/UserContext';
-import {useQuery} from '@tanstack/react-query';
-import RenderHtml, {
-  HTMLContentModel,
-  HTMLElementModel,
-} from 'react-native-render-html';
 import axios from 'axios';
-import {useFocusEffect} from '@react-navigation/native';
+import DropDownPicker from 'react-native-dropdown-picker';
+import Modal from 'react-native-modal';
+import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
+import {DateTimePickerEvent} from '@react-native-community/datetimepicker';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
+type TableRow = {
+  sr: string;
+  date: string;
+  subject: string;
+  action: string;
+};
 
 const TeacherHomework = ({navigation}: any) => {
   const {token} = useUser();
-  const [from, setFrom] = useState(new Date());
-  const [to, setTo] = useState(new Date());
-  const [showFromDatePicker, setShowFromDatePicker] = useState(false);
-  const [showToDatePicker, setShowToDatePicker] = useState(false);
-  const [hwModalVisible, setHwModalVisible] = useState(false);
-  const [modalClassOpen, setModalClassOpen] = useState(false);
-  const [modalClassValue, setModalClassValue] = useState(null);
-  const [subjectOpen, setSubjectOpen] = useState(false);
-  const [subjectValue, setSubjectValue] = useState(null);
-  const [modalSectionOpen, setModalSectionOpen] = useState(false);
-  const [modalSectionValue, setModalSectionValue] = useState(null);
-  const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [desc, setdesc] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [subjectError, setSubjectError] = useState('');
+  const [dateError, setDateError] = useState('');
+  const [descError, setDescError] = useState('');
+  const [desError, setDesError] = useState('');
+  const [date, setDate] = useState('');
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [value, setValue] = useState('');
+  const [dat, setDat] = useState('');
+  const [desc, setDesc] = useState('');
+  const [des, setDes] = useState('');
+  const [endDate, setEndDate] = useState(new Date());
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [startDate, setStartDate] = useState(new Date());
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [branchError, setBranchError] = useState('');
+
+  const [currentValue, setCurrentValue] = useState(null);
+  const itemc = [{label: 'Ten', value: 1}];
+  const [branchErrr, setBranchErrr] = useState('');
+  const [isOpn, setIsOpn] = useState(false);
+  const [currentValu, setCurrentValu] = useState(null);
+  const itemz = [{label: 'Select Class First', value: 1}];
+  const [isOpe, setIsOpe] = useState(false);
+  const [currentVale, setCurrentVale] = useState(null);
+  const itemo = [{label: 'Select Section First', value: 1}];
+
+  const originalData: TableRow[] = [
+    {sr: '1', date: '05-03-2025', subject: 'English', action: ''},
+    {sr: '2', date: '05-03-2025', subject: 'Urdu', action: ''},
+  ];
+  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+
+  const items = [
+    {label: '10', value: 10},
+    {label: '25', value: 25},
+    {label: '50', value: 50},
+    {label: '100', value: 100},
+  ];
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    if (text.trim() === '') {
+      setTableData(originalData);
+    } else {
+      const filtered = originalData.filter(item =>
+        Object.values(item).some(value =>
+          String(value).toLowerCase().includes(text.toLowerCase()),
+        ),
+      );
+      setTableData(filtered);
+    }
+  };
+
+  const totalPages = Math.ceil(tableData.length / entriesPerPage);
+
+  const handlePageChange = (page: number) => {
+    if (page > 0 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const currentEntries = tableData.slice(
+    (currentPage - 1) * entriesPerPage,
+    currentPage * entriesPerPage,
+  );
+
+  const [isModalVisi, setModalVisi] = useState(false);
+
+  const toggleModl = () => {
+    setModalVisi(!isModalVisi);
+  };
+
+  const onStartDateChange = (
+    event: DateTimePickerEvent,
+    selectedDate?: Date,
+  ) => {
+    const currentDate = selectedDate || startDate;
+    setShowStartDatePicker(false);
+    setStartDate(currentDate);
+  };
+
+  const onEndDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    const currentDate = selectedDate || endDate;
+    setShowEndDatePicker(false);
+    setEndDate(currentDate);
+  };
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
+
+  const validateFields = () => {
+    let isValid = true;
+    if (!isOpn) {
+      setBranchErrr('Section is required');
+      isValid = false;
+    } else {
+      setBranchErrr('');
+    }
+    if (!isOpen) {
+      setBranchError('Class is required');
+      isValid = false;
+    } else {
+      setBranchError('');
+    }
+
+    if (!value) {
+      setSubjectError('Subject is required');
+      isValid = false;
+    } else {
+      setSubjectError('');
+    }
+
+    if (!dat) {
+      setDateError('Date is required');
+      isValid = false;
+    } else {
+      setDateError('');
+    }
+
+    if (!desc) {
+      setDescError('Description is required');
+      isValid = false;
+    } else {
+      setDescError('');
+    }
+    if (!des) {
+      setDesError('Total Marks is required');
+      isValid = false;
+    } else {
+      setDesError('');
+    }
+
+    return isValid;
+  };
 
   const fetchData = async () => {
     if (token) {
       try {
         const response = await axios.get(
-          `https://demo.capobrain.com/teacherhomeworks_fetchhomework?from=${
-            from.toISOString().split('T')[0]
-          }&to=${to.toISOString().split('T')[0]}&_token=${token}`,
+          `https://demo.capobrain.com/teacherhomeworks_fetchhomework`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -65,60 +189,11 @@ const TeacherHomework = ({navigation}: any) => {
     }
   };
 
-  const {data, refetch, isFetching} = useQuery({
-    queryKey: ['tableData'],
-    queryFn: fetchData,
-    refetchOnWindowFocus: true,
-  });
-
-  const customHTMLElementModels = {
-    center: HTMLElementModel.fromCustomModel({
-      tagName: 'center',
-      mixedUAStyles: {
-        alignItems: 'center',
-        textAlign: 'center',
-      },
-      contentModel: HTMLContentModel.block,
-    }),
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      refetch();
-    }, [refetch]),
-  );
-
-  const onChange = ({event, selectedDate}: any) => {
-    setShowDatePicker(false); // Hide the picker
-    if (selectedDate) setDate(selectedDate); // Set the selected date
-  };
-
-  const showDialog = () => {
-    setHwModalVisible(true);
-  };
-  const hideDialog = () => {
-    setHwModalVisible(false);
-  };
-
-  const onChangeFrom = (event: any, selectedDate: Date | undefined) => {
-    setShowFromDatePicker(false); // Hide the picker
-    if (selectedDate) setFrom(selectedDate); // Set the selected date
-  };
-
-  const onChangeTo = (event: any, selectedDate: Date | undefined) => {
-    setShowToDatePicker(false); // Hide the picker
-    if (selectedDate) setTo(selectedDate); // Set the selected date
-  };
-
-  const classItems: {label: string; value: string}[] = [];
-
   useEffect(() => {
-    if (from || to) {
-      refetch();
-    }
+    fetchData();
 
     const backAction = () => {
-      navigation.goBack();
+      navigation.navigate('TeacherHome');
       return true;
     };
 
@@ -128,403 +203,763 @@ const TeacherHomework = ({navigation}: any) => {
     );
 
     return () => backHandler.remove();
-  }, [from, to]);
+  }, []);
   return (
-    <View style={styles.container}>
-      <NavBar />
+    <View style={{backgroundColor: 'white', flex: 1}}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate('TeacherHome')}>
+          <Icon
+            name="arrow-left"
+            size={38}
+            color={'#fff'}
+            style={{paddingHorizontal: 10}}
+          />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Home Work</Text>
+      </View>
 
-      <ScrollView>
-        <View style={styles.accountContainer}>
-          {/* From Date Picker */}
-          <View style={styles.datePickerContainer}>
-            <TouchableOpacity onPress={() => setShowFromDatePicker(true)}>
-              <TextInput
-                label="From"
-                value={from.toISOString().split('T')[0]} // Display date in YYYY-MM-DD format
-                theme={{
-                  colors: {
-                    primary: '#3B82F6',
-                  },
-                }}
-                mode="outlined"
-                editable={false} // Prevent keyboard from opening
-                right={
-                  <TextInput.Icon
-                    icon="calendar"
-                    onPress={() => setShowFromDatePicker(true)} // Open date picker on icon press
-                  />
-                }
-              />
-            </TouchableOpacity>
-          </View>
-          {showFromDatePicker && (
-            <DateTimePicker
-              value={from}
-              mode="date"
-              display="default"
-              onChange={onChangeFrom}
-            />
-          )}
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          marginTop: 15,
+        }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderTopWidth: 1,
+            borderBottomWidth: 1,
+            width: 140,
+            borderRightWidth: 1,
+            borderLeftWidth: 1,
+            borderRadius: 5,
+            borderColor: 'gray',
+            marginLeft: 20,
+          }}>
+          <Text style={styles.label}>From</Text>
 
-          {/* To Date Picker */}
           <View
-            style={[
-              styles.datePickerContainer,
-              {marginTop: 10, marginBottom: 40},
-            ]}>
-            <TouchableOpacity onPress={() => setShowToDatePicker(true)}>
-              <TextInput
-                label="To"
-                value={to.toISOString().split('T')[0]} // Display date in YYYY-MM-DD format
-                theme={{
-                  colors: {
-                    primary: '#3B82F6',
-                  },
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              borderRadius: 5,
+              borderColor: 'gray',
+            }}>
+            <Text style={{marginLeft: 10}}>
+              {`${startDate.toLocaleDateString()}`}
+            </Text>
+            <TouchableOpacity onPress={() => setShowStartDatePicker(true)}>
+              <Image
+                style={{
+                  height: 20,
+                  width: 20,
+                  resizeMode: 'stretch',
+                  alignItems: 'center',
+                  marginLeft: 20,
                 }}
-                mode="outlined"
-                editable={false} // Prevent keyboard from opening
-                right={
-                  <TextInput.Icon
-                    icon="calendar"
-                    onPress={() => setShowToDatePicker(true)} // Open date picker on icon press
-                  />
-                }
+                source={require('../../assets/calendar.png')}
               />
-            </TouchableOpacity>
-          </View>
-          {showToDatePicker && (
-            <DateTimePicker
-              value={to}
-              mode="date"
-              display="default"
-              onChange={onChangeTo}
-            />
-          )}
-
-          {/*Buttons */}
-          <View style={styles.btnCtr}>
-            <TouchableOpacity
-              style={[styles.btn, {backgroundColor: '#3B82F6'}]}
-              onPress={() => navigation.navigate('TSummerHomework')}>
-              <Text style={styles.btnText}>Summer Home Work </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.btn, {backgroundColor: '#28A745'}]}
-              onPress={showDialog}>
-              <Text style={styles.btnText}>Add Home Work </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.btn,
-                {backgroundColor: '#5A6268', flexDirection: 'row'},
-              ]}
-              onPress={() => navigation.navigate('TeacherHome')}>
-              <Image
-                source={require('../../assets/back.png')}
-                style={[styles.bckBtnIcon, {marginRight: -8}]}
-              />
-              <Image
-                source={require('../../assets/back.png')}
-                style={styles.bckBtnIcon}
-              />
-              <Text style={styles.btnText}>Dashboard</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Data Container */}
-          <View style={styles.tblDataCtr}>
-            <ScrollView
-              horizontal
-              style={{flex: 1, padding: 10}}
-              refreshControl={
-                <RefreshControl refreshing={isFetching} onRefresh={refetch} />
-              }>
-              {data ? (
-                <RenderHtml
-                  contentWidth={Dimensions.get('window').width}
-                  source={{html: data}}
-                  customHTMLElementModels={customHTMLElementModels}
-                  tagsStyles={{
-                    h4: {
-                      fontSize: 20,
-                      fontWeight: 'bold',
-                      color: '#000',
-                      textAlign: 'center',
-                    },
-                    table: {
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      width: '100%',
-                      marginLeft: -10,
-                    },
-                    th: {
-                      backgroundColor: '#f2f2f2',
-                      paddingVertical: 0,
-                      paddingHorizontal: 1,
-                      marginHorizontal: -5,
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      width: 145, // Adjust width as needed
-                      height: 50,
-                      justifyContent: 'center',
-                      marginBottom: -10,
-                      marginTop: -10,
-                    },
-                    td: {
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      paddingVertical: 0,
-                      paddingHorizontal: 6,
-                      textAlign: 'center',
-                      width: 100, // Adjust width as needed
-                      height: 50,
-                      justifyContent: 'center',
-                      marginBottom: -1,
-                      borderBottomColor: 'white',
-                    },
-                    tr: {
-                      backgroundColor: '#fff',
-                      marginLeft: -3,
-                    },
-                    h6: {
-                      marginVertical: 0,
-                      textAlign: 'center',
-                    },
-                    span: {
-                      backgroundColor: 'gray', // Green background (Approved)
-                      color: '#fff', // White text
-                      paddingHorizontal: 8,
-                      paddingVertical: 4,
-                      borderRadius: 4,
-                      fontSize: 12,
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                      alignSelf: 'center', // Center the badge
-                    },
-                    center: {
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    },
-                    a: {
-                      backgroundColor: 'green',
-                      paddingHorizontal: 10,
-                      paddingVertical: 5,
-                      borderRadius: 5,
-                      color: '#fff',
-                      fontWeight: 'bold',
-                      textDecorationLine: 'none',
-                    },
-                  }}
+              {showStartDatePicker && (
+                <DateTimePicker
+                  testID="startDatePicker"
+                  value={startDate}
+                  mode="date"
+                  is24Hour={true}
+                  display="default"
+                  onChange={onStartDateChange}
                 />
-              ) : (
-                <View style={styles.attendanceCtr}>
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      fontWeight: '500',
-                      color: 'rgba(0,0,0,0.6)',
-                      textAlign: 'center',
-                    }}>
-                    No record present in the database!
-                  </Text>
-                </View>
               )}
-            </ScrollView>
+            </TouchableOpacity>
           </View>
+        </View>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderTopWidth: 1,
+            borderBottomWidth: 1,
+            width: 140,
+            borderRightWidth: 1,
+            borderLeftWidth: 1,
+            borderRadius: 5,
+            borderColor: 'gray',
+            marginLeft: 10,
+            marginRight: 20,
+            height: 40,
+          }}>
+          <Text style={styles.label}>To</Text>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              borderRadius: 5,
+              borderColor: 'gray',
+            }}>
+            <Text style={{marginLeft: 10}}>
+              {`${endDate.toLocaleDateString()}`}
+            </Text>
+            <TouchableOpacity onPress={() => setShowEndDatePicker(true)}>
+              <Image
+                style={{
+                  height: 20,
+                  width: 20,
+                  resizeMode: 'stretch',
+                  alignItems: 'center',
+                  marginLeft: 20,
+                }}
+                source={require('../../assets/calendar.png')}
+              />
+              {showEndDatePicker && (
+                <DateTimePicker
+                  testID="endDatePicker"
+                  value={endDate}
+                  mode="date"
+                  is24Hour={true}
+                  display="default"
+                  onChange={onEndDateChange}
+                />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      <View
+        style={{
+          flexDirection: 'row',
+          alignSelf: 'flex-end',
+          marginTop: 10,
+          marginBottom: 10,
+          marginLeft: 5,
+          marginRight: 10,
+        }}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('TSummerHomework' as never)}>
+          <View
+            style={{
+              width: 150,
+              height: 30,
+              backgroundColor: '#218838',
+              borderRadius: 5,
+              marginRight: 10,
+            }}>
+            <Text
+              style={{
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: 15,
+                textAlign: 'center',
+                marginTop: 3,
+              }}>
+              Summer Home Work
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={toggleModal}>
+          <View
+            style={{
+              width: 130,
+              height: 30,
+              backgroundColor: '#218838',
+              borderRadius: 5,
+            }}>
+            <Text
+              style={{
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: 15,
+                textAlign: 'center',
+                marginTop: 3,
+              }}>
+              Add Home Work
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          marginTop: 10,
+        }}>
+        <View style={{width: 80, marginTop: 9}}>
+          <DropDownPicker
+            items={items}
+            open={isOpen}
+            setOpen={setIsOpen}
+            value={entriesPerPage}
+            setValue={callback => {
+              setEntriesPerPage(prev =>
+                typeof callback === 'function' ? callback(prev) : callback,
+              );
+            }}
+            maxHeight={200}
+            placeholder=""
+            style={styles.dropdown}
+          />
+        </View>
+
+        <View style={styles.container}>
+          <TextInput
+            style={styles.input}
+            placeholder="Search..."
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+        </View>
+      </View>
+
+      {/* Table */}
+      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
+        <View>
+          <FlatList
+            style={styles.flatList}
+            data={currentEntries}
+            nestedScrollEnabled
+            keyExtractor={(item, index) =>
+              item.sr ? item.sr.toString() : index.toString()
+            }
+            ListHeaderComponent={() => (
+              <View style={styles.row}>
+                {['Sr#', 'Subject', 'Date', 'Action'].map(header => (
+                  <Text key={header} style={[styles.column, styles.headTable]}>
+                    {header}
+                  </Text>
+                ))}
+              </View>
+            )}
+            renderItem={({item, index}) => (
+              <View
+                style={[
+                  styles.row,
+                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                ]}>
+                <Text style={styles.column}>{item.sr}</Text>
+                <Text style={styles.column}>{item.subject}</Text>
+                <Text style={styles.column}>{item.date}</Text>
+                <TouchableOpacity
+                  style={styles.iconContainer}
+                  onPress={toggleModl}>
+                  <Image
+                    style={styles.actionIcon}
+                    source={require('../../assets/visible.png')}
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
+          />
         </View>
       </ScrollView>
 
-      {/* Add Home Work Modal */}
-      <Modal
-        visible={hwModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={hideDialog}>
+      <View style={styles.pagination}>
+        <Text>
+          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
+          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
+          {tableData.length} entries
+        </Text>
+        <View style={styles.paginationButtons}>
+          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
+            <Text style={styles.paginationText}>Previous</Text>
+          </TouchableOpacity>
+          <View style={styles.pageNumber}>
+            <Text style={styles.pageText}>{currentPage}</Text>
+          </View>
+          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
+            <Text style={styles.paginationText}>Next</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Modal */}
+      <Modal isVisible={isModalVisi}>
         <View
           style={{
             flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            backgroundColor: 'white',
+            width: 'auto',
+            maxHeight: 300,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: '#6C757D',
           }}>
           <View
             style={{
-              width: '90%',
-              backgroundColor: '#fff',
-              borderRadius: 10,
-              padding: 20,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              margin: 20,
             }}>
-            <View style={styles.modalTitleCtr}>
-              <Text style={styles.modalTitle}>Add Home Work</Text>
-            </View>
-            <View
-              style={{
-                borderBottomColor: '#000',
-                borderBottomWidth: 0.5,
-                marginVertical: 10,
-              }}
-            />
-            <View>
-              <TouchableOpacity
-                style={styles.clsIconCtr}
-                onPress={() => hideDialog()}>
-                <Icon name="close" size={26} color={'#000'} />
-              </TouchableOpacity>
-              <View style={[styles.picker, {marginTop: 20}]}>
-                <Text style={styles.text}>
-                  Class <Text style={{color: 'red'}}>*</Text>
-                </Text>
-                <DropDownPicker
-                  open={modalClassOpen}
-                  value={modalClassValue}
-                  setOpen={setModalClassOpen}
-                  setValue={setModalClassValue}
-                  placeholder="Please Select Any Class"
-                  items={classItems}
-                  style={{
-                    borderColor: 'transparent',
-                    backgroundColor: 'transparent',
-                    borderRadius: 10,
-                  }}
-                  dropDownContainerStyle={{
-                    borderColor: '#ccc',
-                    borderRadius: 10,
-                    height: 'auto',
-                    zIndex: 100,
-                  }}
-                />
-              </View>
-              <View style={[styles.picker, {marginTop: 20}]}>
-                <Text style={styles.text}>
-                  Section <Text style={{color: 'red'}}>*</Text>
-                </Text>
-                <DropDownPicker
-                  open={modalSectionOpen}
-                  value={modalSectionValue}
-                  setOpen={setModalSectionOpen}
-                  setValue={setModalSectionValue}
-                  placeholder="Select Class First"
-                  items={classItems}
-                  style={{
-                    borderColor: 'transparent',
-                    backgroundColor: 'transparent',
-                    borderRadius: 10,
-                  }}
-                  dropDownContainerStyle={{
-                    borderColor: '#ccc',
-                    borderRadius: 10,
-                    height: 'auto',
-                    zIndex: 100,
-                  }}
-                />
-              </View>
-              <View style={[styles.picker, {marginTop: 20}]}>
-                <Text style={styles.text}>
-                  Assigned Subject <Text style={{color: 'red'}}>*</Text>
-                </Text>
-                <DropDownPicker
-                  open={subjectOpen}
-                  value={subjectValue}
-                  setOpen={setSubjectOpen}
-                  setValue={setSubjectValue}
-                  placeholder="Select Section First"
-                  items={classItems}
-                  style={{
-                    borderColor: 'transparent',
-                    backgroundColor: 'transparent',
-                    borderRadius: 10,
-                  }}
-                  dropDownContainerStyle={{
-                    borderColor: '#ccc',
-                    borderRadius: 10,
-                    height: 'auto',
-                    zIndex: 100,
-                  }}
-                />
-              </View>
+            <Text style={{color: '#6C757D', fontSize: 18}}>Home Work</Text>
 
-              {/* Date Picker */}
-              <View style={[styles.picker, {marginTop: 20}]}>
-                <Text style={styles.text}>
-                  Date <Text style={{color: 'red'}}>*</Text>
-                </Text>
-                <TouchableOpacity
-                  onPress={() => setShowDatePicker(true)}
-                  style={{
-                    borderColor: '#ccc',
-                    width: '100%',
-                    height: '100%',
-                    padding: 8, // Match spacing
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}>
-                  <View
-                    style={{
-                      width: '100%',
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                    }}>
-                    <Text style={{color: '#000'}}>
-                      {date.toISOString().split('T')[0]}{' '}
-                      {/* Display date in YYYY-MM-DD format */}
-                    </Text>
-                    <Icon name="calendar" size={24} color={'#3B82F6'} />
-                  </View>
-                </TouchableOpacity>
+            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
+              <Text style={{color: '#6C757D'}}>✖</Text>
+            </TouchableOpacity>
+          </View>
+          <View
+            style={{
+              height: 1,
+              backgroundColor: 'gray',
+              width: wp('90%'),
+            }}
+          />
 
-                {showDatePicker && (
-                  <DateTimePicker
-                    value={date}
-                    mode="date"
-                    display="default"
-                    onChange={onChange}
-                  />
-                )}
-              </View>
-              <View
-                style={[
-                  styles.picker,
-                  {
-                    marginTop: 20,
-                    flexDirection: 'row',
-                    justifyContent: 'flex-start',
-                    paddingHorizontal: 15,
-                    height: 120,
-                  },
-                ]}>
-                <Text style={styles.text}>
-                  Description <Text style={{color: 'red'}}>*</Text>
-                </Text>
-                <TextInput
-                  key="desc-input" // Add a unique key
-                  value={desc}
-                  onChangeText={text => setdesc(text)}
-                  style={{
-                    flex: 1,
-                    textAlignVertical: 'top',
-                    backgroundColor: 'transparent',
-                  }}
-                  cursorColor={'#000'}
-                  multiline={true}
-                  numberOfLines={5}
-                />
-              </View>
-            </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              margin: 10,
+            }}>
+            <Text style={styles.lblText}>Date</Text>
+            <Text style={styles.valueText}>05-03-2025</Text>
+          </View>
+          <View
+            style={{
+              height: 1,
+              backgroundColor: 'gray',
+              width: wp('90%'),
+            }}
+          />
+
+          <View
+            style={{
+              flexDirection: 'row',
+              margin: 10,
+            }}>
+            <Text style={styles.lblText}>Subject</Text>
+            <Text style={styles.valueText}>English</Text>
+          </View>
+          <View
+            style={{
+              height: 1,
+              backgroundColor: 'gray',
+              width: wp('90%'),
+            }}
+          />
+          <View
+            style={{
+              margin: 10,
+              flexDirection: 'row',
+            }}>
+            <Text style={styles.lblText}>Description:</Text>
+            <Text style={styles.valueText}>abc</Text>
+          </View>
+          <View
+            style={{
+              height: 1,
+              backgroundColor: 'gray',
+              width: wp('90%'),
+            }}
+          />
+        </View>
+      </Modal>
+
+      <Modal isVisible={isModalVisible}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'white',
+            width: 'auto',
+            maxHeight: 500,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: '#6C757D',
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              margin: 20,
+            }}>
+            <Text style={{color: '#6C757D', fontSize: 18}}>Add Home Work</Text>
+
+            <TouchableOpacity onPress={() => setModalVisible(!isModalVisible)}>
+              <Text style={{color: '#6C757D'}}>✖</Text>
+            </TouchableOpacity>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              width: 'auto',
+              height: 1,
+              borderColor: 'gray',
+              borderWidth: 1,
+              borderBottomWidth: 1,
+            }}
+          />
+
+          <View
+            style={{
+              flexDirection: 'row',
+            }}>
             <View
               style={{
                 flexDirection: 'row',
-                justifyContent: 'center',
+                alignItems: 'center',
+                width: 135,
+                borderRightWidth: 1,
+                borderLeftWidth: 1,
+                borderRadius: 5,
+                borderColor: 'gray',
+                marginLeft: 20,
+                height: 32,
+                borderBottomWidth: 1,
+                borderTopWidth: 1,
+                marginRight: 5,
                 marginTop: 20,
               }}>
-              <TouchableOpacity style={styles.saveBtn}>
-                <Text style={styles.saveBtnTxt}>Save</Text>
-              </TouchableOpacity>
+              <Text style={[styles.label, {top: -14}]}>Class</Text>
+              <Text
+                style={{
+                  color: 'red',
+                  flexDirection: 'row',
+                  top: -12,
+                  left: 58,
+                  fontSize: 14,
+                  position: 'absolute',
+                  backgroundColor: 'white',
+                }}>
+                *
+              </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  borderRadius: 5,
+                  borderColor: 'gray',
+                }}>
+                <DropDownPicker
+                  items={itemc}
+                  open={isOpen}
+                  setOpen={() => setIsOpen(!isOpen)}
+                  value={currentValue}
+                  setValue={val => setCurrentValue(val)}
+                  maxHeight={200}
+                  placeholder="Select Class"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: 'white',
+                    borderRadius: 5,
+                    minHeight: 5,
+                  }}
+                />
+              </View>
+            </View>
+            {branchError ? (
+              <Text
+                style={{
+                  color: 'red',
+                  fontSize: 12,
+                  position: 'absolute',
+                  top: 53,
+                  left: 26,
+                }}>
+                {branchError}
+              </Text>
+            ) : null}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                width: 145,
+                borderRightWidth: 1,
+                borderLeftWidth: 1,
+                borderRadius: 5,
+                borderColor: 'gray',
+                marginLeft: 5,
+                height: 32,
+                borderBottomWidth: 1,
+                borderTopWidth: 1,
+                marginRight: 10,
+                marginTop: 20,
+              }}>
+              <Text style={[styles.label, {top: -14}]}>Section</Text>
+              <Text
+                style={{
+                  color: 'red',
+                  flexDirection: 'row',
+                  top: -12,
+                  left: 68,
+                  fontSize: 14,
+                  position: 'absolute',
+                  backgroundColor: 'white',
+                }}>
+                *
+              </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  borderRadius: 5,
+                  borderColor: 'gray',
+                }}>
+                <DropDownPicker
+                  items={itemz}
+                  open={isOpn}
+                  setOpen={() => setIsOpn(!isOpn)}
+                  value={currentValu}
+                  setValue={val => setCurrentValu(val)}
+                  maxHeight={200}
+                  placeholder="Select Section"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: 'white',
+                    borderRadius: 5,
+                    minHeight: 5,
+                  }}
+                />
+              </View>
+            </View>
+            {branchErrr ? (
+              <Text
+                style={{
+                  color: 'red',
+                  fontSize: 12,
+                  position: 'absolute',
+                  top: 53,
+                  left: 170,
+                }}>
+                {branchErrr}
+              </Text>
+            ) : null}
+          </View>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              marginTop: 40,
+              justifyContent: 'space-between',
+            }}>
+            {/* Subject */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                width: 145,
+                borderRightWidth: 1,
+                borderLeftWidth: 1,
+                borderRadius: 5,
+                borderColor: 'gray',
+                marginLeft: 20,
+                height: 32,
+                borderBottomWidth: 1,
+                borderTopWidth: 1,
+                marginRight: 5,
+                marginTop: 3,
+              }}>
+              <Text style={[styles.label, {top: -16}]}>Assigned Subject</Text>
+              <Text
+                style={{
+                  color: 'red',
+                  flexDirection: 'row',
+                  top: -12,
+                  left: 130,
+                  fontSize: 14,
+                  position: 'absolute',
+                  backgroundColor: 'white',
+                }}>
+                *
+              </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  borderRadius: 5,
+                  borderColor: 'gray',
+                }}>
+                <DropDownPicker
+                  items={itemo}
+                  open={isOpe}
+                  setOpen={() => setIsOpe(!isOpe)}
+                  value={currentVale}
+                  setValue={val => setCurrentVale(val)}
+                  maxHeight={200}
+                  placeholder="Select Subject"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: 'white',
+                    borderRadius: 5,
+                    minHeight: 5,
+                  }}
+                />
+              </View>
+            </View>
+
+            {subjectError ? (
+              <Text
+                style={{
+                  color: 'red',
+                  fontSize: 12,
+                  position: 'absolute',
+                  top: 35,
+                  left: 25,
+                }}>
+                {subjectError}
+              </Text>
+            ) : null}
+
+            {/* Date */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                borderTopWidth: 1,
+                borderBottomWidth: 1,
+                width: 135,
+                borderRightWidth: 1,
+                borderLeftWidth: 1,
+                borderRadius: 5,
+                borderColor: 'gray',
+                marginRight: 20,
+                marginLeft: 2,
+              }}>
+              <Text style={styles.label}>Date</Text>
+              <Text
+                style={{
+                  color: 'red',
+                  position: 'absolute',
+                  top: -8,
+                  left: 50,
+                  fontSize: 14,
+                  backgroundColor: 'white',
+                }}>
+                *
+              </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  borderRadius: 5,
+                  borderColor: 'gray',
+                }}>
+                <Text
+                  style={{
+                    marginLeft: 10,
+                  }}>
+                  {`${startDate.toLocaleDateString()}`}
+                </Text>
+
+                <TouchableOpacity onPress={() => setShowStartDatePicker(true)}>
+                  <Image
+                    style={{
+                      height: 20,
+                      width: 20,
+                      resizeMode: 'stretch',
+                      alignItems: 'center',
+                      marginLeft: 30,
+                    }}
+                    source={require('../../assets/calendar.png')}
+                  />
+                  {showStartDatePicker && (
+                    <DateTimePicker
+                      testID="startDatePicker"
+                      value={startDate}
+                      mode="date"
+                      is24Hour={true}
+                      display="default"
+                      onChange={onStartDateChange}
+                    />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+            {dateError ? (
+              <Text
+                style={{
+                  color: 'red',
+                  fontSize: 12,
+                  position: 'absolute',
+                  top: 35,
+                  right: 65,
+                }}>
+                {dateError}
+              </Text>
+            ) : null}
+          </View>
+          {/* Description */}
+          <View
+            style={{
+              flexDirection: 'row',
+              borderTopWidth: 1,
+              borderBottomWidth: 1,
+              width: 'auto',
+              borderRightWidth: 1,
+              borderLeftWidth: 1,
+              borderRadius: 5,
+              borderColor: 'gray',
+              marginLeft: 20,
+              marginTop: 30,
+              height: 100,
+              marginRight: 20,
+            }}>
+            <Text style={styles.label}>Description</Text>
+            <Text
+              style={{
+                color: 'red',
+                position: 'absolute',
+                top: -8,
+                left: 92,
+                fontSize: 14,
+                backgroundColor: 'white',
+              }}>
+              *
+            </Text>
+            <View
+              style={{
+                borderRadius: 5,
+                borderColor: 'gray',
+              }}>
+              <TextInput
+                style={{
+                  color: 'black',
+                }}
+                value={desc}
+                onChangeText={setDesc}
+              />
             </View>
           </View>
+          {descError ? (
+            <Text
+              style={{
+                color: 'red',
+                fontSize: 12,
+                position: 'absolute',
+                top: 325,
+                left: 20,
+              }}>
+              {descError}
+            </Text>
+          ) : null}
+
+          <TouchableOpacity
+            onPress={() => {
+              if (validateFields()) {
+                console.log('Form is valid');
+              } else {
+                console.log('Form is invalid');
+              }
+            }}>
+            <View
+              style={{
+                backgroundColor: '#218838',
+                borderRadius: 5,
+                width: 50,
+                height: 30,
+                alignSelf: 'center',
+                marginTop: 30,
+              }}>
+              <Text
+                style={{
+                  color: 'white',
+                  textAlign: 'center',
+                  marginTop: 5,
+                  fontWeight: 'bold',
+                }}>
+                Save
+              </Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </Modal>
     </View>
@@ -534,146 +969,116 @@ const TeacherHomework = ({navigation}: any) => {
 export default TeacherHomework;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#D1D5DB',
-  },
-  accountContainer: {
-    height: 'auto',
-    width: '90%',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    marginTop: 10,
-    marginBottom: 10,
-    marginHorizontal: '5%',
-    alignItems: 'center',
-  },
-  datePickerContainer: {
-    marginTop: 20,
-    marginBottom: 10,
-    width: '80%',
-  },
-  btnCtr: {
-    width: '80%',
-  },
-  btn: {
-    height: 40,
-    width: '100%',
-    borderRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  btnText: {
-    fontSize: 14,
-    color: '#fff',
-    fontWeight: '600',
-  },
-  bckBtnIcon: {
-    height: 14,
-    width: 14,
-    tintColor: '#fff',
-    marginRight: 5,
-  },
-  dataCtr: {
-    width: '90%',
-    height: 200,
-    marginTop: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  noDataTxt: {
-    fontSize: 18,
-    color: 'gray',
-  },
-
-  // Picker Container Styling
-  pickerCtr: {
-    height: 'auto',
-    width: '100%',
-    paddingVertical: 5,
-    paddingHorizontal: '5%',
-  },
-  picker: {
-    height: 40,
-    marginTop: 20,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 10,
-  },
-  text: {
-    fontSize: 12,
-    position: 'absolute',
-    left: 15,
-    top: -10,
-    backgroundColor: '#fff',
-    paddingHorizontal: 2,
-  },
-  addHWBtnCtr: {
-    width: '90%',
-    flexDirection: 'row-reverse',
-    marginTop: 20,
-  },
-  addHWBtn: {
-    width: '55%',
-    height: 40,
-    backgroundColor: '#28A745',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 5,
-    borderRadius: 10,
-  },
-  addHWBtnTxt: {
-    fontSize: 12,
-    color: '#fff',
-    fontWeight: '600',
-  },
-  innerDataCtr: {
-    width: '100%',
-    height: '100%',
-    paddingHorizontal: '5%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  //Modal Styling
-  modalTitleCtr: {
-    paddingHorizontal: 10,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  clsIconCtr: {
-    position: 'absolute',
-    right: 5,
-    top: -50,
-  },
-  saveBtn: {
-    backgroundColor: '#28A745',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 5,
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 10,
+    backgroundColor: '#3b82f6',
   },
-  saveBtnTxt: {
-    color: '#fff',
-    fontSize: 14,
+  backButton: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+    tintColor: 'white',
+    marginLeft: 10,
+  },
+  headerText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+    flex: 1,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 4,
+    borderRadius: 4,
+  },
+  dropdown: {
+    borderWidth: 1,
+    borderColor: '#d5d5d9',
+    borderRadius: 5,
+    minHeight: 30,
+    marginLeft: 10,
+  },
+  row: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+  },
+  column: {
+    width: 100,
+    padding: 5,
+    textAlign: 'center',
+  },
+  headTable: {
+    fontWeight: 'bold',
+    backgroundColor: '#3b82f6',
+    color: 'white',
+  },
+
+  pagination: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    margin: 10,
+  },
+  paginationButtons: {
+    flexDirection: 'row',
+  },
+  paginationText: {
     fontWeight: 'bold',
   },
-  tblDataCtr: {
-    marginTop: 10,
-    height: 'auto',
-    width: '100%',
-    padding: 10,
-  },
-  attendanceCtr: {
-    height: 'auto',
-    width: '100%',
-    padding: 20,
+  pageNumber: {
+    width: 22,
+    height: 22,
+    backgroundColor: '#3b82f6',
     justifyContent: 'center',
     alignItems: 'center',
+    marginLeft: 10,
+    marginRight: 10,
+  },
+  pageText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  flatList: {
+    margin: 10,
+    flex: 1,
+  },
+  container: {
+    backgroundColor: '#fff',
+    marginTop: 12,
+    width: 90,
+    height: 30,
+    marginRight: 10,
+  },
+  lblText: {
+    fontWeight: 'bold',
+    marginRight: 10,
+  },
+  valueText: {
+    marginRight: 10,
+  },
+  iconContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 60,
+    height: 30,
+  },
+  actionIcon: {
+    width: 20,
+    height: 20,
+    tintColor: '#3b82f6',
+    marginLeft: 40,
+  },
+  label: {
+    position: 'absolute',
+    top: -10,
+    left: 14,
+    fontSize: 14,
+    color: 'black',
+    backgroundColor: 'white',
+    paddingHorizontal: 4,
   },
 });

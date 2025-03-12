@@ -42,24 +42,22 @@ interface Printer {
   name: string;
   url: string;
 }
-type TableRow = {
-  sr: string | number;
-  subject: string;
-  totalMarks: string;
-  obtainMarks: string;
-};
+
+interface ResultData {
+  id: number;
+  sub_name: string;
+  total_marks: string;
+  obtain_marks: string;
+}
 
 const SummerHomeWorkResult = ({navigation}: any) => {
   const {token} = useUser();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [selectedPrinter, setSelectedPrinter] = useState<Printer | null>(null);
 
-  const originalData: TableRow[] = [
-    {sr: '1', subject: 'English', totalMarks: '50', obtainMarks: '0'},
-    {sr: 'Total', subject: '', totalMarks: '50', obtainMarks: '0'},
-  ];
+  const originalData: ResultData[] = [];
 
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [tableData, setTableData] = useState<ResultData[]>(originalData);
 
   const silentPrint = async () => {
     if (!selectedPrinter) {
@@ -110,7 +108,7 @@ const SummerHomeWorkResult = ({navigation}: any) => {
           },
         );
         setUserData(response.data);
-        return response.data.output;
+        setTableData(response.data.marking);
       } catch (error) {
         console.log(error);
       }
@@ -174,7 +172,7 @@ const SummerHomeWorkResult = ({navigation}: any) => {
             data={tableData}
             nestedScrollEnabled
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -195,10 +193,10 @@ const SummerHomeWorkResult = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.subject}</Text>
-                <Text style={styles.column}>{item.totalMarks}</Text>
-                <Text style={styles.column}>{item.obtainMarks}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.sub_name}</Text>
+                <Text style={styles.column}>{item.total_marks}</Text>
+                <Text style={styles.column}>{item.obtain_marks}</Text>
               </View>
             )}
           />

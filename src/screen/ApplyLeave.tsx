@@ -23,24 +23,35 @@ import {
 import Modal from 'react-native-modal';
 import DropDownPicker from 'react-native-dropdown-picker';
 
-interface TableRow {
-  sr: string;
+interface LeaveData {
+  id: number;
   subject: string;
-  date: string;
+  leave_date: string;
   status: string;
-  action: string;
+}
+interface LeaveDetails {
+  subject: string;
+  leave_date: string;
+  leave_desc: string;
 }
 
 const ApplyLeave = ({navigation}: any) => {
   const {token} = useUser();
   const [isModalVisible, setModalVisible] = useState(false);
-
+  const [subjectError, setSubjectError] = useState('');
+  const [dateError, setDateError] = useState('');
+  const [descError, setDescError] = useState('');
   const [value, setValue] = useState('');
   const [date, setDate] = useState('');
   const [desc, setDesc] = useState('');
-
+  const [isOpen, setIsOpen] = useState(false);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isModalVisi, setModalVisi] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [startDate, setStartDate] = useState(new Date());
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [leaveDetails, setLeaveDetails] = useState<LeaveDetails | null>(null);
 
   const onStartDateChange = (
     event: DateTimePickerEvent,
@@ -50,10 +61,6 @@ const ApplyLeave = ({navigation}: any) => {
     setShowStartDatePicker(false);
     setStartDate(currentDate);
   };
-
-  const [subjectError, setSubjectError] = useState('');
-  const [dateError, setDateError] = useState('');
-  const [descError, setDescError] = useState('');
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -86,34 +93,8 @@ const ApplyLeave = ({navigation}: any) => {
     return isValid;
   };
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      subject: 'Sick',
-      date: '06-03-2025',
-      status: 'pending',
-      action: '',
-    },
-    {
-      sr: '2',
-      subject: 'Sick',
-      date: '06-03-2025',
-      status: 'approved',
-      action: '',
-    },
-    {
-      sr: '3',
-      subject: 'Sick',
-      date: '06-03-2025',
-      status: 'rejected',
-      action: '',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const originalData: LeaveData[] = [];
+  const [tableData, setTableData] = useState<LeaveData[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -136,7 +117,6 @@ const ApplyLeave = ({navigation}: any) => {
     }
   };
 
-  const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(tableData.length / entriesPerPage);
 
   const handlePageChange = (page: number) => {
@@ -152,7 +132,6 @@ const ApplyLeave = ({navigation}: any) => {
   {
     /*view modal*/
   }
-  const [isModalVisi, setModalVisi] = useState(false);
 
   const toggleModl = () => {
     setModalVisi(!isModalVisi);
@@ -170,7 +149,7 @@ const ApplyLeave = ({navigation}: any) => {
           },
         );
 
-        return response.data.output;
+        setTableData(response.data.leave);
       } catch (error) {
         console.error('Error fetching data', error);
         throw error; // Ensure the error is thrown so useQuery can handle it
@@ -200,7 +179,12 @@ const ApplyLeave = ({navigation}: any) => {
     <View style={{backgroundColor: 'white', flex: 1}}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.navigate('Home' as never)}>
-          <Icon name="arrow-left" size={38} color={'#fff'} />
+          <Icon
+            name="arrow-left"
+            size={38}
+            color={'#fff'}
+            style={{paddingHorizontal: 10}}
+          />
         </TouchableOpacity>
         <Text style={styles.headerText}>Apply Leave</Text>
       </View>
@@ -279,7 +263,7 @@ const ApplyLeave = ({navigation}: any) => {
               data={currentEntries}
               nestedScrollEnabled
               keyExtractor={(item, index) =>
-                item.sr ? item.sr.toString() : index.toString()
+                item.id ? item.id.toString() : index.toString()
               }
               ListHeaderComponent={() => (
                 <View style={styles.row}>
@@ -300,16 +284,16 @@ const ApplyLeave = ({navigation}: any) => {
                     styles.row,
                     {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                   ]}>
-                  <Text style={styles.column}>{item.sr}</Text>
+                  <Text style={styles.column}>{index + 1}</Text>
                   <Text style={styles.column}>{item.subject}</Text>
-                  <Text style={styles.column}>{item.date}</Text>
+                  <Text style={styles.column}>{item.leave_date}</Text>
                   <View style={styles.iconContainer}>
                     <Image
                       style={styles.statusIcon}
                       source={
-                        item.status === 'pending'
+                        item.status === 'Pending'
                           ? require('../assets/pending.png')
-                          : item.status === 'approved'
+                          : item.status === 'Approved'
                           ? require('../assets/approved.png')
                           : require('../assets/rejected.png')
                       }
@@ -317,78 +301,32 @@ const ApplyLeave = ({navigation}: any) => {
                   </View>
                   <TouchableOpacity
                     style={styles.iconContainer}
-                    onPress={toggleModl}>
+                    onPress={() => {
+                      const handleShowLeave = async (id: number) => {
+                        try {
+                          const response = await axios.get(
+                            `https://demo.capobrain.com/showleave?id=${item.id}&_token=${token}`,
+                            {
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                              },
+                            },
+                          );
+                          setLeaveDetails(response.data);
+                          setModalVisi(true);
+                        } catch (error) {
+                          console.log(error);
+                          throw error;
+                        }
+                      };
+
+                      handleShowLeave(item.id);
+                    }}>
                     <Image
                       style={styles.actionIcon}
                       source={require('../assets/visible.png')}
                     />
                   </TouchableOpacity>
-                  <Modal isVisible={isModalVisi}>
-                    <View
-                      style={{
-                        flex: 1,
-                        backgroundColor: 'white',
-                        width: 'auto',
-                        maxHeight: 300,
-                        borderRadius: 5,
-                        borderWidth: 1,
-                        borderColor: '#6C757D',
-                      }}>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          justifyContent: 'space-between',
-                          margin: 20,
-                        }}>
-                        <Text style={{color: '#6C757D', fontSize: 18}}>
-                          Leave Detail
-                        </Text>
-
-                        <TouchableOpacity
-                          onPress={() => setModalVisi(!isModalVisi)}>
-                          <Text style={{color: '#6C757D'}}>✖</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <View
-                        style={{
-                          height: 1,
-                          backgroundColor: 'gray',
-                          width: wp('90%'),
-                        }}
-                      />
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          justifyContent: 'space-between',
-                          margin: 10,
-                        }}>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                          }}>
-                          <Text style={styles.lblText}>Subject</Text>
-                          <Text style={styles.valueText}>Sick</Text>
-                        </View>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            marginRight: 50,
-                          }}>
-                          <Text style={styles.lblText}>Date</Text>
-                          <Text style={styles.valueText}>06-03-2025</Text>
-                        </View>
-                      </View>
-
-                      <View
-                        style={{
-                          marginLeft: 10,
-                          marginTop: 10,
-                        }}>
-                        <Text style={styles.lblText}>Leave Description:</Text>
-                        <Text style={styles.valueText}>Sick</Text>
-                      </View>
-                    </View>
-                  </Modal>
                 </View>
               )}
             />
@@ -602,7 +540,7 @@ const ApplyLeave = ({navigation}: any) => {
               borderRadius: 5,
               borderColor: 'gray',
               marginLeft: 20,
-              marginTop: hp('4%'),
+              marginTop: hp('5%'),
               height: 300,
               marginRight: 20,
             }}>
@@ -640,7 +578,7 @@ const ApplyLeave = ({navigation}: any) => {
                 color: 'red',
                 fontSize: 12,
                 position: 'absolute',
-                top: 462,
+                top: 457,
                 left: 20,
               }}>
               {descError}
@@ -662,7 +600,7 @@ const ApplyLeave = ({navigation}: any) => {
                 width: 50,
                 height: 30,
                 alignSelf: 'center',
-                marginTop: 30,
+                marginTop: hp('5%'),
               }}>
               <Text
                 style={{
@@ -675,6 +613,71 @@ const ApplyLeave = ({navigation}: any) => {
               </Text>
             </View>
           </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* View Modal */}
+      <Modal isVisible={isModalVisi}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'white',
+            width: 'auto',
+            maxHeight: 300,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: '#6C757D',
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              margin: 20,
+            }}>
+            <Text style={{color: '#6C757D', fontSize: 18}}>Leave Detail</Text>
+
+            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
+              <Text style={{color: '#6C757D'}}>✖</Text>
+            </TouchableOpacity>
+          </View>
+          <View
+            style={{
+              height: 1,
+              backgroundColor: 'gray',
+              width: wp('90%'),
+            }}
+          />
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              margin: 10,
+            }}>
+            <View
+              style={{
+                flexDirection: 'row',
+              }}>
+              <Text style={styles.lblText}>Subject</Text>
+              <Text style={styles.valueText}>{leaveDetails?.subject}</Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                marginRight: 50,
+              }}>
+              <Text style={styles.lblText}>Date</Text>
+              <Text style={styles.valueText}>{leaveDetails?.leave_date}</Text>
+            </View>
+          </View>
+
+          <View
+            style={{
+              marginLeft: 10,
+              marginTop: 10,
+            }}>
+            <Text style={styles.lblText}>Leave Description:</Text>
+            <Text style={styles.valueText}>{leaveDetails?.leave_desc}</Text>
+          </View>
         </View>
       </Modal>
     </View>
@@ -786,17 +789,22 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 100,
-    height: 40,
+    width: 50,
+    height: 20,
+    marginRight: 50,
   },
   statusIcon: {
-    width: 25,
-    height: 25,
+    width: 17,
+    height: 17,
+    top: 5,
+    marginLeft: 50,
   },
   actionIcon: {
-    width: 20,
-    height: 20,
+    width: 15,
+    height: 15,
     tintColor: '#3b82f6',
+    top: 5,
+    marginLeft: 50,
   },
   lblText: {
     fontWeight: 'bold',

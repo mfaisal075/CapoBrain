@@ -17,12 +17,21 @@ import Modal from 'react-native-modal';
 import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-type TableRow = {
-  sr: string;
-  subject: string;
-  totalMarks: string;
-  action: string;
-};
+interface HomeWork {
+  id: number;
+  sub_name: string;
+  total_marks: string;
+}
+
+interface HomeWorkData {
+  summer_homework: {
+    total_marks: string;
+    desc: string;
+  };
+  subject: {
+    sub_name: string;
+  };
+}
 
 const SummerHomework = ({navigation}: any) => {
   const {token} = useUser();
@@ -32,6 +41,7 @@ const SummerHomework = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalVisi, setModalVisi] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [homeWorkData, setHomeWorkData] = useState<HomeWorkData | null>(null);
 
   const toggleModl = () => {
     setModalVisi(!isModalVisi);
@@ -44,14 +54,9 @@ const SummerHomework = ({navigation}: any) => {
     {label: '100', value: 100},
   ];
 
-  const originalData: TableRow[] = [
-    {sr: '1', subject: 'English', totalMarks: '50', action: ''},
-    {sr: '2', subject: 'Pakistan Studies', totalMarks: '60', action: ''},
-    {sr: '3', subject: 'Islamiyat', totalMarks: '50', action: ''},
-    {sr: '4', subject: 'Maths', totalMarks: '20', action: ''},
-  ];
+  const originalData: HomeWork[] = [];
 
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [tableData, setTableData] = useState<HomeWork[]>(originalData);
   const totalPages = Math.ceil(tableData.length / entriesPerPage);
 
   const handlePageChange = (page: number) => {
@@ -83,7 +88,7 @@ const SummerHomework = ({navigation}: any) => {
     if (token) {
       try {
         const response = await axios.get(
-          'https://demo.capobrain.com/studentsummerhomework',
+          `https://demo.capobrain.com/studentsummerhomework?_token=${token}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -93,7 +98,7 @@ const SummerHomework = ({navigation}: any) => {
 
         // Set user data for student details
         setUserData(response.data);
-
+        setTableData(response.data.homework);
         return response.data.output;
       } catch (error) {
         console.error('Error fetching data', error);
@@ -138,7 +143,7 @@ const SummerHomework = ({navigation}: any) => {
       </View>
 
       <TouchableOpacity
-        onPress={() => navigation.navigate('SummerResult' as never)}>
+        onPress={() => navigation.navigate('SummerHomeworkResult' as never)}>
         <View
           style={{
             width: 200,
@@ -203,7 +208,7 @@ const SummerHomework = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -220,91 +225,37 @@ const SummerHomework = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.subject}</Text>
-                <Text style={styles.column}>{item.totalMarks}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.sub_name}</Text>
+                <Text style={styles.column}>{item.total_marks}</Text>
                 <TouchableOpacity
                   style={styles.iconContainer}
-                  onPress={toggleModl}>
+                  onPress={() => {
+                    const handleShowHomework = async (id: number) => {
+                      try {
+                        const response = await axios.get(
+                          `https://demo.capobrain.com/showstudentsummerwork?id=${item.id}&_token=${token}`,
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          },
+                        );
+                        setHomeWorkData(response.data);
+                        setModalVisi(true);
+                      } catch (error) {
+                        console.log(error);
+                        throw error;
+                      }
+                    };
+
+                    handleShowHomework(item.id);
+                  }}>
                   <Image
                     style={styles.actionIcon}
                     source={require('../../assets/visible.png')}
                   />
                 </TouchableOpacity>
-                <Modal isVisible={isModalVisi}>
-                  <View
-                    style={{
-                      flex: 1,
-                      backgroundColor: 'white',
-                      width: 'auto',
-                      maxHeight: 300,
-                      borderRadius: 5,
-                      borderWidth: 1,
-                      borderColor: '#6C757D',
-                    }}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        margin: 20,
-                      }}>
-                      <Text style={{color: '#6C757D', fontSize: 18}}>
-                        Summer HomeWork
-                      </Text>
-
-                      <TouchableOpacity
-                        onPress={() => setModalVisi(!isModalVisi)}>
-                        <Text style={{color: '#6C757D'}}>✖</Text>
-                      </TouchableOpacity>
-                    </View>
-                    <View
-                      style={{
-                        height: 1,
-                        backgroundColor: 'gray',
-                        width: wp('90%'),
-                      }}
-                    />
-
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        margin: 10,
-                      }}>
-                      <Text style={styles.lblText}>Subject</Text>
-                      <Text style={styles.valueText}>English</Text>
-                    </View>
-                    <View
-                      style={{
-                        height: 1,
-                        backgroundColor: 'gray',
-                        width: wp('90%'),
-                      }}
-                    />
-
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        margin: 10,
-                      }}>
-                      <Text style={styles.lblText}>Marks</Text>
-                      <Text style={styles.valueText}>50</Text>
-                    </View>
-                    <View
-                      style={{
-                        height: 1,
-                        backgroundColor: 'gray',
-                        width: wp('90%'),
-                      }}
-                    />
-                    <View
-                      style={{
-                        margin: 10,
-                      }}>
-                      <Text style={styles.lblText}>Description:</Text>
-                      <Text style={styles.valueText}>abc</Text>
-                    </View>
-                  </View>
-                </Modal>
               </View>
             )}
           />
@@ -329,6 +280,87 @@ const SummerHomework = ({navigation}: any) => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* View Modal */}
+      <Modal isVisible={isModalVisi}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'white',
+            width: 'auto',
+            maxHeight: 300,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: '#6C757D',
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              margin: 20,
+            }}>
+            <Text style={{color: '#6C757D', fontSize: 18}}>
+              Summer HomeWork
+            </Text>
+
+            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
+              <Text style={{color: '#6C757D'}}>✖</Text>
+            </TouchableOpacity>
+          </View>
+          <View
+            style={{
+              height: 1,
+              backgroundColor: 'gray',
+              width: wp('90%'),
+            }}
+          />
+
+          <View
+            style={{
+              flexDirection: 'row',
+              margin: 10,
+            }}>
+            <Text style={styles.lblText}>Subject</Text>
+            <Text style={styles.valueText}>
+              {homeWorkData?.subject.sub_name}
+            </Text>
+          </View>
+          <View
+            style={{
+              height: 1,
+              backgroundColor: 'gray',
+              width: wp('90%'),
+            }}
+          />
+
+          <View
+            style={{
+              flexDirection: 'row',
+              margin: 10,
+            }}>
+            <Text style={styles.lblText}>Marks</Text>
+            <Text style={styles.valueText}>
+              {homeWorkData?.summer_homework.total_marks}
+            </Text>
+          </View>
+          <View
+            style={{
+              height: 1,
+              backgroundColor: 'gray',
+              width: wp('90%'),
+            }}
+          />
+          <View
+            style={{
+              margin: 10,
+            }}>
+            <Text style={styles.lblText}>Description:</Text>
+            <Text style={styles.valueText}>
+              {homeWorkData?.summer_homework.desc}
+            </Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };

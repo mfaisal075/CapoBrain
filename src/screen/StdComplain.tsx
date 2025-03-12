@@ -120,8 +120,9 @@ const StdComplain = ({navigation}: any) => {
             height: 30,
             backgroundColor: '#218838',
             borderRadius: 5,
-            marginRight: 4,
+            marginRight: 10,
             alignSelf: 'flex-end',
+            marginTop:10
           }}>
           <Text
             style={{
@@ -167,53 +168,41 @@ const StdComplain = ({navigation}: any) => {
               style={[
                 styles.tableHeaderText,
                 styles.column,
-                {width: 40},
-                {padding: 1},
               ]}>
               Sr
             </Text>
             <Text
               style={[
                 styles.tableHeaderText,
-                styles.column,
-                {width: 100},
-                {padding: 1},
+                styles.column
               ]}>
               Name
             </Text>
             <Text
               style={[
                 styles.tableHeaderText,
-                styles.column,
-                {width: 100},
-                {padding: 1},
+                styles.column
               ]}>
               Email
             </Text>
             <Text
               style={[
                 styles.tableHeaderText,
-                styles.column,
-                {width: 100},
-                {padding: 1},
+                styles.column
               ]}>
               Contact
             </Text>
             <Text
               style={[
                 styles.tableHeaderText,
-                styles.column,
-                {width: 100},
-                {padding: 1},
+                styles.column
               ]}>
               Status
             </Text>
             <Text
               style={[
                 styles.tableHeaderText,
-                styles.column,
-                {width: 100},
-                {padding: 1},
+                styles.column
               ]}>
               Action
             </Text>
@@ -232,8 +221,7 @@ const StdComplain = ({navigation}: any) => {
                   style={[
                     styles.tableCell,
                     styles.column,
-                    {width: 40},
-                    {padding: 5},
+                   
                   ]}>
                   {item.sr}
                 </Text>
@@ -241,8 +229,7 @@ const StdComplain = ({navigation}: any) => {
                   style={[
                     styles.tableCell,
                     styles.column,
-                    {width: 100},
-                    {padding: 5},
+                  
                   ]}>
                   {item.name}
                 </Text>
@@ -250,8 +237,7 @@ const StdComplain = ({navigation}: any) => {
                   style={[
                     styles.tableCell,
                     styles.column,
-                    {width: 100},
-                    {padding: 5},
+                   
                   ]}>
                   {item.email}
                 </Text>
@@ -259,8 +245,7 @@ const StdComplain = ({navigation}: any) => {
                   style={[
                     styles.tableCell,
                     styles.column,
-                    {width: 100},
-                    {padding: 5},
+                   
                   ]}>
                   {item.contact}
                 </Text>
@@ -514,7 +499,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: 'white',
     flex: 1,
-    padding: 10,
+    paddingBottom:5
   },
   header: {
     flexDirection: 'row',
@@ -522,42 +507,50 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingVertical: 15,
     paddingHorizontal: 15,
+    backgroundColor:'#3b82f6'
   },
   backButton: {
     width: 24,
     height: 24,
-    tintColor: 'black',
+    tintColor: 'white',
     marginRight: 15,
   },
   headerText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: 'black',
+    color: 'white',
+    textAlign:'center',
+    flex:1
   },
   filterContainer: {
     flexDirection: 'row',
     marginVertical: 10,
     justifyContent: 'space-between',
+    marginLeft:10,
+    marginRight:10
   },
   pickerContainer: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
+    borderRadius: 5,
     paddingHorizontal: 10,
     marginRight: 10,
+    height:30
   },
   picker: {
-    width: 100,
+    width: 90,
     height: 50,
     color: '#000',
+    top:-15
   },
   searchBar: {
     width: 120,
-    height: 50,
+    height: 30,
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
+    borderRadius: 5,
     paddingHorizontal: 10,
+    padding:6
   },
   table: {
     minWidth: 700,
@@ -612,20 +605,21 @@ const styles = StyleSheet.create({
   },
   column: {
     width: '33.33%',
+    padding:1
   },
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
     width: 100,
-    height: 40,
+    height: 20,
   },
   statusIcon: {
-    width: 25,
-    height: 25,
-  },
-  actionIcon: {
     width: 20,
     height: 20,
+  },
+  actionIcon: {
+    width: 15,
+    height: 15,
     tintColor: '#3b82f6',
   },
   label: {

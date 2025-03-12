@@ -72,6 +72,7 @@ const StdUpdate = ({navigation}: any) => {
             />
             <Text style={styles.heading}>Iqbal Day</Text>
           </View>
+          <Text style={styles.Text}>Description</Text>
           <Text style={styles.Text}>09-Nov-2025</Text>
         </View>
 
@@ -83,6 +84,7 @@ const StdUpdate = ({navigation}: any) => {
             />
             <Text style={styles.heading}>Quaid Day</Text>
           </View>
+          <Text style={styles.Text}>Description</Text>
           <Text style={styles.Text}>25-Dec-2025</Text>
         </View>
       </ScrollView>

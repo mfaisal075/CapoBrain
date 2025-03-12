@@ -348,8 +348,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
   },
   column: {
-    width: 100,
-    padding: 5,
+    width: 140,
+    padding: 1,
     textAlign: 'center'
   },
   headTable: {
@@ -402,12 +402,12 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 100,
-    height: 40,
+    width: 70,
+    height: 20,
   },
   actionIcon: {
-    width: 20,
-    height: 20,
+    width: 15,
+    height: 15,
     tintColor: '#3b82f6',
   },
 });

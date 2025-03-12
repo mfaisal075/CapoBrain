@@ -413,7 +413,7 @@ const Home = ({navigation}: any) => {
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => navigation.navigate('Feedback' as never)}>
-        <View style={[styles.update, {marginBottom: hp('4%')}]}>
+        <View style={[styles.update, {marginBottom: hp('5%')}]}>
           <Image
             style={{
               width: 30,

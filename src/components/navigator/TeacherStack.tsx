@@ -22,6 +22,7 @@ import TeacherFeedback from '../../screen/teacher/TeacherFeedback';
 import TeacherComplain from '../../screen/teacher/TeacherComplain';
 import TeacherCalendar from '../../screen/teacher/TeacherCalendar';
 import TeacherMessages from '../../screen/teacher/TeacherMessages';
+import TeacherComment from '../../screen/teacher/TeacherComment';
 
 const Stack = createNativeStackNavigator();
 
@@ -131,6 +132,11 @@ const TeacherStack = () => {
       <Stack.Screen
         name="TeacherMessages"
         component={TeacherMessages}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="TeacherComment"
+        component={TeacherComment}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

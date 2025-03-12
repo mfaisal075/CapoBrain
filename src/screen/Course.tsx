@@ -108,8 +108,8 @@ const Course = ({navigation}: any) => {
     return () => backHandler.remove();
   }, []);
   return (
-    <ScrollView style={{backgroundColor: 'white', flex: 1}}>
-      <View>
+    <View style={{backgroundColor: 'white', flex: 1}}>
+   
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => navigation.navigate('Home' as never)}>
@@ -211,8 +211,8 @@ const Course = ({navigation}: any) => {
             </TouchableOpacity>
           </View>
         </View>
-      </View>
-    </ScrollView>
+      
+    </View>
   );
 };
 

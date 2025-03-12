@@ -159,7 +159,7 @@ const Result = ({navigation}: any) => {
       </View>
 
       <View
-        style={{flexDirection: 'column', marginTop: 10, marginHorizontal: 10}}>
+        style={{flexDirection: 'column', marginTop: 10, marginHorizontal: 10, alignItems:'center' }}>
         <Text
           style={{
             fontSize: 18,
@@ -341,8 +341,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
   },
   column: {
-    width: 100,
-    padding: 5,
+    width: 140,
+    padding: 2,
     textAlign: 'center',
   },
   headTable: {

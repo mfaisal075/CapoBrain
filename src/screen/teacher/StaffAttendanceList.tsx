@@ -1,6 +1,6 @@
 import {
   BackHandler,
-  Image,
+  FlatList,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,49 +8,59 @@ import {
   View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
-import NavBar from '../../components/NavBar';
-import {DataTable} from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+
+type TableRow = {
+  date: string | number;
+  clockin: string;
+  clockout: string;
+  status: string;
+};
 
 const StaffAttendanceList = ({navigation}: any) => {
-  const [page, setPage] = useState<number>(0);
-  const [numberOfItemsPerPageList] = useState([10, 50, 100]);
-  const [itemsPerPage, onItemsPerPageChange] = useState(
-    numberOfItemsPerPageList[0],
-  );
-
-  const [items] = useState([
+  const originalData: TableRow[] = [
+    {date: '14-Nov-24', clockin: '5:50:00', clockout: '--:--:--', status: ''},
+    {date: '15-Nov-24', clockin: '10:15:00', clockout: '--:--:--', status: ''},
     {
-      date: '13-Nov-2024',
-      clockin: '10:40:00',
-      clockout: '--:--:--',
-      status: '',
-      actionType: '',
-    },
-    {
-      date: '15-Nov-2024',
-      clockin: '10:42:00',
-      clockout: '3:42:00',
+      date: '16-Nov-24',
+      clockin: '10:41:00',
+      clockout: '12:00:00',
       status: 'Present',
-      actionType: 'green',
     },
+    {date: '20-Nov-24', clockin: '2:52:00', clockout: '--:--:--', status: ''},
     {
-      date: '16-Nov-2024',
-      clockin: '10:50:00',
-      clockout: '11:00:00',
+      date: '21-Nov-24',
+      clockin: '12:22:00',
+      clockout: '12:27:00',
       status: 'Present',
-      actionType: 'green',
     },
     {
-      date: '15-Nov-2024',
-      clockin: '--:--:--',
-      clockout: '--:--:--',
-      status: 'Absent',
-      actionType: 'red',
+      date: '28-Nov-24',
+      clockin: '11:33:00',
+      clockout: '12:33:00',
+      status: 'Present',
     },
-  ]);
+    {
+      date: '05-Dec-24',
+      clockin: '9:43:00',
+      clockout: '9:43:00',
+      status: 'Present',
+    },
+    {
+      date: '06-Dec-24',
+      clockin: '3:28:00',
+      clockout: '3:28:00',
+      status: 'Present',
+    },
+    {
+      date: '09-Dec-24',
+      clockin: '10:04:00',
+      clockout: '10:04:00',
+      status: 'Present',
+    },
+  ];
 
-  const from = page * itemsPerPage;
-  const to = Math.min((page + 1) * itemsPerPage, items.length);
+  const [tableData, setTableData] = useState<TableRow[]>(originalData);
 
   useEffect(() => {
     const backAction = () => {
@@ -66,154 +76,75 @@ const StaffAttendanceList = ({navigation}: any) => {
     return () => backHandler.remove();
   }, []);
   return (
-    <View style={styles.container}>
-      <NavBar />
+    <View style={{backgroundColor: 'white', flex: 1}}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Icon
+            name="arrow-left"
+            size={38}
+            color={'#fff'}
+            style={{paddingHorizontal: 10}}
+          />
+        </TouchableOpacity>
+        <Text style={styles.headerText}> Attendance List</Text>
+      </View>
 
-      <ScrollView>
-        <View style={styles.accountContainer}>
-          <View style={styles.actHeadingContainer}>
-            <Text style={styles.tblHdCtr}>Attendance List</Text>
-          </View>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('TeacherStudentList' as never)}>
+        <View
+          style={{
+            width: 150,
+            height: 30,
+            backgroundColor: '#0069D9',
+            borderRadius: 5,
+            marginRight: 10,
+            alignSelf: 'flex-end',
+            marginTop: 10,
+          }}>
+          <Text
+            style={{
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: 15,
+              textAlign: 'center',
+              marginTop: 3,
+            }}>
+            Student Attendance
+          </Text>
+        </View>
+      </TouchableOpacity>
 
-          {/* Back Button */}
-          <View style={styles.bckBtnCtr}>
-            <TouchableOpacity
-              style={styles.bckBtn}
-              onPress={() => navigation.goBack()}>
-              <Image
-                source={require('../../assets/back.png')}
-                style={[styles.bckBtnIcon, {marginRight: -8}]}
-              />
-              <Image
-                source={require('../../assets/back.png')}
-                style={styles.bckBtnIcon}
-              />
-              <Text style={styles.bckBtnText}>Back</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.stdAttBtn}
-              onPress={() => navigation.navigate('StdAttendance')}>
-              <Text style={styles.stdAttBtnText}>Student Attendance</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Table */}
-          <View style={styles.tblDataCtr}>
-            <ScrollView horizontal>
-              <DataTable>
-                <DataTable.Header>
-                  {['Date', 'Clock in', 'Clock out', 'Status'].map(
-                    (title, index) => (
-                      <DataTable.Title
-                        key={index}
-                        textStyle={{
-                          color: 'black',
-                          fontSize: 14,
-                          fontWeight: 'bold',
-                        }}
-                        style={{
-                          width: 100,
-                          paddingHorizontal: 5,
-                          borderColor: '#000',
-                          borderWidth: 0.5,
-                          backgroundColor: '#F0F0F0',
-                        }}>
-                        {title}
-                      </DataTable.Title>
-                    ),
-                  )}
-                </DataTable.Header>
-
-                {items.length > 0 ? (
-                  items.map((item, index) => (
-                    <DataTable.Row key={index}>
-                      {[item.date, item.clockin, item.clockout].map(
-                        (value, idx) => (
-                          <DataTable.Cell
-                            key={idx}
-                            textStyle={{color: '#000', fontSize: 12}}
-                            style={{
-                              width: 100, // Reduced width for the first cell
-                              paddingHorizontal: 5,
-                              borderColor: '#000',
-                              borderWidth: 0.5,
-                            }}>
-                            {value}
-                          </DataTable.Cell>
-                        ),
-                      )}
-                      <DataTable.Cell
-                        key={'action'}
-                        textStyle={{color: '#000', fontSize: 12}}
-                        style={{
-                          width: 100,
-                          paddingHorizontal: 5,
-                          borderColor: '#000',
-                          borderWidth: 0.5,
-                        }}>
-                        <View
-                          style={{
-                            width: '80%',
-                            backgroundColor: item.actionType,
-                            padding: 5,
-                            paddingHorizontal: 10,
-                            borderRadius: 15,
-                            alignItems: 'center',
-                            alignSelf: 'center',
-                          }}>
-                          <Text style={{color: '#fff', fontSize: 12}}>
-                            {item.status}
-                          </Text>
-                        </View>
-                      </DataTable.Cell>
-                    </DataTable.Row>
-                  ))
-                ) : (
-                  <DataTable.Row>
-                    <DataTable.Cell
-                      textStyle={{
-                        color: 'gray',
-                        fontSize: 16,
-                        fontWeight: 'bold',
-                      }}
-                      style={{
-                        width: '100%',
-                        paddingHorizontal: 5,
-                        borderColor: '#000',
-                        borderWidth: 0.5,
-                        justifyContent: 'center',
-                      }}>
-                      No data found
-                    </DataTable.Cell>
-                  </DataTable.Row>
-                )}
-
-                <DataTable.Pagination
-                  page={page}
-                  numberOfPages={Math.ceil(items.length / itemsPerPage)}
-                  onPageChange={page => setPage(page)}
-                  label={`${from + 1}-${to} of ${items.length}`}
-                  numberOfItemsPerPageList={numberOfItemsPerPageList}
-                  numberOfItemsPerPage={itemsPerPage}
-                  onItemsPerPageChange={onItemsPerPageChange}
-                  showFastPaginationControls
-                  selectPageDropdownLabel={'Show Entries'}
-                  theme={{
-                    colors: {
-                      primary: '#000',
-                      elevation: {
-                        level2: '#fff',
-                      },
-                      text: '#616161',
-                      onSurface: '#616161',
-                    },
-                    dark: false,
-                    roundness: 1,
-                  }}
-                />
-              </DataTable>
-            </ScrollView>
-          </View>
+      {/* Table */}
+      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
+        <View>
+          <FlatList
+            style={styles.flatList}
+            data={tableData}
+            keyExtractor={(item, index) =>
+              item.date ? item.date.toString() : index.toString()
+            }
+            ListHeaderComponent={() => (
+              <View style={styles.row}>
+                {['Date', 'Clock In', 'Clock Out', 'Status'].map(header => (
+                  <Text key={header} style={[styles.column, styles.headTable]}>
+                    {header}
+                  </Text>
+                ))}
+              </View>
+            )}
+            renderItem={({item, index}) => (
+              <View
+                style={[
+                  styles.row,
+                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                ]}>
+                <Text style={styles.column}>{item.date}</Text>
+                <Text style={styles.column}>{item.clockin}</Text>
+                <Text style={styles.column}>{item.clockout}</Text>
+                <Text style={styles.column}>{item.status}</Text>
+              </View>
+            )}
+          />
         </View>
       </ScrollView>
     </View>
@@ -223,75 +154,44 @@ const StaffAttendanceList = ({navigation}: any) => {
 export default StaffAttendanceList;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#D1D5DB',
-  },
-  accountContainer: {
-    height: 'auto',
-    width: '90%',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    marginTop: 10,
-    marginBottom: 10,
-    marginHorizontal: '5%',
-  },
-  actHeadingContainer: {
-    height: 50,
-    width: '100%',
-    justifyContent: 'center',
-    paddingLeft: 20,
-  },
-  tblHdCtr: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  tblDataCtr: {
-    marginTop: 10,
-    height: 'auto',
-    width: '100%',
-    padding: 10,
-  },
-  bckBtnCtr: {
-    height: 50,
-    width: '100%',
+  row: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    paddingRight: 20,
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
   },
-  bckBtn: {
-    backgroundColor: '#5A6268',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 5,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  bckBtnText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  bckBtnIcon: {
-    height: 16,
-    width: 16,
-    tintColor: '#fff',
-    marginRight: 5,
-  },
-  stdAttBtn: {
-    backgroundColor: '#3B82F6',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 5,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 5,
-  },
-  stdAttBtnText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
+  column: {
+    width: 100,
+    padding: 5,
     textAlign: 'center',
+  },
+  headTable: {
+    fontWeight: 'bold',
+    backgroundColor: '#3b82f6',
+    color: 'white',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    backgroundColor: '#3b82f6',
+    justifyContent: 'center',
+  },
+  backButton: {
+    width: 24,
+    height: 24,
+    tintColor: 'white',
+  },
+  headerText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    flex: 1,
+    textAlign: 'center',
+  },
+  flatList: {
+    margin: 10,
+    flex: 1,
   },
 });

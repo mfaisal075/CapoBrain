@@ -633,7 +633,7 @@ const Account = ({navigation}: any) => {
                         style={[styles.text, styles.column, styles.withBorder]}>
                         {item.key}:
                       </Text>
-                      <Text style={[styles.value, styles.column]}>
+                      <Text style={[styles.value, styles.column,{marginRight:5}]}>
                         {item.value}
                       </Text>
                     </View>
