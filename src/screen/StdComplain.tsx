@@ -85,6 +85,7 @@ const StdComplain = ({navigation}: any) => {
   const toggleModl = () => {
     setModalVisi(!isModalVisi);
   };
+  
 
   useEffect(() => {
     const backAction = () => {
@@ -162,116 +163,50 @@ const StdComplain = ({navigation}: any) => {
       </View>
 
       <ScrollView horizontal>
-        <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <Text
-              style={[
-                styles.tableHeaderText,
-                styles.column,
-              ]}>
-              Sr
-            </Text>
-            <Text
-              style={[
-                styles.tableHeaderText,
-                styles.column
-              ]}>
-              Name
-            </Text>
-            <Text
-              style={[
-                styles.tableHeaderText,
-                styles.column
-              ]}>
-              Email
-            </Text>
-            <Text
-              style={[
-                styles.tableHeaderText,
-                styles.column
-              ]}>
-              Contact
-            </Text>
-            <Text
-              style={[
-                styles.tableHeaderText,
-                styles.column
-              ]}>
-              Status
-            </Text>
-            <Text
-              style={[
-                styles.tableHeaderText,
-                styles.column
-              ]}>
-              Action
-            </Text>
-          </View>
-
-          <FlatList
-            data={currentComplaints}
-            keyExtractor={item => item.sr}
-            renderItem={({item, index}) => (
-              <View
-                style={[
-                  styles.tableRow,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text
-                  style={[
-                    styles.tableCell,
-                    styles.column,
-                   
-                  ]}>
-                  {item.sr}
-                </Text>
-                <Text
-                  style={[
-                    styles.tableCell,
-                    styles.column,
-                  
-                  ]}>
-                  {item.name}
-                </Text>
-                <Text
-                  style={[
-                    styles.tableCell,
-                    styles.column,
-                   
-                  ]}>
-                  {item.email}
-                </Text>
-                <Text
-                  style={[
-                    styles.tableCell,
-                    styles.column,
-                   
-                  ]}>
-                  {item.contact}
-                </Text>
-
-                <View style={styles.iconContainer}>
+        <View>
+        
+        <FlatList
+              style={styles.flatList}
+              data={currentComplaints}
+             
+              keyExtractor={(item, index) => item.sr ? item.sr.toString() : index.toString()}
+              ListHeaderComponent={() => (
+                <View style={styles.row}>
+                  {["Sr#", "Name", "Email", "Contact", "Status", "Action"].map((header) => (
+                    <Text key={header} style={[styles.column, styles.headTable]}>{header}</Text>
+                  ))}
+                </View>
+              )}
+              renderItem={({ item, index }) => (
+                <View style={[styles.row, { backgroundColor: index % 2 === 0 ? "white" : "#E2F0FF" }]}>
+                  <Text style={styles.column}>{item.sr}</Text>
+                  <Text style={styles.column}>{item.name}</Text>
+                  <Text style={styles.column}>{item.email}</Text>
+                  <Text style={styles.column}>{item.contact}</Text>
+              
+                  <View style={styles.iconContainer}>
                   <Image
                     style={styles.statusIcon}
                     source={
-                      item.status === 'approved'
-                        ? require('../assets/approved.png')
-                        : require('../assets/rejected.png')
+                      item.status === "approved"
+                      ? require('../assets/approved.png')
+                      : require('../assets/rejected.png')
                     }
                   />
                 </View>
 
-                <TouchableOpacity
-                  style={styles.iconContainer}
-                  onPress={toggleModl}>
-                  <Image
+                <TouchableOpacity style={styles.iconContainer} onPress={toggleModl}>
+                  <Image 
                     style={styles.actionIcon}
                     source={require('../assets/visible.png')}
                   />
                 </TouchableOpacity>
-              </View>
-            )}
-          />
+              
+                </View>
+              )}
+            />
+ 
+         
         </View>
       </ScrollView>
 
@@ -604,18 +539,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   column: {
-    width: '33.33%',
+    width: 140,
     padding:1
   },
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 100,
+    width: 50,
     height: 20,
+    marginRight:90 
   },
   statusIcon: {
-    width: 20,
-    height: 20,
+    width: 17,
+    height: 17,
   },
   actionIcon: {
     width: 15,
@@ -638,4 +574,19 @@ const styles = StyleSheet.create({
   valueText: {
     marginRight: 10,
   },
+  flatList: {
+    margin: 10,
+    flex: 1,
+  },
+  row: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderColor: "#ccc",
+  },
+  headTable: {
+    fontWeight: "bold",
+    backgroundColor: "#3b82f6",
+    color: "white",
+  },
 });
+

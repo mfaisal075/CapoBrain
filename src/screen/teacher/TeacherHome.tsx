@@ -436,6 +436,21 @@ const TeacherHome = ({navigation}: any) => {
               <Text>Date Sheet</Text>
             </View>
           </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('TeacherDiary' as never)}>
+            <View style={styles.iconContainer}>
+              <Image
+                style={{
+                  alignSelf: 'center',
+                  width: 25,
+                  height: 30,
+                  tintColor: '#27445D',
+                }}
+                source={require('../../assets/diary.png')}
+              />
+              <Text>Daily Diary</Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </View>
       {/*news*/}
@@ -558,7 +573,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: hp('2%'),
+    marginBottom: hp('5%'),
   },
   attendance: {
     backgroundColor: '#3b82f6',

@@ -1,20 +1,18 @@
 import {
-  BackHandler,
-  FlatList,
-  Image,
-  ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
+  TouchableOpacity,
+  Image,
+  FlatList,
+  ScrollView,
   TextInput,
+  Alert,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import DateTimePicker, {
-  DateTimePickerEvent,
-} from '@react-native-community/datetimepicker';
-import {useUser} from '../../Ctx/UserContext';
-import axios from 'axios';
+import React, {useState} from 'react';
+import {useNavigation} from '@react-navigation/native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import {DateTimePickerEvent} from '@react-native-community/datetimepicker';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Modal from 'react-native-modal';
 import {
@@ -22,6 +20,7 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {Picker} from '@react-native-picker/picker';
 
 type TableRow = {
   sr: string;
@@ -31,24 +30,10 @@ type TableRow = {
   action: string;
 };
 
-interface DailyDiary {
-  id: number;
-  cls_name: string;
-  sec_name: string;
-  sub_name: string;
-  date: string;
-}
-
-const StudentDiary = ({navigation}: any) => {
-  const {token} = useUser();
+export default function DailyDiary() {
+  const navigation = useNavigation();
   const [startDate, setStartDate] = useState(new Date());
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
-  const [endDate, setEndDate] = useState(new Date());
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
 
   const onStartDateChange = (
     event: DateTimePickerEvent,
@@ -59,15 +44,65 @@ const StudentDiary = ({navigation}: any) => {
     setStartDate(currentDate);
   };
 
+  const [endDate, setEndDate] = useState(new Date());
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+
   const onEndDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     const currentDate = selectedDate || endDate;
     setShowEndDatePicker(false);
     setEndDate(currentDate);
   };
 
-  const originalData: DailyDiary[] = [];
+  const [isOpen, setIsOpen] = useState(false);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const [tableData, setTableData] = useState<DailyDiary[]>(originalData);
+  const originalData: TableRow[] = [
+    {
+      sr: '1',
+      class: 'Three(A)',
+      subject: 'English',
+      date: '07-03-2025',
+      action: '',
+    },
+    {
+      sr: '2',
+      class: 'Three(A)',
+      subject: 'Urdu',
+      date: '07-03-2025',
+      action: '',
+    },
+    {
+      sr: '3',
+      class: 'Three(A)',
+      subject: 'Math',
+      date: '07-03-2025',
+      action: '',
+    },
+    {
+      sr: '4',
+      class: 'Three(A)',
+      subject: 'Pakistan Studies',
+      date: '07-03-2025',
+      action: '',
+    },
+    {
+      sr: '5',
+      class: 'Three(A)',
+      subject: 'Science',
+      date: '07-03-2025',
+      action: '',
+    },
+    {
+      sr: '6',
+      class: 'Three(A)',
+      subject: 'Islamiyat',
+      date: '07-03-2025',
+      action: '',
+    },
+  ];
+
+  const [tableData, setTableData] = useState<TableRow[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -90,6 +125,7 @@ const StudentDiary = ({navigation}: any) => {
     }
   };
 
+  const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(tableData.length / entriesPerPage);
 
   const handlePageChange = (page: number) => {
@@ -111,42 +147,55 @@ const StudentDiary = ({navigation}: any) => {
     setModalVisi(!isModalVisi);
   };
 
-  const fetchData = async () => {
-    if (token) {
-      try {
-        const response = await axios.get(
-          `https://demo.capobrain.com/fetchstudentdiary?from=${
-            startDate.toISOString().split('T')[0]
-          }&to=${endDate.toISOString().split('T')[0]}&_token=${token}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
+  {
+    /*Add Diary*/
+  }
+  const [isModalVisible, setModalVisible] = useState(false);
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
 
-        setTableData(response.data.dailydiary);
-      } catch (error) {
-        console.log(error);
-        throw error;
-      }
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedSection, setSelectedSection] = useState('');
+  const [startDte, setStartDte] = useState(new Date());
+  const [showStartDtePicker, setShowStartDtePicker] = useState(false);
+  const [formData, setFormData] = useState({
+    english: '',
+    urdu: '',
+    math: '',
+    pakistanStudies: '',
+    chemistry: '',
+    biology: '',
+    physics: '',
+    islamiyat: '',
+  });
+
+  const onStartDteChange = (_event: any, selectedDate?: Date) => {
+    if (selectedDate) {
+      setStartDte(selectedDate);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-    const backAction = () => {
-      navigation.goBack();
-      return true;
-    };
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
+    setFormData({...formData, [field]: value});
+  };
 
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction,
-    );
+  const validateFields = () => {
+    if (!selectedClass || !selectedSection) {
+      Alert.alert('Error', 'Please select Class and Section');
+      return false;
+    }
 
-    return () => backHandler.remove();
-  }, [startDate, endDate]);
+    for (const key of Object.keys(formData) as Array<keyof typeof formData>) {
+      if (!formData[key]) {
+        Alert.alert('Error', `Please enter ${key}`);
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   return (
     <View
       style={{
@@ -154,7 +203,8 @@ const StudentDiary = ({navigation}: any) => {
         flex: 1,
       }}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('LMS' as never)}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Teacher' as never)}>
           <Icon
             name="arrow-left"
             size={38}
@@ -164,6 +214,172 @@ const StudentDiary = ({navigation}: any) => {
         </TouchableOpacity>
         <Text style={styles.headerText}>Daily Diary</Text>
       </View>
+      <TouchableOpacity onPress={toggleModal}>
+        <View
+          style={{
+            width: 90,
+            height: 30,
+            backgroundColor: '#218838',
+            borderRadius: 5,
+            margin: 10,
+            alignSelf: 'flex-end',
+          }}>
+          <Text
+            style={{
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: 15,
+              textAlign: 'center',
+              marginTop: 3,
+            }}>
+            Add Diary
+          </Text>
+        </View>
+      </TouchableOpacity>
+      <Modal isVisible={isModalVisible}>
+        <ScrollView
+          style={{
+            flex: 1,
+            backgroundColor: 'white',
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: '#6C757D',
+            padding: 10,
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}>
+            <Text
+              style={{
+                fontSize: 18,
+                color: '#6C757D',
+              }}>
+              Add Diary
+            </Text>
+            <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <Text style={{color: '#6C757D'}}>✖</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View
+            style={{
+              height: 1,
+              width: wp('85%'),
+              backgroundColor: 'gray',
+            }}
+          />
+          <Text
+            style={{
+              marginTop: 10,
+              left: 7,
+            }}>
+            Class
+          </Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              style={styles.picker}
+              dropdownIconColor="gray"
+              mode="dropdown"
+              selectedValue={selectedClass}
+              onValueChange={itemValue => setSelectedClass(itemValue)}>
+              <Picker.Item label="Please Select" value="" />
+              <Picker.Item label="Ten" value="Ten" />
+            </Picker>
+          </View>
+
+          <Text
+            style={{
+              left: 7,
+            }}>
+            Section
+          </Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              style={styles.picker}
+              dropdownIconColor="gray"
+              mode="dropdown"
+              selectedValue={selectedSection}
+              onValueChange={itemValue => setSelectedSection(itemValue)}>
+              <Picker.Item label="Select Section" value="" />
+              <Picker.Item label="A" value="A" />
+            </Picker>
+          </View>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              borderWidth: 1,
+              borderColor: 'gray',
+              padding: 7,
+              borderRadius: 5,
+              justifyContent: 'space-between',
+              height: 33,
+            }}>
+            <Text>Date: {startDte.toLocaleDateString()}</Text>
+            <TouchableOpacity onPress={() => setShowStartDtePicker(true)}>
+              <Image
+                source={require('../../assets/calendar.png')}
+                style={{height: 20, width: 20}}
+              />
+            </TouchableOpacity>
+          </View>
+          {showStartDtePicker && (
+            <DateTimePicker
+              value={startDte}
+              mode="date"
+              display="default"
+              onChange={onStartDteChange}
+            />
+          )}
+
+          {Object.keys(formData).map(subject => (
+            <View key={subject} style={{marginVertical: 10}}>
+              <Text>{subject.charAt(0).toUpperCase() + subject.slice(1)}</Text>
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  borderColor: 'gray',
+                  padding: 5,
+                  borderRadius: 5,
+                }}
+                value={formData[subject as keyof typeof formData]}
+                onChangeText={text =>
+                  handleInputChange(subject as keyof typeof formData, text)
+                }
+                placeholder={`Enter ${subject} details`}
+              />
+            </View>
+          ))}
+
+          <TouchableOpacity
+            onPress={() => {
+              if (validateFields()) {
+                Alert.alert('Success', 'Form submitted successfully!');
+              }
+            }}>
+            <View
+              style={{
+                backgroundColor: '#218838',
+                padding: 10,
+                borderRadius: 5,
+                alignItems: 'center',
+                marginBottom: hp('5%'),
+                marginTop: hp('2%'),
+              }}>
+              <Text
+                style={{
+                  color: 'white',
+                  fontWeight: 'bold',
+                }}>
+                Save
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </ScrollView>
+      </Modal>
 
       <View
         style={{
@@ -204,7 +420,7 @@ const StudentDiary = ({navigation}: any) => {
                   width: 20,
                   resizeMode: 'stretch',
                   alignItems: 'center',
-                  marginLeft: 28,
+                  marginLeft: 35,
                 }}
                 source={require('../../assets/calendar.png')}
               />
@@ -258,7 +474,7 @@ const StudentDiary = ({navigation}: any) => {
                   width: 20,
                   resizeMode: 'stretch',
                   alignItems: 'center',
-                  marginLeft: 28,
+                  marginLeft: 35,
                 }}
                 source={require('../../assets/calendar.png')}
               />
@@ -277,12 +493,7 @@ const StudentDiary = ({navigation}: any) => {
         </View>
       </View>
 
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: 10,
-        }}>
+      <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
         <View style={{width: 80, marginTop: 9}}>
           <DropDownPicker
             items={items}
@@ -304,7 +515,6 @@ const StudentDiary = ({navigation}: any) => {
           <TextInput
             style={styles.input}
             placeholder="Search..."
-            placeholderTextColor={'gray'}
             value={searchQuery}
             onChangeText={handleSearch}
           />
@@ -318,7 +528,7 @@ const StudentDiary = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.id ? item.id.toString() : index.toString()
+              item.sr ? item.sr.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -335,9 +545,9 @@ const StudentDiary = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{index + 1}</Text>
-                <Text style={styles.column}>{item.cls_name}</Text>
-                <Text style={styles.column}>{item.sub_name}</Text>
+                <Text style={styles.column}>{item.sr}</Text>
+                <Text style={styles.column}>{item.class}</Text>
+                <Text style={styles.column}>{item.subject}</Text>
                 <Text style={styles.column}>{item.date}</Text>
                 <TouchableOpacity
                   style={styles.iconContainer}
@@ -353,7 +563,7 @@ const StudentDiary = ({navigation}: any) => {
                       flex: 1,
                       backgroundColor: 'white',
                       width: 'auto',
-                      maxHeight: 400,
+                      maxHeight: 300,
                       borderRadius: 5,
                       borderWidth: 1,
                       borderColor: '#6C757D',
@@ -415,10 +625,11 @@ const StudentDiary = ({navigation}: any) => {
                       style={{
                         marginLeft: 10,
                         marginTop: 10,
+                        flexDirection: 'row',
                       }}>
                       <Text style={styles.lblText}>Description:</Text>
                       <Text style={styles.valueText}>
-                        ghfghdft nfghjfgghfghdft nfghjfgghfghdft
+                        ghfghdft nfghjfgghfghdft
                       </Text>
                     </View>
                   </View>
@@ -449,9 +660,7 @@ const StudentDiary = ({navigation}: any) => {
       </View>
     </View>
   );
-};
-
-export default StudentDiary;
+}
 
 const styles = StyleSheet.create({
   label: {
@@ -495,8 +704,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign: 'center',
-    color: 'gray',
+    textAlign:'center',
+    color:'gray'
   },
   dropdown: {
     borderWidth: 1,
@@ -513,7 +722,6 @@ const styles = StyleSheet.create({
   column: {
     width: 140,
     padding: 1,
-    textAlign: 'center',
   },
   headTable: {
     fontWeight: 'bold',
@@ -553,19 +761,36 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   valueText: {
-    marginRight: hp('2%'),
+    marginRight: 10,
   },
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 70,
+    width: 50,
     height: 20,
   },
 
   actionIcon: {
-    width: 15,
-    height: 15,
+    width: 17,
+    height: 17,
     tintColor: '#3b82f6',
-    marginLeft: 70,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 5,
+    backgroundColor: 'white',
+    width: wp('83%'),
+    alignSelf: 'center',
+    height: 30,
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  picker: {
+    paddingHorizontal: 10,
+    color: 'black',
+    fontSize: 16,
+    height: 50,
+    paddingLeft: 10,
   },
 });

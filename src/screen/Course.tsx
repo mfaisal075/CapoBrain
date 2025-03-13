@@ -231,6 +231,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
+    textAlign:'center',
+    color:'gray'
   },
   dropdown: {
     borderWidth: 1,
@@ -245,8 +247,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
   },
   column: {
-    width: 100,
-    padding: 5,
+    width: 140,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {

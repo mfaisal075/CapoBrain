@@ -93,6 +93,7 @@ const Account = ({navigation}: any) => {
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const viewShotRef = useRef<any>(null);
+  
   const [accoutData, setAccountData] = useState<AccountData | null>(null);
   const [accountDetails, setAccountDestails] = useState<AccountInfo[]>([]);
 
@@ -745,6 +746,8 @@ const styles = StyleSheet.create({
     padding: 4,
     marginBottom: 5,
     borderRadius: 4,
+    textAlign:'center',
+    color:'gray'
   },
   item: {
     borderBottomColor: '#ccc',

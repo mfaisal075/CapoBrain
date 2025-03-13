@@ -17,11 +17,20 @@ import Modal from 'react-native-modal';
 import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-interface TableRow {
-  sr: string;
-  date: string;
-  subject: string;
-  action: string;
+interface HomeWorkDetails {
+  homework: {
+    home_date: string;
+    home_desc: string;
+  };
+  subject: {
+    sub_name: string;
+  };
+}
+
+interface HomeWork {
+  id: number;
+  home_date: string;
+  sub_name: string;
 }
 
 const HomeWork = ({navigation}: any) => {
@@ -29,13 +38,12 @@ const HomeWork = ({navigation}: any) => {
   const [isOpen, setIsOpen] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
+  const [homeworkDetails, setHomeworkDetails] =
+    useState<HomeWorkDetails | null>(null);
 
-  const originalData: TableRow[] = [
-    {sr: '1', date: '05-03-2025', subject: 'English', action: ''},
-    {sr: '2', date: '05-03-2025', subject: 'Urdu', action: ''},
-  ];
+  const originalData: HomeWork[] = [];
 
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [tableData, setTableData] = useState<HomeWork[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -83,14 +91,14 @@ const HomeWork = ({navigation}: any) => {
     if (token) {
       try {
         const response = await axios.get(
-          'https://demo.capobrain.com/homeworks_studenthomework',
+          `https://demo.capobrain.com/homeworks_studenthomework?_token=${token}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           },
         );
-        return response.data.output;
+        setTableData(response.data.homework);
       } catch (error) {
         console.error(error);
         throw error;
@@ -169,7 +177,7 @@ const HomeWork = ({navigation}: any) => {
             data={currentEntries}
             nestedScrollEnabled
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -186,12 +194,32 @@ const HomeWork = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.subject}</Text>
-                <Text style={styles.column}>{item.date}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.sub_name}</Text>
+                <Text style={styles.column}>{item.home_date}</Text>
                 <TouchableOpacity
                   style={styles.iconContainer}
-                  onPress={toggleModl}>
+                  onPress={() => {
+                    const handleView = async (id: number) => {
+                      try {
+                        const response = await axios.get(
+                          `https://demo.capobrain.com/showstudenthomework?id=${item.id}&_token=${token}`,
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          },
+                        );
+                        setHomeworkDetails(response.data);
+                        setModalVisi(true);
+                      } catch (error) {
+                        console.log(error);
+                        throw error;
+                      }
+                    };
+
+                    handleView(item.id);
+                  }}>
                   <Image
                     style={styles.actionIcon}
                     source={require('../assets/visible.png')}
@@ -260,7 +288,9 @@ const HomeWork = ({navigation}: any) => {
               margin: 10,
             }}>
             <Text style={styles.lblText}>Date</Text>
-            <Text style={styles.valueText}>05-03-2025</Text>
+            <Text style={styles.valueText}>
+              {homeworkDetails?.homework.home_date}
+            </Text>
           </View>
           <View
             style={{
@@ -276,7 +306,9 @@ const HomeWork = ({navigation}: any) => {
               margin: 10,
             }}>
             <Text style={styles.lblText}>Subject</Text>
-            <Text style={styles.valueText}>English</Text>
+            <Text style={styles.valueText}>
+              {homeworkDetails?.subject.sub_name}
+            </Text>
           </View>
           <View
             style={{
@@ -291,7 +323,9 @@ const HomeWork = ({navigation}: any) => {
               flexDirection: 'row',
             }}>
             <Text style={styles.lblText}>Description:</Text>
-            <Text style={styles.valueText}>abc</Text>
+            <Text style={styles.valueText}>
+              {homeworkDetails?.homework.home_desc}
+            </Text>
           </View>
           <View
             style={{
@@ -334,6 +368,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
+    textAlign:'center',
+    color:'gray'
   },
   dropdown: {
     borderWidth: 1,
@@ -350,7 +386,7 @@ const styles = StyleSheet.create({
   column: {
     width: 140,
     padding: 1,
-    textAlign: 'center'
+    textAlign: 'center',
   },
   headTable: {
     fontWeight: 'bold',
@@ -398,6 +434,7 @@ const styles = StyleSheet.create({
   },
   valueText: {
     marginRight: 10,
+    width: '80%',
   },
   iconContainer: {
     justifyContent: 'center',
@@ -409,5 +446,6 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
+    marginLeft: 70,
   },
 });

@@ -17,16 +17,6 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
 
-type TableRow = {
-  sr: string;
-  branch: string;
-  class: string;
-  section: string;
-  date: string;
-  feedbackby: string;
-  action: string;
-};
-
 interface FeedbackData {
   id: number;
   feed_feedback: string;
@@ -684,6 +674,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
+    textAlign:'center',
+    color:'gray'
   },
   dropdown: {
     borderWidth: 1,

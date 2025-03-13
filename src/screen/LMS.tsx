@@ -18,41 +18,62 @@ import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-interface Item {
-  sr: number;
-  class: string;
-  section: string;
-  title: string;
-  date: string;
-  action: string;
+interface LectureData {
+  lecture: {
+    date: string;
+    url: string;
+    description: string;
+  };
+  class: {
+    cls_name: string;
+  };
+  section: {
+    sec_name: string;
+  };
+  subject: {
+    sub_name: string;
+  };
+  branch: {
+    bra_name: string;
+  };
 }
 
-type TableRow = {
-  sr: string;
-  branch: string;
-  class: string;
-  subject: string;
-  action: string;
-};
+interface Lecture {
+  id: number;
+  bra_name: string;
+  cls_name: string;
+  sec_name: string;
+  sub_name: string;
+}
 
 const LMS = ({navigation}: any) => {
-  // const [items] = useState<Item[]>([]);
   const {token} = useUser();
-
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      branch: 'Main Branch',
-      class: 'Three',
-      subject: 'English',
-      action: '',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
-
   const [isOpen, setIsOpen] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
+  const [lectureData, setLectureData] = useState<LectureData | null>(null);
+
+  const extractVideoId = (url: any) => {
+    if (!url) {
+      return null;
+    }
+
+    if (url.includes('v=')) {
+      const videoId = url.split('v=')[1];
+      const ampersandPosition = videoId.indexOf('&');
+      if (ampersandPosition !== -1) {
+        return videoId.substring(0, ampersandPosition);
+      }
+      return videoId;
+    } else {
+      return url.split('/').pop().split('?')[0];
+    }
+  };
+
+  const videoId = extractVideoId(lectureData?.lecture.url);
+
+  const originalData: Lecture[] = [];
+  const [tableData, setTableData] = useState<Lecture[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -94,9 +115,6 @@ const LMS = ({navigation}: any) => {
   }
   const [isModalVisi, setModalVisi] = useState(false);
 
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
-  };
   const [playing, setPlaying] = useState(false);
 
   const onStateChange = useCallback((state: string) => {
@@ -106,10 +124,10 @@ const LMS = ({navigation}: any) => {
   }, []);
 
   const studentInfo = [
-    {key: 'Class', value: 'Three'},
-    {key: 'Section', value: 'A'},
-    {key: 'Subject', value: 'English'},
-    {key: 'Date', value: '2025-02-26'},
+    {key: 'Class', value: lectureData?.class.cls_name},
+    {key: 'Section', value: lectureData?.section.sec_name},
+    {key: 'Subject', value: lectureData?.subject.sub_name},
+    {key: 'Date', value: lectureData?.lecture.date},
   ];
 
   const fetchData = async () => {
@@ -123,7 +141,7 @@ const LMS = ({navigation}: any) => {
             },
           },
         );
-        return response.data.output;
+        setTableData(response.data.lectures);
       } catch (error) {
         console.error('Error fetching data', error);
         throw error; // Ensure the error is thrown so useQuery can handle it
@@ -171,7 +189,7 @@ const LMS = ({navigation}: any) => {
           alignItems: 'flex-end',
         }}>
         <View style={{flexDirection: 'row'}}>
-        <TouchableOpacity
+          <TouchableOpacity
             onPress={() => navigation.navigate('LibraryBooks' as never)}>
             <View
               style={{
@@ -226,7 +244,6 @@ const LMS = ({navigation}: any) => {
           style={{
             flexDirection: 'row',
           }}>
-        
           <TouchableOpacity
             onPress={() => navigation.navigate('DateSheet' as never)}>
             <View
@@ -284,7 +301,7 @@ const LMS = ({navigation}: any) => {
                 backgroundColor: '#0069D9',
                 marginTop: 10,
                 borderRadius: 5,
-                marginRight: 2,
+                marginRight: 10,
               }}>
               <Text
                 style={{
@@ -299,7 +316,6 @@ const LMS = ({navigation}: any) => {
             </View>
           </TouchableOpacity>
         </View>
-
       </View>
       <View
         style={{
@@ -403,86 +419,45 @@ const LMS = ({navigation}: any) => {
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
                 <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                  {item.sr}
+                  {index + 1}
                 </Text>
                 <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                  {item.branch}
+                  {item.bra_name}
                 </Text>
                 <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                  {item.class}
+                  {item.cls_name}
                 </Text>
                 <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                  {item.subject}
+                  {item.sub_name}
                 </Text>
                 <TouchableOpacity
                   style={styles.iconContainer}
-                  onPress={toggleModl}>
+                  onPress={() => {
+                    const handleView = async (id: number) => {
+                      try {
+                        const response = await axios.get(
+                          `https://demo.capobrain.com/leactureshow?id=${item.id}&_token=${token}`,
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          },
+                        );
+                        setLectureData(response.data);
+                        setModalVisi(true);
+                      } catch (error) {
+                        console.log(error);
+                        throw error;
+                      }
+                    };
+
+                    handleView(item.id);
+                  }}>
                   <Image
                     style={styles.actionIcon}
                     source={require('../assets/visible.png')}
                   />
                 </TouchableOpacity>
-                <Modal isVisible={isModalVisi}>
-                  <View
-                    style={{
-                      flex: 1,
-                      backgroundColor: 'white',
-                      width: 'auto',
-                      maxHeight: 600,
-                      borderRadius: 5,
-                      borderWidth: 1,
-                      borderColor: '#6C757D',
-                    }}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        margin: 20,
-                      }}>
-                      <Text style={{color: '#6C757D', fontSize: 18}}>
-                        Show Lecture Detail
-                      </Text>
-
-                      <TouchableOpacity
-                        onPress={() => setModalVisi(!isModalVisi)}>
-                        <Text style={{color: '#6C757D'}}>✖</Text>
-                      </TouchableOpacity>
-                    </View>
-                    <View
-                      style={{
-                        height: 1,
-                        backgroundColor: 'gray',
-                        width: wp('90%'),
-                      }}
-                    />
-
-                    <YoutubePlayer
-                      height={200}
-                      play={playing}
-                      videoId="HACa4b02mu8?si=M4Xh4mFZFyNjCv2Q"
-                      onChangeState={onStateChange}
-                    />
-                    <View style={styles.border}>
-                      <Text style={styles.branch}>Main Branch</Text>
-                      <View style={styles.details}>
-                        <FlatList
-                          data={studentInfo}
-                          keyExtractor={item => item.key}
-                          renderItem={({item}) => (
-                            <View style={styles.infoRow}>
-                              <Text style={styles.text}>{item.key}:</Text>
-                              <Text style={styles.value}>{item.value}</Text>
-                            </View>
-                          )}
-                        />
-                      </View>
-                    </View>
-
-                    <View style={styles.border}>
-                      <Text>Abc</Text>
-                    </View>
-                  </View>
-                </Modal>
               </View>
             )}
           />
@@ -507,6 +482,68 @@ const LMS = ({navigation}: any) => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* View Modal */}
+      <Modal isVisible={isModalVisi}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'white',
+            width: 'auto',
+            maxHeight: 600,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: '#6C757D',
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              margin: 20,
+            }}>
+            <Text style={{color: '#6C757D', fontSize: 18}}>
+              Show Lecture Detail
+            </Text>
+
+            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
+              <Text style={{color: '#6C757D'}}>✖</Text>
+            </TouchableOpacity>
+          </View>
+          <View
+            style={{
+              height: 1,
+              backgroundColor: 'gray',
+              width: wp('90%'),
+            }}
+          />
+
+          <YoutubePlayer
+            height={200}
+            play={playing}
+            videoId={videoId}
+            onChangeState={onStateChange}
+          />
+          <View style={styles.border}>
+            <Text style={styles.branch}>{lectureData?.branch.bra_name}</Text>
+            <View style={styles.details}>
+              <FlatList
+                data={studentInfo}
+                keyExtractor={item => item.key}
+                renderItem={({item}) => (
+                  <View style={styles.infoRow}>
+                    <Text style={styles.text}>{item.key}:</Text>
+                    <Text style={styles.value}>{item.value}</Text>
+                  </View>
+                )}
+              />
+            </View>
+          </View>
+
+          <View style={styles.border}>
+            <Text>{lectureData?.lecture.description}</Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -527,6 +564,8 @@ const styles = StyleSheet.create({
     padding: 4,
     marginBottom: 5,
     borderRadius: 4,
+    textAlign:'center',
+    color:'gray'
   },
   item: {
     borderBottomColor: '#ccc',

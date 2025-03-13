@@ -405,6 +405,8 @@ const styles = StyleSheet.create({
     padding: 4,
     marginBottom: 5,
     borderRadius: 4,
+    textAlign:'center',
+    color:'gray'
   },
   item: {
     borderBottomColor: '#ccc',

@@ -230,6 +230,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
+    textAlign:'center',
+    color:'gray'
   },
   dropdown: {
     borderWidth: 1,

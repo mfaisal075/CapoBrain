@@ -1,4 +1,5 @@
 import {
+  Alert,
   BackHandler,
   Image,
   ScrollView,
@@ -15,6 +16,7 @@ import {TextInput} from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import {heightPercentageToDP as hp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import RNFS from 'react-native-fs';
 
 const srNumber: number = 5;
 const row = {
@@ -74,6 +76,31 @@ const Download = ({navigation}: any) => {
     (currentPage - 1) * entriesPerPage,
     currentPage * entriesPerPage,
   );
+
+  const downloadFile = async (url: any) => {
+    try {
+      const fileName = url.split('/').pop();
+      const downloadDest = `${RNFS.DownloadDirectoryPath}/${fileName}`;
+
+      const options = {
+        fromUrl: url,
+        toFile: downloadDest,
+      };
+
+      const download = RNFS.downloadFile(options);
+
+      download.promise.then(response => {
+        if (response.statusCode === 200) {
+          Alert.alert('Success', `File downloaded to ${downloadDest}`);
+        } else {
+          Alert.alert('Error', 'Failed to download file');
+        }
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      Alert.alert('Error', 'An error occurred while downloading the file');
+    }
+  };
 
   const fetchData = async () => {
     if (token) {
@@ -216,7 +243,11 @@ const Download = ({navigation}: any) => {
                 </Text>
                 <TouchableOpacity
                   style={styles.iconContainer}
-                  onPress={() => {}}>
+                  onPress={() =>
+                    downloadFile(
+                      `https://demo.capobrain.com/files_download/${item.file_notes}`,
+                    )
+                  }>
                   <Image
                     style={styles.actionIcon}
                     source={require('../assets/dpd.png')}
@@ -281,6 +312,8 @@ const styles = StyleSheet.create({
     padding: 4,
     marginBottom: 5,
     borderRadius: 4,
+    textAlign:'center',
+    color:'gray'
   },
   item: {
     borderBottomColor: '#ccc',
@@ -292,7 +325,7 @@ const styles = StyleSheet.create({
   },
   column: {
     width: '33.33%',
-    textAlign:'center'
+    textAlign: 'center',
   },
   headTable: {
     fontWeight: 'bold',
@@ -329,7 +362,7 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    top:-1,
-    marginLeft: 70
+    top: -1,
+    marginLeft: 70,
   },
 });

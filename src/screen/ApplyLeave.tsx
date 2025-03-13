@@ -129,13 +129,6 @@ const ApplyLeave = ({navigation}: any) => {
     (currentPage - 1) * entriesPerPage,
     currentPage * entriesPerPage,
   );
-  {
-    /*view modal*/
-  }
-
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
-  };
 
   const fetchData = async () => {
     if (token) {
@@ -728,6 +721,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
+    textAlign:'center',
+    color:'gray'
   },
   dropdown: {
     borderWidth: 1,
@@ -749,7 +744,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
   },
   column: {
-    width: 100,
+    width: 140,
     padding: 5,
     textAlign: 'center',
   },
@@ -797,14 +792,14 @@ const styles = StyleSheet.create({
     width: 17,
     height: 17,
     top: 5,
-    marginLeft: 50,
+    marginLeft: 90,
   },
   actionIcon: {
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
     top: 5,
-    marginLeft: 50,
+    marginLeft: 170,
   },
   lblText: {
     fontWeight: 'bold',
