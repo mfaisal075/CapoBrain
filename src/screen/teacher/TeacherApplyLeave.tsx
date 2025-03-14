@@ -218,7 +218,7 @@ const TeacherApplyLeave = ({navigation}: any) => {
           style={{
             flexDirection: 'row',
             justifyContent: 'space-between',
-            marginTop: 10,
+          
           }}>
           <View style={{width: 80, marginTop: 9}}>
             <DropDownPicker
@@ -512,7 +512,7 @@ const TeacherApplyLeave = ({navigation}: any) => {
               borderRadius: 5,
               borderColor: 'gray',
               marginLeft: 20,
-              marginTop: hp('4%'),
+              marginTop: hp('5%'),
               height: 300,
               marginRight: 20,
             }}>
@@ -549,7 +549,7 @@ const TeacherApplyLeave = ({navigation}: any) => {
                 color: 'red',
                 fontSize: 12,
                 position: 'absolute',
-                top: 462,
+                top: 450,
                 left: 20,
               }}>
               {descError}
@@ -733,7 +733,7 @@ const styles = StyleSheet.create({
   },
   column: {
     width: 140,
-    padding: 5,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {
@@ -773,17 +773,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: 60,
-    height: 30,
+    height: 20,
     marginRight: 80,
   },
   statusIcon: {
-    width: 25,
-    height: 25,
+    width: 20,
+    height: 20,
     marginLeft: 80,
   },
   actionIcon: {
-    width: 20,
-    height: 20,
+    width: 15,
+    height: 15,
     tintColor: '#3b82f6',
     marginLeft: 80,
   },

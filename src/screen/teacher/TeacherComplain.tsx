@@ -588,7 +588,7 @@ const styles = StyleSheet.create({
   },
   column: {
     width: 140,
-    padding: 5,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {
@@ -627,20 +627,20 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 60,
-    height: 30,
-    marginRight: 80,
+    width: 50,
+    height: 20,
+  
   },
   statusIcon: {
-    width: 25,
-    height: 25,
+    width: 20,
+    height: 20,
     marginLeft: 70,
   },
   actionIcon: {
-    width: 20,
-    height: 20,
+    width: 15,
+    height: 15,
     tintColor: '#3b82f6',
-    marginLeft: 80,
+    marginLeft: hp('32%'),
   },
   lblText: {
     fontWeight: 'bold',

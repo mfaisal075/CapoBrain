@@ -72,7 +72,7 @@ const LMS = ({navigation}: any) => {
 
   const videoId = extractVideoId(lectureData?.lecture.url);
 
-  const originalData: Lecture[] = [];
+  const [originalData, setOriginalData] = useState<Lecture[]>([]);
   const [tableData, setTableData] = useState<Lecture[]>(originalData);
 
   const items = [
@@ -141,6 +141,7 @@ const LMS = ({navigation}: any) => {
             },
           },
         );
+        setOriginalData(response.data.lectures);
         setTableData(response.data.lectures);
       } catch (error) {
         console.error('Error fetching data', error);
@@ -564,8 +565,8 @@ const styles = StyleSheet.create({
     padding: 4,
     marginBottom: 5,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   item: {
     borderBottomColor: '#ccc',

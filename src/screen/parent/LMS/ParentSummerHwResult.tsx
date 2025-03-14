@@ -558,13 +558,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderColor: '#ccc',
-    borderRightWidth: 1,
-    borderLeftWidth: 1,
-    borderTopWidth: 1,
+  
   },
   column: {
     width: 140,
-    padding: 5,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {
@@ -577,7 +575,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginLeft: 60,
+    marginLeft: 50,
     marginTop: 1,
     marginBottom: 1,
   },
@@ -587,6 +585,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 27,
     borderRadius: 5,
+    top:-3
   },
   available: {
     color: 'darkblue',
@@ -594,6 +593,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 27,
     borderRadius: 5,
+    top:-3
   },
   withBorder: {
     borderRightWidth: 1,

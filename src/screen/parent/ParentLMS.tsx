@@ -14,17 +14,39 @@ import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Modal from 'react-native-modal';
-import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from 'react-native-responsive-screen';
 
-type TableRow = {
-  sr: string;
-  branch: string;
-  class: string;
-  subject: string;
-  action: string;
-};
+interface LectureData {
+  lecture: {
+    description: string;
+    url: string;
+    date: string;
+  };
+  class: {
+    cls_name: string;
+  };
+  branch: {
+    bra_name: string;
+  };
+  section: {
+    sec_name: string;
+  };
+  subject: {
+    sub_name: string;
+  };
+}
+
+interface Lecture {
+  id: number;
+  bra_name: string;
+  cls_name: string;
+  sub_name: string;
+}
 
 const ParentLMS = ({navigation}: any) => {
   const {token} = useUser();
@@ -34,56 +56,28 @@ const ParentLMS = ({navigation}: any) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisi, setModalVisi] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [originalData, setOriginalData] = useState<Lecture[]>([]);
+  const [tableData, setTableData] = useState<Lecture[]>(originalData);
+  const [lectureData, setLectureData] = useState<LectureData | null>(null);
 
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
+  const extractVideoId = (url: any) => {
+    if (!url) {
+      return null;
+    }
+
+    if (url.includes('v=')) {
+      const videoId = url.split('v=')[1];
+      const ampersandPosition = videoId.indexOf('&');
+      if (ampersandPosition !== -1) {
+        return videoId.substring(0, ampersandPosition);
+      }
+      return videoId;
+    } else {
+      return url.split('/').pop().split('?')[0];
+    }
   };
 
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      branch: 'Main Branch',
-      class: 'Nursery',
-      subject: 'English',
-      action: '',
-    },
-    {
-      sr: '2',
-      branch: 'Main Branch',
-      class: 'Nursery',
-      subject: 'Math',
-      action: '',
-    },
-    {
-      sr: '3',
-      branch: 'Main Branch',
-      class: 'Nursery',
-      subject: 'Urdu',
-      action: '',
-    },
-    {
-      sr: '4',
-      branch: 'Main Branch',
-      class: 'Nursery',
-      subject: 'Islamiyat',
-      action: '',
-    },
-    {
-      sr: '5',
-      branch: 'Main Branch',
-      class: 'Nursery',
-      subject: 'English',
-      action: '',
-    },
-    {
-      sr: '6',
-      branch: 'Main Branch',
-      class: 'Nursery',
-      subject: 'Math',
-      action: '',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const videoId = extractVideoId(lectureData?.lecture.url);
 
   const items = [
     {label: '10', value: 10},
@@ -126,10 +120,10 @@ const ParentLMS = ({navigation}: any) => {
   }, []);
 
   const studentInfo = [
-    {key: 'Class', value: 'Nursery'},
-    {key: 'Section', value: 'A'},
-    {key: 'Subject', value: 'English'},
-    {key: 'Date', value: '2025-02-26'},
+    {key: 'Class', value: lectureData?.class.cls_name},
+    {key: 'Section', value: lectureData?.section.sec_name},
+    {key: 'Subject', value: lectureData?.subject.sub_name},
+    {key: 'Date', value: lectureData?.lecture.date},
   ];
 
   const fetchData = async () => {
@@ -143,7 +137,8 @@ const ParentLMS = ({navigation}: any) => {
             },
           },
         );
-        return response.data.output;
+        setOriginalData(response.data.lectures);
+        setTableData(response.data.lectures);
       } catch (error) {
         console.log(error);
         throw error;
@@ -185,56 +180,78 @@ const ParentLMS = ({navigation}: any) => {
       <View
         style={{
           flexDirection: 'column',
-          marginLeft: 62,
           marginBottom: 20,
           alignItems: 'flex-end',
+          marginLeft: hp('1.5%'),
+          marginRight: hp('1.5%'),
         }}>
         <View style={{flexDirection: 'row'}}>
           <TouchableOpacity
-            onPress={() => navigation.navigate('ParentSummerHw' as never)}>
+            onPress={() => navigation.navigate('ParentCourse' as never)}>
             <View
               style={{
-                width: 160,
+                width: 60,
                 height: 30,
                 backgroundColor: '#0069D9',
                 marginTop: 10,
                 borderRadius: 5,
-                marginRight: 6,
-                justifyContent: 'center',
-                alignItems: 'center',
+                marginRight: 5,
               }}>
               <Text
                 style={{
                   color: 'white',
                   fontWeight: 'bold',
-                  fontSize: 14,
+                  fontSize: 15,
                   textAlign: 'center',
+                  marginTop: 3,
                 }}>
-                Summer HomeWork
+                Courses
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ParentDailyDiary' as never)}>
+            <View
+              style={{
+                width: 80,
+                height: 30,
+                backgroundColor: '#0069D9',
+                marginTop: 10,
+                borderRadius: 5,
+                marginRight: 5,
+              }}>
+              <Text
+                style={{
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: 15,
+                  textAlign: 'center',
+                  marginTop: 3,
+                }}>
+                Daily Diary
               </Text>
             </View>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() =>
-              navigation.navigate('ParentSummerHwResult' as never)
+              navigation.navigate('ParentSummerHWResult' as never)
             }>
             <View
               style={{
-                width: 200,
+                width: 190,
                 height: 30,
                 backgroundColor: '#0069D9',
                 marginTop: 10,
                 borderRadius: 5,
-                marginRight: 8,
-                justifyContent: 'center',
-                alignItems: 'center',
               }}>
               <Text
                 style={{
                   color: 'white',
                   fontWeight: 'bold',
-                  fontSize: 14,
+                  fontSize: 15,
                   textAlign: 'center',
+                  marginTop: 3,
                 }}>
                 Summer HomeWork Result
               </Text>
@@ -247,49 +264,23 @@ const ParentLMS = ({navigation}: any) => {
             flexDirection: 'row',
           }}>
           <TouchableOpacity
-            onPress={() => navigation.navigate('ParentCourses' as never)}>
+            onPress={() => navigation.navigate('ParentLibraryBook' as never)}>
             <View
               style={{
-                width: 70,
+                width: 100,
                 height: 30,
                 backgroundColor: '#0069D9',
                 marginTop: 10,
                 borderRadius: 5,
-                marginRight: 6,
-                justifyContent: 'center',
-                alignItems: 'center',
+                marginRight: 5,
               }}>
               <Text
                 style={{
                   color: 'white',
                   fontWeight: 'bold',
-                  fontSize: 14,
+                  fontSize: 15,
                   textAlign: 'center',
-                }}>
-                Courses
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => navigation.navigate('ParentLibraryBooks' as never)}>
-            <View
-              style={{
-                width: 110,
-                height: 30,
-                backgroundColor: '#0069D9',
-                marginTop: 10,
-                borderRadius: 5,
-                marginRight: 6,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}>
-              <Text
-                style={{
-                  color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: 14,
-                  textAlign: 'center',
+                  marginTop: 3,
                 }}>
                 Library Books
               </Text>
@@ -299,21 +290,20 @@ const ParentLMS = ({navigation}: any) => {
             onPress={() => navigation.navigate('ParentDateSheet' as never)}>
             <View
               style={{
-                width: 90,
+                width: 80,
                 height: 30,
                 backgroundColor: '#0069D9',
                 marginTop: 10,
                 borderRadius: 5,
-                marginRight: 6,
-                justifyContent: 'center',
-                alignItems: 'center',
+                marginRight: 5,
               }}>
               <Text
                 style={{
                   color: 'white',
                   fontWeight: 'bold',
-                  fontSize: 14,
+                  fontSize: 15,
                   textAlign: 'center',
+                  marginTop: 3,
                 }}>
                 Date Sheet
               </Text>
@@ -321,36 +311,34 @@ const ParentLMS = ({navigation}: any) => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate('ParentDailyDiary' as never)}>
+            onPress={() => navigation.navigate('ParentSummerHw' as never)}>
             <View
               style={{
-                width: 90,
+                width: 150,
                 height: 30,
                 backgroundColor: '#0069D9',
                 marginTop: 10,
                 borderRadius: 5,
-                marginRight: 8,
-                justifyContent: 'center',
-                alignItems: 'center',
               }}>
               <Text
                 style={{
                   color: 'white',
                   fontWeight: 'bold',
-                  fontSize: 14,
+                  fontSize: 15,
                   textAlign: 'center',
+                  marginTop: 3,
                 }}>
-                Daily Diary
+                Summer HomeWork
               </Text>
             </View>
           </TouchableOpacity>
         </View>
       </View>
+
       <View
         style={{
           flexDirection: 'row',
           justifyContent: 'space-between',
-          marginTop: 10,
         }}>
         <View style={{width: 80, marginTop: 9}}>
           <DropDownPicker
@@ -448,20 +436,40 @@ const ParentLMS = ({navigation}: any) => {
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
                 <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                  {item.sr}
+                  {index + 1}
                 </Text>
                 <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                  {item.branch}
+                  {item.bra_name}
                 </Text>
                 <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                  {item.class}
+                  {item.cls_name}
                 </Text>
                 <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                  {item.subject}
+                  {item.sub_name}
                 </Text>
                 <TouchableOpacity
                   style={styles.iconContainer}
-                  onPress={toggleModl}>
+                  onPress={() => {
+                    const handleView = async (id: number) => {
+                      try {
+                        const response = await axios.get(
+                          `https://demo.capobrain.com/leactureshow?id=${item.id}&_token=${token}`,
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          },
+                        );
+                        setLectureData(response.data);
+                        setModalVisi(true);
+                      } catch (error) {
+                        console.log(error);
+                        throw error;
+                      }
+                    };
+
+                    handleView(item.id);
+                  }}>
                   <Image
                     style={styles.actionIcon}
                     source={require('../../assets/visible.png')}
@@ -529,7 +537,7 @@ const ParentLMS = ({navigation}: any) => {
           <YoutubePlayer
             height={200}
             play={playing}
-            videoId="ezmsrB59mj8"
+            videoId={videoId}
             onChangeState={onStateChange}
           />
           <View style={styles.border}>
@@ -549,7 +557,7 @@ const ParentLMS = ({navigation}: any) => {
           </View>
 
           <View style={styles.border}>
-            <Text>Watch it</Text>
+            <Text>{lectureData?.lecture.description}</Text>
           </View>
         </View>
       </Modal>
@@ -573,8 +581,8 @@ const styles = StyleSheet.create({
     padding: 4,
     marginBottom: 5,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   item: {
     borderBottomColor: '#ccc',
@@ -611,11 +619,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: 60,
-    height: 30,
+    height: 20,
+    marginTop: 5,
   },
   actionIcon: {
-    width: 20,
-    height: 20,
+    width: 15,
+    height: 15,
     tintColor: '#3b82f6',
     marginLeft: 40,
   },

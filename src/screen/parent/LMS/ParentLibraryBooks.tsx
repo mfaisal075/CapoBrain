@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   },
   column: {
     width: 140,
-    padding: 5,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {
@@ -336,13 +336,13 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    height: 30,
-    marginRight: 70,
-    width: 70,
+    height: 20,
+   marginRight:100,
+   width:40
   },
   statusIcon: {
-    width: 25,
-    height: 25,
+    width: 20,
+    height: 20,
     marginLeft: 60,
   },
 });

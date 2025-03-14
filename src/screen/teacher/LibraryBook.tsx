@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   },
   column: {
     width: 150,
-    padding: 5,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {

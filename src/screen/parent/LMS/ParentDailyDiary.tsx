@@ -515,8 +515,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
   },
   column: {
     width: 140,
-    padding: 5,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {
@@ -578,13 +578,13 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 100,
-    height: 30,
+    width: 50,
+    height: 20,
   },
 
   actionIcon: {
-    width: 20,
-    height: 20,
+    width: 15,
+    height: 15,
     tintColor: '#3b82f6',
     marginLeft: 40,
   },

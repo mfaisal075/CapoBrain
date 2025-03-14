@@ -20,13 +20,6 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 
-type TableRow = {
-  sr: string;
-  branch: string;
-  class: string;
-  action: string;
-};
-
 type TableModal = {
   sr: string | number;
   subject: string;
@@ -35,8 +28,53 @@ type TableModal = {
   endTime: string;
 };
 
+interface Datesheet {
+  id: number;
+  bra_name: string;
+  cls_name: string;
+  sec_name: string;
+}
+
+interface DatesheetData {
+  school: {
+    scl_institute_name: string;
+  };
+  branch: {
+    bra_name: string;
+  };
+  class: {
+    cls_name: string;
+  };
+  section: {
+    sec_name: string;
+  };
+}
+
 const DateSheet = ({navigation}: any) => {
   const {token} = useUser();
+  const [isOpen, setIsOpen] = useState(false);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [originalData, setOriginalData] = useState<Datesheet[]>([]);
+  const [tableData, setTableData] = useState<Datesheet[]>(originalData);
+  const [isModalVisi, setModalVisi] = useState(false);
+  const [datesheetData, setDatesheetDate] = useState<DatesheetData | null>(
+    null,
+  );
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    if (text.trim() === '') {
+      setTableData(originalData);
+    } else {
+      const filtered = originalData.filter(item =>
+        Object.values(item).some(value =>
+          String(value).toLowerCase().includes(text.toLowerCase()),
+        ),
+      );
+      setTableData(filtered);
+    }
+  };
 
   const fetchData = async () => {
     if (token) {
@@ -49,7 +87,8 @@ const DateSheet = ({navigation}: any) => {
             },
           },
         );
-
+        setOriginalData(response.data.datesheets);
+        setTableData(response.data.datesheets);
         return response.data.output;
       } catch (error) {
         console.log(error);
@@ -72,36 +111,12 @@ const DateSheet = ({navigation}: any) => {
     return () => backHandler.remove();
   }, []);
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const originalData: TableRow[] = [
-    {sr: '1', branch: 'Main Branch', class: 'Three (A)', action: ''},
-  ];
-
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
-
   const items = [
     {label: '10', value: 10},
     {label: '25', value: 25},
     {label: '50', value: 50},
     {label: '100', value: 100},
   ];
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setTableData(originalData);
-    } else {
-      const filtered = originalData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered);
-    }
-  };
 
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(tableData.length / entriesPerPage);
@@ -116,18 +131,10 @@ const DateSheet = ({navigation}: any) => {
     (currentPage - 1) * entriesPerPage,
     currentPage * entriesPerPage,
   );
-  {
-    /*view modal*/
-  }
-  const [isModalVisi, setModalVisi] = useState(false);
-
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
-  };
 
   const Info = [
-    {key: 'Class', value: 'Three'},
-    {key: 'Section', value: 'A'},
+    {key: 'Class', value: datesheetData?.class.cls_name},
+    {key: 'Section', value: datesheetData?.section.sec_name},
   ];
 
   const originalDta: TableModal[] = [
@@ -222,6 +229,7 @@ const DateSheet = ({navigation}: any) => {
           <TextInput
             style={styles.input}
             placeholder="Search..."
+            placeholderTextColor={'gray'}
             value={searchQuery}
             onChangeText={handleSearch}
           />
@@ -234,7 +242,7 @@ const DateSheet = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -251,12 +259,35 @@ const DateSheet = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.branch}</Text>
-                <Text style={styles.column}>{item.class}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.bra_name}</Text>
+                <Text
+                  style={
+                    styles.column
+                  }>{`${item.cls_name} (${item.sec_name})`}</Text>
                 <TouchableOpacity
                   style={styles.iconContainer}
-                  onPress={toggleModl}>
+                  onPress={() => {
+                    const handleView = async (id: number) => {
+                      try {
+                        const response = await axios.get(
+                          `https://demo.capobrain.com/showdatesheet?id=5&_token=${token}`,
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          },
+                        );
+                        setDatesheetDate(response.data);
+                        setModalVisi(true);
+                      } catch (error) {
+                        console.log(error);
+                        throw error;
+                      }
+                    };
+
+                    handleView(item.id);
+                  }}>
                   <Image
                     style={styles.actionIcon}
                     source={require('../../assets/visible.png')}
@@ -323,13 +354,13 @@ const DateSheet = ({navigation}: any) => {
               marginTop: 5,
               fontSize: 16,
             }}>
-            Gujranwala City Grammar School
+            {datesheetData?.school.scl_institute_name}
           </Text>
           <Text
             style={{
               textAlign: 'center',
             }}>
-            Main Branch
+            {datesheetData?.branch.bra_name}
           </Text>
 
           <FlatList
@@ -442,8 +473,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,
@@ -460,6 +490,7 @@ const styles = StyleSheet.create({
   column: {
     width: 140,
     padding: 1,
+    textAlign: 'center',
   },
   headTable: {
     fontWeight: 'bold',
@@ -505,6 +536,7 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
+    marginLeft: 90,
   },
   infoRow: {
     flexDirection: 'row',

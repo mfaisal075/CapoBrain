@@ -31,8 +31,7 @@ const LibraryBooks = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const originalData: Books[] = [];
-
+  const [originalData, setOriginalData] = useState<Books[]>([]);
   const items = [
     {label: '10', value: 10},
     {label: '25', value: 25},
@@ -79,7 +78,7 @@ const LibraryBooks = ({navigation}: any) => {
             },
           },
         );
-
+        setOriginalData(response.data.studentlibrarybooks);
         setTableData(response.data.studentlibrarybooks);
       } catch (error) {
         console.error('Error fetching data', error);
@@ -265,8 +264,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,

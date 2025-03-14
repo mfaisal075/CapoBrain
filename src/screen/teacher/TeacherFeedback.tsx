@@ -691,7 +691,7 @@ const styles = StyleSheet.create({
   },
   column: {
     width: 130,
-    padding: 5,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {
@@ -758,12 +758,12 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 60,
-    height: 30,
+    width: 50,
+    height: 20,
   },
   actionIcon: {
-    width: 20,
-    height: 20,
+    width: 15,
+    height: 15,
     tintColor: '#3b82f6',
     marginLeft: 70,
   },

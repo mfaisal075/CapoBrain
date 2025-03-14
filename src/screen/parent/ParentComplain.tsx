@@ -536,8 +536,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
   },
   column: {
-    width: 120,
-    padding: 5,
+    width: 140,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {
@@ -576,18 +576,18 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 60,
-    height: 30,
-    marginRight: 50,
+    width: 50,
+    height: 20,
+    marginRight:70 
   },
   statusIcon: {
-    width: 25,
-    height: 25,
+    width: 20,
+    height: 20,
     marginLeft: 50,
   },
   actionIcon: {
-    width: 20,
-    height: 20,
+    width: 15,
+    height: 15,
     tintColor: '#3b82f6',
     marginLeft: 80,
   },

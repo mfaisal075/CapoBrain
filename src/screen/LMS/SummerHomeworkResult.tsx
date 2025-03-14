@@ -169,7 +169,19 @@ const SummerHomeWorkResult = ({navigation}: any) => {
         <View>
           <FlatList
             style={styles.flatList}
-            data={tableData}
+            data={[
+              ...tableData,
+              {
+                id: -1,
+                sub_name: '',
+                total_marks: tableData
+                  .reduce((sum, item) => sum + parseFloat(item.total_marks), 0)
+                  .toString(),
+                obtain_marks: tableData
+                  .reduce((sum, item) => sum + parseFloat(item.obtain_marks), 0)
+                  .toString(),
+              },
+            ]}
             nestedScrollEnabled
             keyExtractor={(item, index) =>
               item.id ? item.id.toString() : index.toString()
@@ -193,7 +205,9 @@ const SummerHomeWorkResult = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>
+                  {item.id === -1 ? 'Total' : index + 1}
+                </Text>
                 <Text style={styles.column}>{item.sub_name}</Text>
                 <Text style={styles.column}>{item.total_marks}</Text>
                 <Text style={styles.column}>{item.obtain_marks}</Text>

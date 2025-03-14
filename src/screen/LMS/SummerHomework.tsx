@@ -35,17 +35,12 @@ interface HomeWorkData {
 
 const SummerHomework = ({navigation}: any) => {
   const {token} = useUser();
-  const [userData, setUserData] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalVisi, setModalVisi] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [homeWorkData, setHomeWorkData] = useState<HomeWorkData | null>(null);
-
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
-  };
 
   const items = [
     {label: '10', value: 10},
@@ -54,7 +49,7 @@ const SummerHomework = ({navigation}: any) => {
     {label: '100', value: 100},
   ];
 
-  const originalData: HomeWork[] = [];
+  const [originalData, setOriginalData] = useState<HomeWork[]>([]);
 
   const [tableData, setTableData] = useState<HomeWork[]>(originalData);
   const totalPages = Math.ceil(tableData.length / entriesPerPage);
@@ -97,9 +92,8 @@ const SummerHomework = ({navigation}: any) => {
         );
 
         // Set user data for student details
-        setUserData(response.data);
+        setOriginalData(response.data.homework);
         setTableData(response.data.homework);
-        return response.data.output;
       } catch (error) {
         console.error('Error fetching data', error);
         throw error; // Ensure the error is thrown so useQuery can handle it
@@ -380,8 +374,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,

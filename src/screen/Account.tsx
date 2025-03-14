@@ -20,22 +20,6 @@ import RNPrint from 'react-native-print';
 import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-type TableRow = {
-  sr: string;
-  transaction: string;
-  date: string;
-  fee: string;
-  transport: string;
-  inventory: string;
-  arrears: string;
-  others: string;
-  payable: string;
-  paid: string;
-  balance: string;
-  transactionType: string;
-  action: string;
-};
-
 interface AccountData {
   cand: {
     cand_bform: string;
@@ -79,6 +63,7 @@ interface AccountInfo {
   stuacc_paid_amount: string;
   stuacc_balance: string;
   stuacc_payment_method: string;
+  stuacc_status: string;
   monthly_fee: string;
   transportation_fee: string;
   inventory_amount: string;
@@ -93,9 +78,8 @@ const Account = ({navigation}: any) => {
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const viewShotRef = useRef<any>(null);
-  
+
   const [accoutData, setAccountData] = useState<AccountData | null>(null);
-  const [accountDetails, setAccountDestails] = useState<AccountInfo[]>([]);
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -106,69 +90,8 @@ const Account = ({navigation}: any) => {
     await RNPrint.print({filePath: uri});
   };
 
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      transaction: 'FC-22',
-      date: '13-11-2024',
-      fee: '2500',
-      transport: '0',
-      inventory: '0',
-      arrears: '0',
-      others: '6400',
-      payable: '8900',
-      paid: '0',
-      balance: '8900',
-      transactionType: 'Fee Charged',
-      action: 'Not Available',
-    },
-    {
-      sr: '2',
-      transaction: 'FR#015',
-      date: '14-11-2024',
-      fee: '2500',
-      transport: '0',
-      inventory: '0',
-      arrears: '0',
-      others: '6400',
-      payable: '8900',
-      paid: '8900',
-      balance: '0',
-      transactionType: 'Payment Recieved',
-      action: 'Not Available',
-    },
-    {
-      sr: '3',
-      transaction: 'INV#022',
-      date: '21-11-2024',
-      fee: '0',
-      transport: '0',
-      inventory: '240',
-      arrears: '0',
-      others: '0',
-      payable: '240',
-      paid: '240',
-      balance: '0',
-      transactionType: 'Inventory Issued',
-      action: 'Not Available',
-    },
-    {
-      sr: '4',
-      transaction: 'MF-December',
-      date: '07-12-2024',
-      fee: '0',
-      transport: '0',
-      inventory: '0',
-      arrears: '0',
-      others: '2500',
-      payable: '0',
-      paid: '2500',
-      balance: '0',
-      transactionType: 'Monthly Fee',
-      action: 'Payable Voucher',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [originalData, setOriginalData] = useState<AccountInfo[]>([]);
+  const [tableData, setTableData] = useState<AccountInfo[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -180,14 +103,14 @@ const Account = ({navigation}: any) => {
   const handleSearch = (text: string) => {
     setSearchQuery(text);
     if (text.trim() === '') {
-      setTableData(originalData);
+      setTableData(originalData); // Reset to original data if search query is empty
     } else {
       const filtered = originalData.filter(item =>
         Object.values(item).some(value =>
           String(value).toLowerCase().includes(text.toLowerCase()),
         ),
       );
-      setTableData(filtered);
+      setTableData(filtered); // Update tableData with filtered results
     }
   };
 
@@ -238,6 +161,8 @@ const Account = ({navigation}: any) => {
   const fetchData = async () => {
     if (token) {
       try {
+        setTableData([]);
+
         const response = await axios.get(
           `https://demo.capobrain.com/fetchstd_account?_token=${token}`,
           {
@@ -247,7 +172,8 @@ const Account = ({navigation}: any) => {
           },
         );
 
-        setAccountDestails(response.data.accounts);
+        setOriginalData(response.data.accounts);
+        setTableData(response.data.accounts);
       } catch (error) {
         console.error('Error fetching data', error);
         throw error; // Ensure the error is thrown so useQuery can handle it
@@ -356,7 +282,7 @@ const Account = ({navigation}: any) => {
             placeholder="Search..."
             placeholderTextColor={'gray'}
             value={searchQuery}
-            onChangeText={handleSearch}
+            onChangeText={text => handleSearch(text)}
           />
         </View>
       </View>
@@ -368,7 +294,7 @@ const Account = ({navigation}: any) => {
               margin: 10,
               flex: 1,
             }}
-            data={accountDetails}
+            data={currentEntries}
             keyExtractor={(item, index) =>
               item.id ? item.id.toString() : index.toString()
             }
@@ -538,18 +464,21 @@ const Account = ({navigation}: any) => {
 
                 <TouchableOpacity
                   onPress={
-                    item.voucher_id === 'Payable Voucher'
-                      ? toggleModal
-                      : (null as unknown as undefined)
+                    item.stuacc_status === 'Y' &&
+                    parseInt(item.stuacc_balance) > 0
+                      ? () => setModalVisible(true) // Open modal if condition is met
+                      : undefined // Do nothing if condition is not met
                   }
-                  disabled={item.voucher_id === null}>
+                  disabled={item.stuacc_status !== 'Y'} // Disable if voucher_id is null
+                >
                   <View style={styles.iconContainer}>
                     <Image
                       style={styles.statusIcon}
                       source={
-                        item.voucher_id === null
-                          ? require('../assets/rejected.png')
-                          : require('../assets/payable.png')
+                        item.stuacc_status === 'Y' &&
+                        parseInt(item.stuacc_balance) > 0
+                          ? require('../assets/payable.png') // Use "payable" icon for Payable Voucher
+                          : require('../assets/rejected.png') // Use "rejected" icon for Not Available
                       }
                     />
                   </View>
@@ -634,7 +563,8 @@ const Account = ({navigation}: any) => {
                         style={[styles.text, styles.column, styles.withBorder]}>
                         {item.key}:
                       </Text>
-                      <Text style={[styles.value, styles.column,{marginRight:5}]}>
+                      <Text
+                        style={[styles.value, styles.column, {marginRight: 5}]}>
                         {item.value}
                       </Text>
                     </View>
@@ -746,8 +676,8 @@ const styles = StyleSheet.create({
     padding: 4,
     marginBottom: 5,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   item: {
     borderBottomColor: '#ccc',

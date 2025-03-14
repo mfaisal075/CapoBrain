@@ -65,7 +65,7 @@ const StudentDiary = ({navigation}: any) => {
     setEndDate(currentDate);
   };
 
-  const originalData: DailyDiary[] = [];
+  const [originalData, setOriginalData] = useState<DailyDiary[]>([]);
 
   const [tableData, setTableData] = useState<DailyDiary[]>(originalData);
 
@@ -124,7 +124,7 @@ const StudentDiary = ({navigation}: any) => {
             },
           },
         );
-
+        setOriginalData(response.data.dailydiary);
         setTableData(response.data.dailydiary);
       } catch (error) {
         console.log(error);

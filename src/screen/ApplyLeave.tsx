@@ -29,6 +29,7 @@ interface LeaveData {
   leave_date: string;
   status: string;
 }
+
 interface LeaveDetails {
   subject: string;
   leave_date: string;
@@ -93,7 +94,7 @@ const ApplyLeave = ({navigation}: any) => {
     return isValid;
   };
 
-  const originalData: LeaveData[] = [];
+  const [originalData, setOriginalData] = useState<LeaveData[]>([]);
   const [tableData, setTableData] = useState<LeaveData[]>(originalData);
 
   const items = [
@@ -141,7 +142,7 @@ const ApplyLeave = ({navigation}: any) => {
             },
           },
         );
-
+        setOriginalData(response.data.leave);
         setTableData(response.data.leave);
       } catch (error) {
         console.error('Error fetching data', error);
@@ -721,8 +722,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,

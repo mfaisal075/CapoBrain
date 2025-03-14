@@ -287,7 +287,7 @@ const TeacherAccount = ({navigation}: any) => {
         style={{
           flexDirection: 'row',
           justifyContent: 'space-between',
-          marginTop: 10,
+         
         }}>
         <View style={{width: 80, marginTop: 9}}>
           <DropDownPicker
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
   },
   column: {
     width: 140,
-    padding: 5,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {

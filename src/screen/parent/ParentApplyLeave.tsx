@@ -418,7 +418,7 @@ const ParentApplyLeave = ({navigation}: any) => {
             flex: 1,
             backgroundColor: 'white',
             width: 'auto',
-            maxHeight: 630,
+            maxHeight: 'auto',
             borderRadius: 5,
             borderWidth: 1,
             borderColor: '#6C757D',
@@ -502,8 +502,8 @@ const ParentApplyLeave = ({navigation}: any) => {
                 color: 'red',
                 fontSize: 12,
                 position: 'absolute',
-                top: hp('14%'),
-                left: 26,
+                top: hp('19%'),
+                left: 16,
               }}>
               {branchError}
             </Text>
@@ -511,7 +511,7 @@ const ParentApplyLeave = ({navigation}: any) => {
           <View
             style={{
               flexDirection: 'row',
-              marginTop: hp('3.3%'),
+              marginTop: hp('4.3%'),
               justifyContent: 'space-between',
             }}>
             {/* Subject */}
@@ -566,7 +566,7 @@ const ParentApplyLeave = ({navigation}: any) => {
                   color: 'red',
                   fontSize: 12,
                   position: 'absolute',
-                  top: hp('5%'),
+                  top: hp('7%'),
                   left: 20,
                 }}>
                 {subjectError}
@@ -644,7 +644,7 @@ const ParentApplyLeave = ({navigation}: any) => {
                   fontSize: 12,
                   position: 'absolute',
                   top: 42,
-                  right: hp('7%'),
+                  right: hp('11%'),
                 }}>
                 {dateError}
               </Text>
@@ -663,8 +663,8 @@ const ParentApplyLeave = ({navigation}: any) => {
               borderRadius: 5,
               borderColor: 'gray',
               marginLeft: 20,
-              marginTop: hp('4%'),
-              height: 300,
+              marginTop: hp('5%'),
+              height: 270,
               marginRight: 20,
             }}>
             <Text style={styles.label}>Leave Description</Text>
@@ -700,7 +700,7 @@ const ParentApplyLeave = ({navigation}: any) => {
                 color: 'red',
                 fontSize: 12,
                 position: 'absolute',
-                top: hp('59%'),
+                top: hp('79%'),
                 left: 20,
               }}>
               {descError}
@@ -809,7 +809,7 @@ const styles = StyleSheet.create({
   },
   column: {
     width: 140,
-    padding: 5,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {
@@ -848,20 +848,20 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 60,
-    height: 30,
-    marginRight: hp('9%'),
+    width: 40,
+    height: 20,
+   
   },
   statusIcon: {
-    width: 25,
-    height: 25,
+    width: 20,
+    height: 20,
     marginLeft: 80,
   },
   actionIcon: {
-    width: 20,
-    height: 20,
+    width: 15,
+    height: 15,
     tintColor: '#3b82f6',
-    marginLeft: 90,
+    marginLeft:hp('32%')
   },
   lblText: {
     fontWeight: 'bold',

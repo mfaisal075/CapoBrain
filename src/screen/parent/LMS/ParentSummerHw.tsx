@@ -28,6 +28,14 @@ type TableRow = {
   action: string;
 };
 
+interface HomeWork {
+  id: number;
+  total_marks: string;
+  sub_name: string;
+  cls_name: string;
+  sec_name: string;
+}
+
 const ParentSummerHw = ({navigation}: any) => {
   const {token} = useUser();
   const [isOpen, setIsOpen] = useState(false);
@@ -106,8 +114,7 @@ const ParentSummerHw = ({navigation}: any) => {
     if (token) {
       try {
         const response = await axios.get(
-          'https://demo.capobrain.com/studentsummerhomework' +
-            `?_token=${token}`,
+          `https://demo.capobrain.com/studentsummerhomework?_token=${token}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -342,8 +349,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,
@@ -359,7 +366,7 @@ const styles = StyleSheet.create({
   },
   column: {
     width: 140,
-    padding: 5,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {
@@ -427,11 +434,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: 60,
-    height: 30,
+    height: 20,
   },
   actionIcon: {
-    width: 20,
-    height: 20,
+    width: 15,
+    height: 15,
     tintColor: '#3b82f6',
     marginLeft: 80,
   },

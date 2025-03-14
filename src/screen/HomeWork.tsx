@@ -41,7 +41,7 @@ const HomeWork = ({navigation}: any) => {
   const [homeworkDetails, setHomeworkDetails] =
     useState<HomeWorkDetails | null>(null);
 
-  const originalData: HomeWork[] = [];
+  const [originalData, SetOriginalData] = useState<HomeWork[]>([]);
 
   const [tableData, setTableData] = useState<HomeWork[]>(originalData);
 
@@ -83,10 +83,6 @@ const HomeWork = ({navigation}: any) => {
   // view modal
   const [isModalVisi, setModalVisi] = useState(false);
 
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
-  };
-
   const fetchData = async () => {
     if (token) {
       try {
@@ -98,6 +94,7 @@ const HomeWork = ({navigation}: any) => {
             },
           },
         );
+        SetOriginalData(response.data.homework);
         setTableData(response.data.homework);
       } catch (error) {
         console.error(error);
@@ -164,7 +161,7 @@ const HomeWork = ({navigation}: any) => {
             placeholder="Search..."
             placeholderTextColor={'gray'}
             value={searchQuery}
-            onChangeText={handleSearch}
+            onChangeText={text => handleSearch(text)}
           />
         </View>
       </View>
@@ -368,8 +365,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,
