@@ -195,7 +195,7 @@ const LibraryBooks = ({navigation}: any) => {
                     source={
                       item.issue_bk_status === 'Issue'
                         ? require('../../assets/approved.png')
-                        : require('../../assets/rejected.png')
+                        : require('../../assets/pending.png')
                     }
                   />
                 </View>
@@ -320,13 +320,13 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    height: 30,
+    height: 20,
     marginRight: 70,
     width: 70,
   },
   statusIcon: {
-    width: 25,
-    height: 25,
+    width: 20,
+    height: 20,
     marginLeft: 80,
   },
 });

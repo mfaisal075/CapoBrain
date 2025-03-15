@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   },
   column: {
     width: 140,
-    padding: 2,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {

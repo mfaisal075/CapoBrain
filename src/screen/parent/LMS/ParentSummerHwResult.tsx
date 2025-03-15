@@ -22,14 +22,6 @@ interface Printer {
   name: string;
   url: string;
 }
-type TableRow = {
-  sr: string | number;
-  id: string;
-  name: string;
-  classname: string;
-  branchname: string;
-  action: string;
-};
 
 type TableModal = {
   sr: string | number;
@@ -61,59 +53,22 @@ interface UserData {
   };
 }
 
+interface HomeWork {
+  id: number;
+  student_id: string;
+  cand_name: string;
+  cls_name: string;
+  bra_name: string;
+}
+
 const ParentSummerHwResult = ({navigation}: any) => {
   const {token} = useUser();
   const [selectedPrinter, setSelectedPrinter] = useState<Printer | null>(null);
   const [isModalVisible, setModalVisible] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
 
-  const toggleModal = () => {
-    setModalVisible(!isModalVisible);
-  };
-
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      id: 'GCGS1124S001',
-      name: 'Ayesha Zumar',
-      classname: 'Five',
-      branchname: 'Main Branch',
-      action: 'View',
-    },
-    {
-      sr: '2',
-      id: 'GCGS1124S002',
-      name: 'Nayab Fatimah',
-      classname: 'Nursery',
-      branchname: 'Main Branch',
-      action: 'View',
-    },
-    {
-      sr: '3',
-      id: 'GCGS1124S003',
-      name: 'Fiza',
-      classname: 'Two',
-      branchname: 'Gujranwala Branch',
-      action: 'View',
-    },
-    {
-      sr: '4',
-      id: 'GCGS1124S004',
-      name: 'Fahmeen',
-      classname: 'Three',
-      branchname: 'Gujranwala Branch',
-      action: 'View',
-    },
-    {
-      sr: '5',
-      id: 'GCGS1124S002',
-      name: 'Talha',
-      classname: 'Five',
-      branchname: 'Gujranwala Branch',
-      action: 'View',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [originalData, setOriginalData] = useState<HomeWork[]>([]);
+  const [tableData, setTableData] = useState<HomeWork[]>(originalData);
 
   const silentPrint = async () => {
     if (!selectedPrinter) {
@@ -181,7 +136,8 @@ const ParentSummerHwResult = ({navigation}: any) => {
           },
         );
         setUserData(response.data);
-        return response.data.output;
+        setOriginalData(response.data.parent_students);
+        setTableData(response.data.parent_students);
       } catch (error) {
         console.log(error);
         throw error;
@@ -246,7 +202,7 @@ const ParentSummerHwResult = ({navigation}: any) => {
             data={tableData}
             nestedScrollEnabled
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -270,38 +226,36 @@ const ParentSummerHwResult = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.id}</Text>
-                <Text style={styles.column}>{item.name}</Text>
-                <Text style={styles.column}>{item.classname}</Text>
-                <Text style={styles.column}>{item.branchname}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.student_id}</Text>
+                <Text style={styles.column}>{item.cand_name}</Text>
+                <Text style={styles.column}>{item.cls_name}</Text>
+                <Text style={styles.column}>{item.bra_name}</Text>
                 <TouchableOpacity
-                  onPress={
-                    item.action === 'View'
-                      ? toggleModal
-                      : (null as unknown as undefined)
-                  }
-                  disabled={item.action === 'Not Available'}>
-                  <View
-                    style={[
-                      item.action === 'Not Available'
-                        ? styles.notAvailable
-                        : styles.available,
-                      styles.actionView,
-                    ]}>
-                    <Image
-                      style={[
-                        item.action === 'Not Available'
-                          ? styles.notAvailable
-                          : styles.available,
-                        {width: 18},
-                        {height: 18},
-                        {marginLeft: 4},
-                        {marginTop: 4},
-                      ]}
-                      source={require('../../../assets/visible.png')}
-                    />
-                  </View>
+                  style={styles.iconContainer}
+                  onPress={() => {
+                    const handleView = async (id: number) => {
+                      try {
+                        const response = await axios.get(
+                          `https://demo.capobrain.com/leactureshow?id=${item.id}&_token=${token}`,
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          },
+                        );
+                      } catch (error) {
+                        console.log(error);
+                        throw error;
+                      }
+                    };
+
+                    handleView(item.id);
+                  }}>
+                  <Image
+                    style={styles.actionIcon}
+                    source={require('../../../assets/visible.png')}
+                  />
                 </TouchableOpacity>
               </View>
             )}
@@ -558,7 +512,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderColor: '#ccc',
-  
   },
   column: {
     width: 140,
@@ -585,7 +538,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 27,
     borderRadius: 5,
-    top:-3
+    top: -3,
   },
   available: {
     color: 'darkblue',
@@ -593,10 +546,23 @@ const styles = StyleSheet.create({
     width: 50,
     height: 27,
     borderRadius: 5,
-    top:-3
+    top: -3,
   },
   withBorder: {
     borderRightWidth: 1,
     borderColor: '#ccc',
+  },
+  iconContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 60,
+    height: 20,
+    marginTop: 5,
+  },
+  actionIcon: {
+    width: 15,
+    height: 15,
+    tintColor: '#3b82f6',
+    marginLeft: 40,
   },
 });

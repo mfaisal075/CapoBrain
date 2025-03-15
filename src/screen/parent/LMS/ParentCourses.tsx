@@ -18,14 +18,32 @@ import YoutubePlayer from 'react-native-youtube-iframe';
 import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-type TableRow = {
-  sr: string;
+interface Courses {
+  id: number;
   title: string;
-  class: string;
-  section: string;
+  cls_name: string;
+  sec_name: string;
   price: string;
-  action: string;
-};
+}
+
+interface CoursesData {
+  course: {
+    title: string;
+    description: string;
+    url: string;
+    outcomes: string;
+    price: string;
+  };
+  teacher: {
+    app_name: string;
+  };
+  class: {
+    cls_name: string;
+  };
+  section: {
+    sec_name: string;
+  };
+}
 
 const ParentCourses = ({navigation}: any) => {
   const {token} = useUser();
@@ -35,34 +53,27 @@ const ParentCourses = ({navigation}: any) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisi, setModalVisi] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [courseData, setCourseData] = useState<CoursesData | null>(null);
+  const [originalData, setOriginalData] = useState<Courses[]>([]);
+  const [tableData, setTableData] = useState<Courses[]>(originalData);
 
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      title: 'English',
-      class: 'One',
-      section: 'A',
-      price: '0',
-      action: 'View',
-    },
-    {
-      sr: '2',
-      title: 'English',
-      class: 'One',
-      section: 'A',
-      price: '0',
-      action: 'View',
-    },
-    {
-      sr: '3',
-      title: 'English',
-      class: 'One',
-      section: 'A',
-      price: '0',
-      action: 'View',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const extractVideoId = (url: any) => {
+    if (!url) {
+      return null;
+    }
+
+    if (url.includes('v=')) {
+      const videoId = url.split('v=')[1];
+      const ampersandPosition = videoId.indexOf('&');
+      if (ampersandPosition !== -1) {
+        return videoId.substring(0, ampersandPosition);
+      }
+      return videoId;
+    } else {
+      return url.split('/').pop().split('?')[0];
+    }
+  };
+  const videoId = extractVideoId(courseData?.course.url);
 
   const items = [
     {label: '10', value: 10},
@@ -109,9 +120,12 @@ const ParentCourses = ({navigation}: any) => {
   }, []);
 
   const studentInfo = [
-    {key: 'Class', value: 'One (A)'},
-    {key: 'Rs.', value: '0'},
-    {key: 'Created By', value: 'Tahira Khanam'},
+    {
+      key: 'Class',
+      value: `${courseData?.class.cls_name} (${courseData?.section.sec_name})`,
+    },
+    {key: 'Rs.', value: courseData?.course.price},
+    {key: 'Created By', value: courseData?.teacher.app_name},
   ];
 
   const fetchData = async () => {
@@ -125,7 +139,8 @@ const ParentCourses = ({navigation}: any) => {
             },
           },
         );
-        return response.data.output;
+        setTableData(response.data.course);
+        setOriginalData(response.data.course);
       } catch (error) {
         console.log(error);
         throw error;
@@ -205,7 +220,7 @@ const ParentCourses = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -226,14 +241,36 @@ const ParentCourses = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
                 <Text style={styles.column}>{item.title}</Text>
-                <Text style={styles.column}>{item.class}</Text>
-                <Text style={styles.column}>{item.section}</Text>
-                <Text style={styles.column}>{item.price}</Text>
+                <Text style={styles.column}>{item.cls_name}</Text>
+                <Text style={styles.column}>{item.sec_name}</Text>
+                <Text style={styles.column}>
+                  {item.price === '0' ? 'Free' : item.price}
+                </Text>
                 <TouchableOpacity
                   style={styles.iconContainer}
-                  onPress={toggleModl}>
+                  onPress={() => {
+                    const handleView = async (id: number) => {
+                      try {
+                        const response = await axios.get(
+                          `https://demo.capobrain.com/showcourse?id=${item.id}&_token=${token}`,
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          },
+                        );
+                        setCourseData(response.data);
+                        setModalVisi(true);
+                      } catch (error) {
+                        console.log(error);
+                        throw error;
+                      }
+                    };
+
+                    handleView(item.id);
+                  }}>
                   <Image
                     style={styles.actionIcon}
                     source={require('../../../assets/visible.png')}
@@ -300,7 +337,7 @@ const ParentCourses = ({navigation}: any) => {
           <YoutubePlayer
             height={200}
             play={playing}
-            videoId="ezmsrB59mj8"
+            videoId={videoId}
             onChangeState={onStateChange}
           />
           <View style={styles.border}>
@@ -328,11 +365,11 @@ const ParentCourses = ({navigation}: any) => {
           </View>
 
           <View style={styles.border}>
-            <Text>English</Text>
-            <Text>Knowledge of English</Text>
+            <Text>{courseData?.course.title}</Text>
+            <Text>{courseData?.course.outcomes}</Text>
           </View>
           <View style={styles.border}>
-            <Text>-----</Text>
+            <Text>{courseData?.course.description}</Text>
           </View>
         </View>
       </Modal>
@@ -355,8 +392,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,
@@ -465,6 +502,6 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    marginLeft: 40,
+    marginLeft: 80,
   },
 });

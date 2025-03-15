@@ -23,14 +23,6 @@ import {
 } from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-type TableRow = {
-  sr: string;
-  class: string;
-  subject: string;
-  date: string;
-  action: string;
-};
-
 interface DailyDiary {
   id: number;
   cls_name: string;

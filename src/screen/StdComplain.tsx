@@ -107,7 +107,7 @@ const StdComplain = ({navigation}: any) => {
           <Icon
             name="arrow-left"
             size={38}
-            color={'#000'}
+            color={'#FFFFFF'}
             style={{paddingHorizontal: 10}}
           />
         </TouchableOpacity>
@@ -485,7 +485,9 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 5,
     paddingHorizontal: 10,
-    padding:6
+    padding:6,
+    textAlign:'center',
+    color:'gray'
   },
   table: {
     minWidth: 700,

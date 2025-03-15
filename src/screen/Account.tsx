@@ -491,7 +491,7 @@ const Account = ({navigation}: any) => {
 
       <View style={styles.pagination}>
         <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to
+          Showing {(currentPage - 1) * entriesPerPage + 1} to 
           {Math.min(currentPage * entriesPerPage, tableData.length)} of
           {tableData.length} entries
         </Text>
@@ -737,16 +737,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: 60,
-    height: 30,
+    height: 20,
   },
   statusIcon: {
-    width: 25,
-    height: 25,
+    width: 20,
+    height: 20,
     marginLeft: 90,
   },
   actionIcon: {
-    width: 20,
-    height: 20,
+    width: 15,
+    height: 15,
     tintColor: '#3b82f6',
   },
   infoRow: {

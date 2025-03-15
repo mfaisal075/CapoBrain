@@ -24,6 +24,15 @@ type TableRow = {
   returnDate: string;
 };
 
+interface LibraryBooks {
+  id: string;
+  issue_bk_quantity_no: string;
+  issue_bk_status: string;
+  issue_bk_date: string;
+  issue_bk_return_date: string;
+  bk_name: string;
+}
+
 const ParentLibraryBooks = ({navigation}: any) => {
   const {token} = useUser();
   const [isOpen, setIsOpen] = useState(false);
@@ -31,25 +40,8 @@ const ParentLibraryBooks = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      book: 'Physics Key Book',
-      quantity: '1',
-      status: 'Issue',
-      issueDate: '07-03-2025',
-      returnDate: '08-03-2025',
-    },
-    {
-      sr: '2',
-      book: 'Chemistry Key Book',
-      quantity: '1',
-      status: 'Issue',
-      issueDate: '07-03-2025',
-      returnDate: '09-03-2025',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [originalData, setOriginalData] = useState<LibraryBooks[]>([]);
+  const [tableData, setTableData] = useState<LibraryBooks[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -96,7 +88,8 @@ const ParentLibraryBooks = ({navigation}: any) => {
             },
           },
         );
-        return response.data.output;
+        setOriginalData(response.data.studentlibrarybooks);
+        setTableData(response.data.studentlibrarybooks);
       } catch (error) {
         console.log(error);
         throw error;
@@ -178,7 +171,7 @@ const ParentLibraryBooks = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -202,21 +195,21 @@ const ParentLibraryBooks = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.book}</Text>
-                <Text style={styles.column}>{item.quantity}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.bk_name}</Text>
+                <Text style={styles.column}>{item.issue_bk_quantity_no}</Text>
                 <View style={styles.iconContainer}>
                   <Image
                     style={styles.statusIcon}
                     source={
-                      item.status === 'Issue'
+                      item.issue_bk_status === 'Issue'
                         ? require('../../../assets/approved.png')
                         : require('../../../assets/rejected.png')
                     }
                   />
                 </View>
-                <Text style={styles.column}>{item.issueDate}</Text>
-                <Text style={styles.column}>{item.returnDate}</Text>
+                <Text style={styles.column}>{item.issue_bk_date}</Text>
+                <Text style={styles.column}>{item.issue_bk_return_date}</Text>
               </View>
             )}
           />
@@ -280,8 +273,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,
@@ -337,12 +330,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     height: 20,
-   marginRight:100,
-   width:40
+    marginRight: 100,
+    width: 40,
   },
   statusIcon: {
-    width: 20,
-    height: 20,
-    marginLeft: 60,
+    width: 15,
+    height: 15,
+    marginLeft: 100,
   },
 });

@@ -41,6 +41,12 @@ type TableRow = {
   action: string;
 };
 
+interface Complain {
+  id: number;
+  name: string;
+  status: string
+}
+
 const TeacherComplain = ({navigation}: any) => {
   const {token} = useUser();
   const [loading, setLoading] = useState(false);

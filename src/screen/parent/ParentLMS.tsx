@@ -76,7 +76,6 @@ const ParentLMS = ({navigation}: any) => {
       return url.split('/').pop().split('?')[0];
     }
   };
-
   const videoId = extractVideoId(lectureData?.lecture.url);
 
   const items = [
@@ -187,7 +186,7 @@ const ParentLMS = ({navigation}: any) => {
         }}>
         <View style={{flexDirection: 'row'}}>
           <TouchableOpacity
-            onPress={() => navigation.navigate('ParentCourse' as never)}>
+            onPress={() => navigation.navigate('ParentCourses' as never)}>
             <View
               style={{
                 width: 60,
@@ -235,7 +234,7 @@ const ParentLMS = ({navigation}: any) => {
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() =>
-              navigation.navigate('ParentSummerHWResult' as never)
+              navigation.navigate('ParentSummerHwResult' as never)
             }>
             <View
               style={{
@@ -249,7 +248,7 @@ const ParentLMS = ({navigation}: any) => {
                 style={{
                   color: 'white',
                   fontWeight: 'bold',
-                  fontSize: 15,
+                  fontSize: 14,
                   textAlign: 'center',
                   marginTop: 3,
                 }}>
@@ -264,7 +263,7 @@ const ParentLMS = ({navigation}: any) => {
             flexDirection: 'row',
           }}>
           <TouchableOpacity
-            onPress={() => navigation.navigate('ParentLibraryBook' as never)}>
+            onPress={() => navigation.navigate('ParentLibraryBooks' as never)}>
             <View
               style={{
                 width: 100,

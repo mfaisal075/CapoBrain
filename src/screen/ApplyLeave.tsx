@@ -7,6 +7,7 @@ import {
   View,
   TextInput,
   FlatList,
+  Alert,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {Image} from 'react-native';
@@ -42,8 +43,7 @@ const ApplyLeave = ({navigation}: any) => {
   const [subjectError, setSubjectError] = useState('');
   const [dateError, setDateError] = useState('');
   const [descError, setDescError] = useState('');
-  const [value, setValue] = useState('');
-  const [date, setDate] = useState('');
+  const [subject, setSubject] = useState('');
   const [desc, setDesc] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
@@ -53,6 +53,8 @@ const ApplyLeave = ({navigation}: any) => {
   const [startDate, setStartDate] = useState(new Date());
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [leaveDetails, setLeaveDetails] = useState<LeaveDetails | null>(null);
+  const [originalData, setOriginalData] = useState<LeaveData[]>([]);
+  const [tableData, setTableData] = useState<LeaveData[]>(originalData);
 
   const onStartDateChange = (
     event: DateTimePickerEvent,
@@ -70,14 +72,14 @@ const ApplyLeave = ({navigation}: any) => {
   const validateFields = () => {
     let isValid = true;
 
-    if (!value) {
+    if (!subject) {
       setSubjectError('Subject is required');
       isValid = false;
     } else {
       setSubjectError('');
     }
 
-    if (!date) {
+    if (!startDate) {
       setDateError('Date is required');
       isValid = false;
     } else {
@@ -93,9 +95,6 @@ const ApplyLeave = ({navigation}: any) => {
 
     return isValid;
   };
-
-  const [originalData, setOriginalData] = useState<LeaveData[]>([]);
-  const [tableData, setTableData] = useState<LeaveData[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -151,6 +150,43 @@ const ApplyLeave = ({navigation}: any) => {
     } else {
       console.log('User is not authenticated');
       throw new Error('User is not authenticated');
+    }
+  };
+
+  const handleAddLeave = async () => {
+    if (token) {
+      try {
+        const response = await axios.post(
+          'https://demo.capobrain.com/Leavestore',
+          {
+            subject,
+            leave_date: startDate,
+            leave_desc: desc,
+          },
+          {withCredentials: true},
+        );
+
+        const data = response.data;
+
+        if (response.status === 200) {
+          Alert.alert('Success', 'Leave added successfully');
+          fetchData();
+          setModalVisible(false);
+          setSubject('');
+          setDesc('');
+          setStartDate(new Date());
+          console.log(response.data);
+          console.log(response.status);
+          console.log(data);
+        } else {
+          console.log('Backend validation error:', response.data);
+          Alert.alert('Error', response.data.message || 'Failed to add leave');
+          console.log(data.status);
+        }
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
     }
   };
 
@@ -424,8 +460,8 @@ const ApplyLeave = ({navigation}: any) => {
                     color: 'black',
                     width: 95,
                   }}
-                  value={value}
-                  onChangeText={setValue}
+                  value={subject}
+                  onChangeText={setSubject}
                   placeholder="Enter"
                   placeholderTextColor={'gray'}
                 />
@@ -582,7 +618,7 @@ const ApplyLeave = ({navigation}: any) => {
           <TouchableOpacity
             onPress={() => {
               if (validateFields()) {
-                console.log('Form is valid');
+                handleAddLeave();
               } else {
                 console.log('Form is invalid');
               }
@@ -746,7 +782,7 @@ const styles = StyleSheet.create({
   },
   column: {
     width: 140,
-    padding: 5,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {

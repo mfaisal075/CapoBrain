@@ -23,13 +23,26 @@ import {
 } from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-type TableRow = {
-  sr: string;
-  class: string;
-  subject: string;
+interface DailyDiary {
+  id: number;
+  cls_name: string;
+  sec_name: string;
+  sub_name: string;
   date: string;
-  action: string;
-};
+}
+
+interface DailyDiaryData {
+  diary: {
+    date: string;
+    diary: string;
+  };
+  class: {
+    cls_name: string;
+  };
+  subject: {
+    sub_name: string;
+  };
+}
 
 const ParentDailyDiary = ({navigation}: any) => {
   const {token} = useUser();
@@ -42,10 +55,9 @@ const ParentDailyDiary = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisi, setModalVisi] = useState(false);
-
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
-  };
+  const [dailydiaryData, setDailydiaryData] = useState<DailyDiaryData | null>(
+    null,
+  );
 
   const onStartDateChange = (
     event: DateTimePickerEvent,
@@ -62,51 +74,8 @@ const ParentDailyDiary = ({navigation}: any) => {
     setEndDate(currentDate);
   };
 
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      class: 'Three(A)',
-      subject: 'English',
-      date: '07-03-2025',
-      action: '',
-    },
-    {
-      sr: '2',
-      class: 'Three(A)',
-      subject: 'Urdu',
-      date: '07-03-2025',
-      action: '',
-    },
-    {
-      sr: '3',
-      class: 'Three(A)',
-      subject: 'Math',
-      date: '07-03-2025',
-      action: '',
-    },
-    {
-      sr: '4',
-      class: 'Three(A)',
-      subject: 'Pakistan Studies',
-      date: '07-03-2025',
-      action: '',
-    },
-    {
-      sr: '5',
-      class: 'Three(A)',
-      subject: 'Science',
-      date: '07-03-2025',
-      action: '',
-    },
-    {
-      sr: '6',
-      class: 'Three(A)',
-      subject: 'Islamiyat',
-      date: '07-03-2025',
-      action: '',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [originalData, setOriginalData] = useState<DailyDiary[]>([]);
+  const [tableData, setTableData] = useState<DailyDiary[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -146,15 +115,21 @@ const ParentDailyDiary = ({navigation}: any) => {
     if (token) {
       try {
         const response = await axios.get(
-          'https://demo.capobrain.com/fetchstudentdiary',
+          `https://demo.capobrain.com/fetchstudentdiary?from=${
+            startDate.toISOString().split('T')[0]
+          }&to=${endDate.toISOString().split('T')[0]}&_token=${token}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           },
         );
-        return response.data;
-      } catch (error) {}
+        setOriginalData(response.data.dailydiary);
+        setTableData(response.data.dailydiary);
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
     }
   };
 
@@ -171,7 +146,7 @@ const ParentDailyDiary = ({navigation}: any) => {
     );
 
     return () => backHandler.remove();
-  }, []);
+  }, [startDate, endDate]);
 
   return (
     <View
@@ -345,7 +320,7 @@ const ParentDailyDiary = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -362,13 +337,36 @@ const ParentDailyDiary = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.class}</Text>
-                <Text style={styles.column}>{item.subject}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text
+                  style={
+                    styles.column
+                  }>{`${item.cls_name} (${item.sec_name})`}</Text>
+                <Text style={styles.column}>{item.sub_name}</Text>
                 <Text style={styles.column}>{item.date}</Text>
                 <TouchableOpacity
                   style={styles.iconContainer}
-                  onPress={toggleModl}>
+                  onPress={() => {
+                    const handleView = async (id: number) => {
+                      try {
+                        const response = await axios.get(
+                          `https://demo.capobrain.com/showdiary?id=${item.id}&_token=${token}`,
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          },
+                        );
+                        setModalVisi(true);
+                        setDailydiaryData(response.data);
+                      } catch (error) {
+                        console.log(error);
+                        throw error;
+                      }
+                    };
+
+                    handleView(item.id);
+                  }}>
                   <Image
                     style={styles.actionIcon}
                     source={require('../../../assets/visible.png')}
@@ -441,7 +439,7 @@ const ParentDailyDiary = ({navigation}: any) => {
                 flexDirection: 'row',
               }}>
               <Text style={styles.lblText}>Date</Text>
-              <Text style={styles.valueText}>07-03-2025</Text>
+              <Text style={styles.valueText}>{dailydiaryData?.diary.date}</Text>
             </View>
             <View
               style={{
@@ -449,7 +447,9 @@ const ParentDailyDiary = ({navigation}: any) => {
                 marginRight: 50,
               }}>
               <Text style={styles.lblText}>Class</Text>
-              <Text style={styles.valueText}>Three</Text>
+              <Text style={styles.valueText}>
+                {dailydiaryData?.class.cls_name}
+              </Text>
             </View>
           </View>
 
@@ -459,18 +459,18 @@ const ParentDailyDiary = ({navigation}: any) => {
               marginLeft: 10,
             }}>
             <Text style={styles.lblText}>Subject</Text>
-            <Text style={styles.valueText}>English</Text>
+            <Text style={styles.valueText}>
+              {dailydiaryData?.subject.sub_name}
+            </Text>
           </View>
           <View
             style={{
               marginLeft: 10,
               marginTop: 10,
-              flexDirection: 'row',
+            
             }}>
             <Text style={styles.lblText}>Description:</Text>
-            <Text style={styles.valueText}>
-              ghfghdft nfghjfgghfghdft nfghjfgghfghdft
-            </Text>
+            <Text style={styles.valueText}>{dailydiaryData?.diary.diary}</Text>
           </View>
         </View>
       </Modal>
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   valueText: {
-    marginRight: 10,
+    marginRight: hp('5%'),
   },
   iconContainer: {
     justifyContent: 'center',
@@ -586,6 +586,6 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    marginLeft: 40,
+    marginLeft: 80,
   },
 });

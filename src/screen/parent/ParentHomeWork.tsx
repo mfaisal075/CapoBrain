@@ -417,6 +417,6 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    marginLeft: 40,
+    marginLeft: 44,
   },
 });

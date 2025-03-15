@@ -359,7 +359,7 @@ const TSummerHomework = ({navigation}: any) => {
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
-                {['Sr#', 'Title', 'Class', 'Section', 'Price', 'Action'].map(
+                {['Sr#', 'Branch', 'Class', 'Section', 'Subject', 'Action'].map(
                   header => (
                     <Text
                       key={header}
@@ -1195,7 +1195,7 @@ const styles = StyleSheet.create({
   },
   column: {
     width: 150,
-    padding: 5,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {
@@ -1272,19 +1272,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: 60,
-    height: 30,
+    height: 20,
   },
   actionIcon: {
-    width: 17,
-    height: 17,
+    width: 15,
+    height: 15,
     tintColor: '#3b82f6',
     marginLeft: 80,
+    marginTop:-12  
   },
   actionView: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
-    marginBottom: 2,
+    marginTop: -6,
     marginRight: 5,
     marginLeft: 5,
   },

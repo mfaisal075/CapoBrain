@@ -219,7 +219,6 @@ const ParentAttendance = ({navigation}: any) => {
             },
           },
         );
-        // setUserData(response.data);
 
         return response.data.output;
       } catch (error) {

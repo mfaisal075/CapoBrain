@@ -23,14 +23,19 @@ import {
 } from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-type TableRow = {
-  sr: string;
-  student: string;
+interface LeaveData {
   subject: string;
-  date: string;
+  leave_date: string;
+  leave_desc: string;
+}
+
+interface Leave {
+  id: number;
+  subject: string;
+  leave_date: string;
   status: string;
-  action: string;
-};
+  cand_name: string;
+}
 
 const ParentApplyLeave = ({navigation}: any) => {
   const {token} = useUser();
@@ -50,6 +55,7 @@ const ParentApplyLeave = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisi, setModalVisi] = useState(false);
+  const [leaveData, setLeaveData] = useState<LeaveData | null>(null);
 
   const onStartDateChange = (
     event: DateTimePickerEvent,
@@ -62,10 +68,6 @@ const ParentApplyLeave = ({navigation}: any) => {
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
-  };
-
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
   };
 
   const validateFields = () => {
@@ -113,25 +115,8 @@ const ParentApplyLeave = ({navigation}: any) => {
     {label: '100', value: 100},
   ];
 
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      student: 'Ayesha Zumar',
-      subject: 'Urgent Work Leave',
-      date: '16-11-2024',
-      status: 'rejected',
-      action: '',
-    },
-    {
-      sr: '2',
-      student: 'Nayab Fatimah',
-      subject: 'Sick',
-      date: '24-11-2024',
-      status: 'approved',
-      action: '',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [originalData, setOriginalData] = useState<Leave[]>([]);
+  const [tableData, setTableData] = useState<Leave[]>(originalData);
 
   const handleSearch = (text: string) => {
     setSearchQuery(text);
@@ -171,7 +156,8 @@ const ParentApplyLeave = ({navigation}: any) => {
             },
           },
         );
-        return response.data.output;
+        setTableData(response.data.leave);
+        setOriginalData(response.data.leave);
       } catch (error) {
         console.log(error);
         throw error;
@@ -264,6 +250,7 @@ const ParentApplyLeave = ({navigation}: any) => {
           <TextInput
             style={styles.input}
             placeholder="Search..."
+            placeholderTextColor={'gray'}
             value={searchQuery}
             onChangeText={handleSearch}
           />
@@ -276,7 +263,7 @@ const ParentApplyLeave = ({navigation}: any) => {
             data={currentEntries}
             nestedScrollEnabled
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -297,17 +284,17 @@ const ParentApplyLeave = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.student}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.cand_name}</Text>
                 <Text style={styles.column}>{item.subject}</Text>
-                <Text style={styles.column}>{item.date}</Text>
+                <Text style={styles.column}>{item.leave_date}</Text>
                 <View style={styles.iconContainer}>
                   <Image
                     style={styles.statusIcon}
                     source={
-                      item.status === 'pending'
+                      item.status === 'Pending'
                         ? require('../../assets/pending.png')
-                        : item.status === 'approved'
+                        : item.status === 'Approved'
                         ? require('../../assets/approved.png')
                         : require('../../assets/rejected.png')
                     }
@@ -315,77 +302,32 @@ const ParentApplyLeave = ({navigation}: any) => {
                 </View>
                 <TouchableOpacity
                   style={styles.iconContainer}
-                  onPress={toggleModl}>
+                  onPress={() => {
+                    const handleView = async (id: number) => {
+                      try {
+                        const response = await axios.get(
+                          `https://demo.capobrain.com/showleave?id=${item.id}&_token=${token}`,
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          },
+                        );
+                        setLeaveData(response.data);
+                        setModalVisi(true);
+                      } catch (error) {
+                        console.log(error);
+                        throw error;
+                      }
+                    };
+
+                    handleView(item.id);
+                  }}>
                   <Image
                     style={styles.actionIcon}
                     source={require('../../assets/visible.png')}
                   />
                 </TouchableOpacity>
-                <Modal isVisible={isModalVisi}>
-                  <View
-                    style={{
-                      flex: 1,
-                      backgroundColor: 'white',
-                      width: 'auto',
-                      maxHeight: 300,
-                      borderRadius: 5,
-                      borderWidth: 1,
-                      borderColor: '#6C757D',
-                    }}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        margin: 20,
-                      }}>
-                      <Text style={{color: '#6C757D', fontSize: 18}}>
-                        Leave Detail
-                      </Text>
-
-                      <TouchableOpacity
-                        onPress={() => setModalVisi(!isModalVisi)}>
-                        <Text style={{color: '#6C757D'}}>✖</Text>
-                      </TouchableOpacity>
-                    </View>
-                    <View
-                      style={{
-                        height: 1,
-                        backgroundColor: 'gray',
-                        width: wp('90%'),
-                      }}
-                    />
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        margin: 10,
-                      }}>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                        }}>
-                        <Text style={styles.lblText}>Subject</Text>
-                        <Text style={styles.valueText}>Urgent Work Leave</Text>
-                      </View>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          marginRight: 50,
-                        }}>
-                        <Text style={styles.lblText}>Date</Text>
-                        <Text style={styles.valueText}>16-11-2024</Text>
-                      </View>
-                    </View>
-
-                    <View
-                      style={{
-                        margin: 10,
-                      }}>
-                      <Text style={styles.lblText}>Leave Description:</Text>
-                      <Text style={styles.valueText}>Urgent Work Leave</Text>
-                    </View>
-                  </View>
-                </Modal>
               </View>
             )}
           />
@@ -737,6 +679,70 @@ const ParentApplyLeave = ({navigation}: any) => {
           </TouchableOpacity>
         </View>
       </Modal>
+
+      {/* Leave Details Modal */}
+      <Modal isVisible={isModalVisi}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'white',
+            width: 'auto',
+            maxHeight: 300,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: '#6C757D',
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              margin: 20,
+            }}>
+            <Text style={{color: '#6C757D', fontSize: 18}}>Leave Detail</Text>
+
+            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
+              <Text style={{color: '#6C757D'}}>✖</Text>
+            </TouchableOpacity>
+          </View>
+          <View
+            style={{
+              height: 1,
+              backgroundColor: 'gray',
+              width: wp('90%'),
+            }}
+          />
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              margin: 10,
+            }}>
+            <View
+              style={{
+                flexDirection: 'row',
+              }}>
+              <Text style={styles.lblText}>Subject</Text>
+              <Text style={styles.valueText}>{leaveData?.subject}</Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                marginRight: 50,
+              }}>
+              <Text style={styles.lblText}>Date</Text>
+              <Text style={styles.valueText}>{leaveData?.leave_date}</Text>
+            </View>
+          </View>
+
+          <View
+            style={{
+              margin: 10,
+            }}>
+            <Text style={styles.lblText}>Leave Description:</Text>
+            <Text style={styles.valueText}>{leaveData?.leave_desc}</Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -799,8 +805,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   row: {
     flexDirection: 'row',
@@ -848,9 +854,8 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 40,
+    width: 50,
     height: 20,
-   
   },
   statusIcon: {
     width: 20,
@@ -861,7 +866,7 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    marginLeft:hp('32%')
+    marginLeft: hp('35%'),
   },
   lblText: {
     fontWeight: 'bold',

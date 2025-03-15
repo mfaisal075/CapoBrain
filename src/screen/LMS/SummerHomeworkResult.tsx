@@ -328,8 +328,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
   },
   column: {
-    width: 100,
-    padding: 5,
+    width: 140,
+    padding: 1,
     textAlign: 'center',
   },
   headTable: {

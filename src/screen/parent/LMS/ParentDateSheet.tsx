@@ -35,8 +35,35 @@ type TableModal = {
   endTime: string;
 };
 
+interface DateSheet {
+  id: number;
+  cls_name: string;
+  sec_name: string;
+  bra_name: string;
+}
+
+interface DateSheetData {
+  school: {
+    scl_institute_name: string;
+  };
+  branch: {
+    bra_name: string;
+  };
+  class: {
+    cls_name: string;
+  };
+  section: {
+    sec_name: string;
+  };
+}
+
 const ParentDateSheet = ({navigation}: any) => {
   const {token} = useUser();
+  const [isOpen, setIsOpen] = useState(false);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [originalData, setOriginalData] = useState<DateSheet[]>([]);
+  const [tableData, setTableData] = useState<DateSheet[]>(originalData);
 
   const fetchData = async () => {
     if (token) {
@@ -49,7 +76,8 @@ const ParentDateSheet = ({navigation}: any) => {
             },
           },
         );
-        return response.data.output;
+        setOriginalData(response.data.datesheets);
+        setTableData(response.data.datesheets);
       } catch (error) {
         console.log(error);
         throw error;
@@ -73,16 +101,6 @@ const ParentDateSheet = ({navigation}: any) => {
 
     return () => backHandler.remove();
   }, []);
-
-  const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const originalData: TableRow[] = [
-    {sr: '1', branch: 'Main Branch', class: 'Three (A)', action: ''},
-  ];
-
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -225,6 +243,7 @@ const ParentDateSheet = ({navigation}: any) => {
           <TextInput
             style={styles.input}
             placeholder="Search..."
+            placeholderTextColor={'gray'}
             value={searchQuery}
             onChangeText={handleSearch}
           />
@@ -238,7 +257,7 @@ const ParentDateSheet = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -255,12 +274,15 @@ const ParentDateSheet = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.branch}</Text>
-                <Text style={styles.column}>{item.class}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.bra_name}</Text>
+                <Text
+                  style={
+                    styles.column
+                  }>{`${item.cls_name} (${item.sec_name})`}</Text>
                 <TouchableOpacity
                   style={styles.iconContainer}
-                  onPress={toggleModl}>
+                  onPress={() => {}}>
                   <Image
                     style={styles.actionIcon}
                     source={require('../../../assets/visible.png')}
@@ -444,6 +466,7 @@ const styles = StyleSheet.create({
   column: {
     width: 140,
     padding: 1,
+    textAlign: 'center',
   },
   headTable: {
     fontWeight: 'bold',
@@ -458,11 +481,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     backgroundColor: '#3b82f6',
     justifyContent: 'center',
-  },
-  backButton: {
-    width: 24,
-    height: 24,
-    tintColor: 'white',
   },
   headerText: {
     fontSize: 20,
@@ -510,6 +528,7 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
+    marginLeft: 90,
   },
   infoRow: {
     flexDirection: 'row',
