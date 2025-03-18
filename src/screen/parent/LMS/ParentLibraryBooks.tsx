@@ -15,15 +15,6 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import {FlatList} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-type TableRow = {
-  sr: string;
-  book: string;
-  quantity: string;
-  status: string;
-  issueDate: string;
-  returnDate: string;
-};
-
 interface LibraryBooks {
   id: string;
   issue_bk_quantity_no: string;
@@ -39,7 +30,6 @@ const ParentLibraryBooks = ({navigation}: any) => {
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-
   const [originalData, setOriginalData] = useState<LibraryBooks[]>([]);
   const [tableData, setTableData] = useState<LibraryBooks[]>(originalData);
 
@@ -113,6 +103,17 @@ const ParentLibraryBooks = ({navigation}: any) => {
 
     return () => backHandler.remove();
   }, []);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''; // Handle empty or invalid dates
+
+    const date = new Date(dateString); // Parse the date string
+    const day = String(date.getDate()).padStart(2, '0'); // Ensure 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Return formatted date
+  };
   return (
     <View
       style={{
@@ -171,7 +172,7 @@ const ParentLibraryBooks = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.id ? item.id.toString() : index.toString()
+              item.id ? `${item.id}-${index}` : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -203,13 +204,17 @@ const ParentLibraryBooks = ({navigation}: any) => {
                     style={styles.statusIcon}
                     source={
                       item.issue_bk_status === 'Issue'
-                        ? require('../../../assets/approved.png')
-                        : require('../../../assets/rejected.png')
+                        ? require('../../../assets/rejected.png')
+                        : require('../../../assets/approved.png')
                     }
                   />
                 </View>
-                <Text style={styles.column}>{item.issue_bk_date}</Text>
-                <Text style={styles.column}>{item.issue_bk_return_date}</Text>
+                <Text style={styles.column}>
+                  {formatDate(item.issue_bk_date)}
+                </Text>
+                <Text style={styles.column}>
+                  {formatDate(item.issue_bk_return_date)}
+                </Text>
               </View>
             )}
           />

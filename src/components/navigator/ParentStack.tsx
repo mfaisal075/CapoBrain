@@ -21,6 +21,7 @@ import ParentAnnouncement from '../../screen/parent/ParentAnnouncement';
 import ParentComplain from '../../screen/parent/ParentComplain';
 import ParentCalendar from '../../screen/parent/ParentCalendar';
 import ParentMessages from '../../screen/parent/ParentMessages';
+import ParentMeeting from '../../screen/parent/ParentMeeting';
 
 const Stack = createNativeStackNavigator();
 
@@ -125,6 +126,11 @@ const ParentStack = () => {
       <Stack.Screen
         name="ParentMessages"
         component={ParentMessages}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ParentMeeting"
+        component={ParentMeeting}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

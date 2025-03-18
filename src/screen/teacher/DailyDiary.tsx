@@ -625,7 +625,6 @@ export default function DailyDiary() {
                       style={{
                         marginLeft: 10,
                         marginTop: 10,
-                        flexDirection: 'row',
                       }}>
                       <Text style={styles.lblText}>Description:</Text>
                       <Text style={styles.valueText}>
@@ -761,7 +760,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   valueText: {
-    marginRight: 10,
+    marginRight: hp('5%'),
   },
   iconContainer: {
     justifyContent: 'center',

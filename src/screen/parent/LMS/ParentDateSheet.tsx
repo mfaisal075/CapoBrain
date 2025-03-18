@@ -20,29 +20,23 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 
-type TableRow = {
-  sr: string;
-  branch: string;
-  class: string;
-  action: string;
-};
-
-type TableModal = {
-  sr: string | number;
-  subject: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-};
-
 interface DateSheet {
   id: number;
   cls_name: string;
   sec_name: string;
   bra_name: string;
+  class_id: number;
 }
 
 interface DateSheetData {
+  sub_name: string;
+  id: number;
+  date: string;
+  time_from: string;
+  time_to: string;
+}
+
+interface Details {
   school: {
     scl_institute_name: string;
   };
@@ -64,6 +58,47 @@ const ParentDateSheet = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [originalData, setOriginalData] = useState<DateSheet[]>([]);
   const [tableData, setTableData] = useState<DateSheet[]>(originalData);
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(tableData.length / entriesPerPage);
+  const [details, setDetails] = useState<Details | null>(null);
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    if (text.trim() === '') {
+      setTableData(originalData);
+    } else {
+      const filtered = originalData.filter(item =>
+        Object.values(item).some(value =>
+          String(value).toLowerCase().includes(text.toLowerCase()),
+        ),
+      );
+      setTableData(filtered);
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page > 0 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const currentEntries = tableData.slice(
+    (currentPage - 1) * entriesPerPage,
+    currentPage * entriesPerPage,
+  );
+  {
+    /*view modal*/
+  }
+  const [isModalVisi, setModalVisi] = useState(false);
+
+  const Info = [
+    {key: 'Class', value: details?.class.cls_name},
+    {key: 'Section', value: details?.section.sec_name},
+  ];
+
+  const originalDta: DateSheetData[] = [];
+
+  const [ModalData, setModalData] = useState<DateSheetData[]>(originalDta);
 
   const fetchData = async () => {
     if (token) {
@@ -109,93 +144,16 @@ const ParentDateSheet = ({navigation}: any) => {
     {label: '100', value: 100},
   ];
 
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setTableData(originalData);
-    } else {
-      const filtered = originalData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered);
-    }
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''; // Handle empty or invalid dates
+
+    const date = new Date(dateString); // Parse the date string
+    const day = String(date.getDate()).padStart(2, '0'); // Ensure 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Return formatted date
   };
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(tableData.length / entriesPerPage);
-
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const currentEntries = tableData.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage,
-  );
-  {
-    /*view modal*/
-  }
-  const [isModalVisi, setModalVisi] = useState(false);
-
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
-  };
-
-  const Info = [
-    {key: 'Class', value: 'Three'},
-    {key: 'Section', value: 'A'},
-  ];
-
-  const originalDta: TableModal[] = [
-    {
-      sr: '1',
-      subject: 'English',
-      date: '14-03-2025',
-      startTime: '12:44',
-      endTime: '13:44',
-    },
-    {
-      sr: '2',
-      subject: 'Urdu',
-      date: '15-03-2025',
-      startTime: '12:44',
-      endTime: '14:44',
-    },
-    {
-      sr: '3',
-      subject: 'Math',
-      date: '16-03-2025',
-      startTime: '12:44',
-      endTime: '15:44',
-    },
-    {
-      sr: '4',
-      subject: 'Pakistan Studies',
-      date: '17-03-2025',
-      startTime: '12:44',
-      endTime: '16:44',
-    },
-    {
-      sr: '5',
-      subject: 'Science',
-      date: '18-03-2025',
-      startTime: '12:44',
-      endTime: '17:44',
-    },
-    {
-      sr: '6',
-      subject: 'Islamiyat',
-      date: '19-03-2025',
-      startTime: '12:44',
-      endTime: '13:44',
-    },
-  ];
-
-  const [ModalData, setModalData] = useState<TableModal[]>(originalDta);
 
   return (
     <View
@@ -257,7 +215,7 @@ const ParentDateSheet = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.id ? item.id.toString() : index.toString()
+              item.id ? `${item.id}-${index}` : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -282,7 +240,28 @@ const ParentDateSheet = ({navigation}: any) => {
                   }>{`${item.cls_name} (${item.sec_name})`}</Text>
                 <TouchableOpacity
                   style={styles.iconContainer}
-                  onPress={() => {}}>
+                  onPress={() => {
+                    const handleView = async (id: number) => {
+                      try {
+                        const response = await axios.get(
+                          `https://demo.capobrain.com/showdatesheet?id=${item.class_id}&_token=${token}`,
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          },
+                        );
+                        setDetails(response.data);
+                        setModalData(response.data.datesheet_detail);
+                        setModalVisi(true);
+                      } catch (error) {
+                        console.log(error);
+                        throw error;
+                      }
+                    };
+
+                    handleView(item.id);
+                  }}>
                   <Image
                     style={styles.actionIcon}
                     source={require('../../../assets/visible.png')}
@@ -349,13 +328,13 @@ const ParentDateSheet = ({navigation}: any) => {
               marginTop: 5,
               fontSize: 16,
             }}>
-            Gujranwala City Grammar School
+            {details?.school.scl_institute_name}
           </Text>
           <Text
             style={{
               textAlign: 'center',
             }}>
-            Main Branch
+            {details?.branch.bra_name}
           </Text>
 
           <FlatList
@@ -381,7 +360,7 @@ const ParentDateSheet = ({navigation}: any) => {
                 data={ModalData}
                 nestedScrollEnabled
                 keyExtractor={(item, index) =>
-                  item.sr ? item.sr.toString() : index.toString()
+                  item.id ? `${item.id}-${index}` : index.toString()
                 }
                 ListHeaderComponent={() => (
                   <View style={styles.row}>
@@ -396,23 +375,21 @@ const ParentDateSheet = ({navigation}: any) => {
                     )}
                   </View>
                 )}
-                renderItem={({item}) => (
+                renderItem={({item, index}) => (
                   <View style={styles.row}>
                     <Text style={[styles.column, styles.withBorder]}>
-                      {item.sr}
+                      {index + 1}
                     </Text>
                     <Text style={[styles.column, styles.withBorder]}>
-                      {item.subject}
+                      {item.sub_name}
                     </Text>
                     <Text style={[styles.column, styles.withBorder]}>
-                      {item.date}
+                      {formatDate(item.date)}
                     </Text>
                     <Text style={[styles.column, styles.withBorder]}>
-                      {item.startTime}
+                      {item.time_from}
                     </Text>
-                    <Text style={[styles.column, styles.withBorder]}>
-                      {item.endTime}
-                    </Text>
+                    <Text style={styles.column}>{item.time_to}</Text>
                   </View>
                 )}
               />

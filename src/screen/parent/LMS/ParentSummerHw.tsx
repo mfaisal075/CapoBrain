@@ -1,8 +1,6 @@
 import {
   BackHandler,
-  Dimensions,
   Image,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,21 +17,24 @@ import Modal from 'react-native-modal';
 import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-type TableRow = {
-  sr: string;
-  class: string;
-  section: string;
-  subject: string;
-  totalMarks: string;
-  action: string;
-};
-
 interface HomeWork {
   id: number;
   total_marks: string;
   sub_name: string;
   cls_name: string;
   sec_name: string;
+  student_id: string;
+  cand_name: string;
+}
+
+interface HomeWorkData {
+  summer_homework: {
+    desc: string;
+    total_marks: string;
+  };
+  subject: {
+    sub_name: string;
+  };
 }
 
 const ParentSummerHw = ({navigation}: any) => {
@@ -43,38 +44,27 @@ const ParentSummerHw = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisi, setModalVisi] = useState(false);
+  const [homeworkData, setHomeworkData] = useState<HomeWorkData | null>(null);
 
-  const toggleModl = () => {
+  const toggleModl = async (id: number) => {
+    try {
+      const res = await axios.get(
+        `https://demo.capobrain.com/showstudentsummerwork?id=${id}&_token=${token}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      setHomeworkData(res.data);
+    } catch (error) {
+      console.log(error);
+    }
     setModalVisi(!isModalVisi);
   };
 
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      class: 'Play Group',
-      section: 'A',
-      subject: 'English',
-      totalMarks: '50',
-      action: '',
-    },
-    {
-      sr: '2',
-      class: 'Nursery',
-      section: 'A',
-      subject: 'Pakistan Studies',
-      totalMarks: '60',
-      action: '',
-    },
-    {
-      sr: '3',
-      class: 'Nursery',
-      section: 'A',
-      subject: 'Pakistan Studies',
-      totalMarks: '60',
-      action: '',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [originalData, setOriginalData] = useState<HomeWork[]>([]);
+  const [tableData, setTableData] = useState<HomeWork[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -121,7 +111,8 @@ const ParentSummerHw = ({navigation}: any) => {
             },
           },
         );
-        return response.data.output;
+        setOriginalData(response.data.homework);
+        setTableData(response.data.homework);
       } catch (error) {
         console.log(error);
         throw error;
@@ -204,11 +195,19 @@ const ParentSummerHw = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? `${item.id}-${index}` : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
-                {['Sr#', 'Subject', 'Total Marks', 'Action'].map(header => (
+                {[
+                  'Sr#',
+                  'Student',
+                  'Class',
+                  'Section',
+                  'Subject',
+                  'Total Marks',
+                  'Action',
+                ].map(header => (
                   <Text key={header} style={[styles.column, styles.headTable]}>
                     {header}
                   </Text>
@@ -221,91 +220,20 @@ const ParentSummerHw = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.subject}</Text>
-                <Text style={styles.column}>{item.totalMarks}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.cand_name}</Text>
+                <Text style={styles.column}>{item.cls_name}</Text>
+                <Text style={styles.column}>{item.sec_name}</Text>
+                <Text style={styles.column}>{item.sub_name}</Text>
+                <Text style={styles.column}>{item.total_marks}</Text>
                 <TouchableOpacity
                   style={styles.iconContainer}
-                  onPress={toggleModl}>
+                  onPress={() => toggleModl(item.id)}>
                   <Image
                     style={styles.actionIcon}
                     source={require('../../../assets/visible.png')}
                   />
                 </TouchableOpacity>
-                <Modal isVisible={isModalVisi}>
-                  <View
-                    style={{
-                      flex: 1,
-                      backgroundColor: 'white',
-                      width: 'auto',
-                      maxHeight: 300,
-                      borderRadius: 5,
-                      borderWidth: 1,
-                      borderColor: '#6C757D',
-                    }}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        margin: 20,
-                      }}>
-                      <Text style={{color: '#6C757D', fontSize: 18}}>
-                        Summer HomeWork
-                      </Text>
-
-                      <TouchableOpacity
-                        onPress={() => setModalVisi(!isModalVisi)}>
-                        <Text style={{color: '#6C757D'}}>✖</Text>
-                      </TouchableOpacity>
-                    </View>
-                    <View
-                      style={{
-                        height: 1,
-                        backgroundColor: 'gray',
-                        width: wp('90%'),
-                      }}
-                    />
-
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        margin: 10,
-                      }}>
-                      <Text style={styles.lblText}>Subject</Text>
-                      <Text style={styles.valueText}>English</Text>
-                    </View>
-                    <View
-                      style={{
-                        height: 1,
-                        backgroundColor: 'gray',
-                        width: wp('90%'),
-                      }}
-                    />
-
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        margin: 10,
-                      }}>
-                      <Text style={styles.lblText}>Marks</Text>
-                      <Text style={styles.valueText}>50</Text>
-                    </View>
-                    <View
-                      style={{
-                        height: 1,
-                        backgroundColor: 'gray',
-                        width: wp('90%'),
-                      }}
-                    />
-                    <View
-                      style={{
-                        margin: 10,
-                      }}>
-                      <Text style={styles.lblText}>Description:</Text>
-                      <Text style={styles.valueText}>abc</Text>
-                    </View>
-                  </View>
-                </Modal>
               </View>
             )}
           />
@@ -330,6 +258,87 @@ const ParentSummerHw = ({navigation}: any) => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* View Modal */}
+      <Modal isVisible={isModalVisi}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'white',
+            width: 'auto',
+            maxHeight: 300,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: '#6C757D',
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              margin: 20,
+            }}>
+            <Text style={{color: '#6C757D', fontSize: 18}}>
+              Summer HomeWork
+            </Text>
+
+            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
+              <Text style={{color: '#6C757D'}}>✖</Text>
+            </TouchableOpacity>
+          </View>
+          <View
+            style={{
+              height: 1,
+              backgroundColor: 'gray',
+              width: wp('90%'),
+            }}
+          />
+
+          <View
+            style={{
+              flexDirection: 'row',
+              margin: 10,
+            }}>
+            <Text style={styles.lblText}>Subject</Text>
+            <Text style={styles.valueText}>
+              {homeworkData?.subject.sub_name}
+            </Text>
+          </View>
+          <View
+            style={{
+              height: 1,
+              backgroundColor: 'gray',
+              width: wp('90%'),
+            }}
+          />
+
+          <View
+            style={{
+              flexDirection: 'row',
+              margin: 10,
+            }}>
+            <Text style={styles.lblText}>Marks</Text>
+            <Text style={styles.valueText}>
+              {homeworkData?.summer_homework.total_marks}
+            </Text>
+          </View>
+          <View
+            style={{
+              height: 1,
+              backgroundColor: 'gray',
+              width: wp('90%'),
+            }}
+          />
+          <View
+            style={{
+              margin: 10,
+            }}>
+            <Text style={styles.lblText}>Description:</Text>
+            <Text style={styles.valueText}>
+              {homeworkData?.summer_homework.desc}
+            </Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };

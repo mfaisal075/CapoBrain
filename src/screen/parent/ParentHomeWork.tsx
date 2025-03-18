@@ -16,31 +16,42 @@ import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Modal from 'react-native-modal';
-import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-type TableRow = {
-  sr: string;
-  date: string;
-  subject: string;
-  action: string;
-};
+interface Homework {
+  id: number;
+  bra_name: string;
+  cls_name: string;
+  sec_name: string;
+  sub_name: string;
+  cand_name: string;
+  home_date: string;
+}
+
+interface HomeworkData {
+  homework: {
+    home_date: string;
+    home_desc: string;
+  };
+  subject: {
+    sub_name: string;
+  };
+}
 
 const ParentHomeWork = ({navigation}: any) => {
   const {token} = useUser();
-
   const [isOpen, setIsOpen] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisi, setModalVisi] = useState(false);
-
-  const originalData: TableRow[] = [
-    {sr: '1', date: '08-03-2025', subject: 'English', action: ''},
-    {sr: '2', date: '09-03-2025', subject: 'Maths', action: ''},
-  ];
-
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [originalData, setOriginalData] = useState<Homework[]>([]);
+  const [tableData, setTableData] = useState<Homework[]>(originalData);
+  const [homeworkData, setHomeworkData] = useState<HomeworkData | null>(null);
 
   const items = [
     {label: '10', value: 10},
@@ -80,7 +91,20 @@ const ParentHomeWork = ({navigation}: any) => {
     /*view modal*/
   }
 
-  const toggleModl = () => {
+  const toggleModl = async (id: number) => {
+    try {
+      const res = await axios.get(
+        `https://demo.capobrain.com/parentshomeworkshow?id=${id}&_token=${token}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      setHomeworkData(res.data);
+    } catch (error) {
+      console.log(error);
+    }
     setModalVisi(!isModalVisi);
   };
 
@@ -95,7 +119,8 @@ const ParentHomeWork = ({navigation}: any) => {
             },
           },
         );
-        return response.data.output;
+        setOriginalData(response.data.homework);
+        setTableData(response.data.homework);
       } catch (error) {
         console.log(error);
         throw error;
@@ -174,11 +199,20 @@ const ParentHomeWork = ({navigation}: any) => {
             data={currentEntries}
             nestedScrollEnabled
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
-                {['Sr#', 'Subject', 'Date', 'Action'].map(header => (
+                {[
+                  'Sr#',
+                  'Branch',
+                  'Class',
+                  'Section',
+                  'Student',
+                  'Subject',
+                  'Date',
+                  'Action',
+                ].map(header => (
                   <Text key={header} style={[styles.column, styles.headTable]}>
                     {header}
                   </Text>
@@ -191,12 +225,16 @@ const ParentHomeWork = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.subject}</Text>
-                <Text style={styles.column}>{item.date}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.bra_name}</Text>
+                <Text style={styles.column}>{item.cls_name}</Text>
+                <Text style={styles.column}>{item.sec_name}</Text>
+                <Text style={styles.column}>{item.cand_name}</Text>
+                <Text style={styles.column}>{item.sub_name}</Text>
+                <Text style={styles.column}>{item.home_date}</Text>
                 <TouchableOpacity
                   style={styles.iconContainer}
-                  onPress={toggleModl}>
+                  onPress={() => toggleModl(item.id)}>
                   <Image
                     style={styles.actionIcon}
                     source={require('../../assets/visible.png')}
@@ -265,7 +303,9 @@ const ParentHomeWork = ({navigation}: any) => {
               margin: 10,
             }}>
             <Text style={styles.lblText}>Date</Text>
-            <Text style={styles.valueText}>05-03-2025</Text>
+            <Text style={styles.valueText}>
+              {homeworkData?.homework.home_date}
+            </Text>
           </View>
           <View
             style={{
@@ -281,7 +321,9 @@ const ParentHomeWork = ({navigation}: any) => {
               margin: 10,
             }}>
             <Text style={styles.lblText}>Subject</Text>
-            <Text style={styles.valueText}>English</Text>
+            <Text style={styles.valueText}>
+              {homeworkData?.subject.sub_name}
+            </Text>
           </View>
           <View
             style={{
@@ -293,10 +335,11 @@ const ParentHomeWork = ({navigation}: any) => {
           <View
             style={{
               margin: 10,
-              flexDirection: 'row',
             }}>
             <Text style={styles.lblText}>Description:</Text>
-            <Text style={styles.valueText}>abc</Text>
+            <Text style={styles.valueText}>
+              {homeworkData?.homework.home_desc}
+            </Text>
           </View>
           <View
             style={{
@@ -339,8 +382,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,
@@ -405,7 +448,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   valueText: {
-    marginRight: 10,
+    marginRight: hp('5%'),
   },
   iconContainer: {
     justifyContent: 'center',
@@ -417,6 +460,6 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    marginLeft: 44,
+    marginLeft: 80,
   },
 });

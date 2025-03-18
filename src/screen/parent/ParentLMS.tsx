@@ -370,114 +370,122 @@ const ParentLMS = ({navigation}: any) => {
       {/**table */}
 
       <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        <View>
-          <FlatList
-            style={{
-              margin: 10,
-              flex: 1,
-            }}
-            scrollEnabled={true}
-            data={currentEntries}
-            keyExtractor={(item, index) => index.toString()}
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                <Text
+        {currentEntries.length > 0 ? (
+          <View>
+            <FlatList
+              style={{
+                margin: 10,
+                flex: 1,
+              }}
+              scrollEnabled={true}
+              data={currentEntries}
+              keyExtractor={(item, index) => index.toString()}
+              ListHeaderComponent={() => (
+                <View style={styles.row}>
+                  <Text
+                    style={[
+                      styles.column,
+                      styles.headTable,
+                      {width: 100},
+                      {padding: 1},
+                    ]}>
+                    Sr#
+                  </Text>
+                  <Text
+                    style={[
+                      styles.column,
+                      styles.headTable,
+                      {width: 100},
+                      {padding: 1},
+                    ]}>
+                    Branch
+                  </Text>
+                  <Text
+                    style={[
+                      styles.column,
+                      styles.headTable,
+                      {width: 100},
+                      {padding: 1},
+                    ]}>
+                    Class
+                  </Text>
+                  <Text
+                    style={[
+                      styles.column,
+                      styles.headTable,
+                      {width: 100},
+                      {padding: 1},
+                    ]}>
+                    Subject
+                  </Text>
+                  <Text
+                    style={[
+                      styles.column,
+                      styles.headTable,
+                      {width: 100},
+                      {padding: 1},
+                    ]}>
+                    Action
+                  </Text>
+                </View>
+              )}
+              renderItem={({item, index}) => (
+                <View
                   style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 100},
-                    {padding: 1},
+                    styles.row,
+                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                   ]}>
-                  Sr#
-                </Text>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 100},
-                    {padding: 1},
-                  ]}>
-                  Branch
-                </Text>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 100},
-                    {padding: 1},
-                  ]}>
-                  Class
-                </Text>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 100},
-                    {padding: 1},
-                  ]}>
-                  Subject
-                </Text>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 100},
-                    {padding: 1},
-                  ]}>
-                  Action
-                </Text>
-              </View>
-            )}
-            renderItem={({item, index}) => (
-              <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                  {index + 1}
-                </Text>
-                <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                  {item.bra_name}
-                </Text>
-                <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                  {item.cls_name}
-                </Text>
-                <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                  {item.sub_name}
-                </Text>
-                <TouchableOpacity
-                  style={styles.iconContainer}
-                  onPress={() => {
-                    const handleView = async (id: number) => {
-                      try {
-                        const response = await axios.get(
-                          `https://demo.capobrain.com/leactureshow?id=${item.id}&_token=${token}`,
-                          {
-                            headers: {
-                              Authorization: `Bearer ${token}`,
+                  <Text style={[styles.column, {width: 100}, {padding: 5}]}>
+                    {index + 1}
+                  </Text>
+                  <Text style={[styles.column, {width: 100}, {padding: 5}]}>
+                    {item.bra_name}
+                  </Text>
+                  <Text style={[styles.column, {width: 100}, {padding: 5}]}>
+                    {item.cls_name}
+                  </Text>
+                  <Text style={[styles.column, {width: 100}, {padding: 5}]}>
+                    {item.sub_name}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.iconContainer}
+                    onPress={() => {
+                      const handleView = async (id: number) => {
+                        try {
+                          const response = await axios.get(
+                            `https://demo.capobrain.com/leactureshow?id=${item.id}&_token=${token}`,
+                            {
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                              },
                             },
-                          },
-                        );
-                        setLectureData(response.data);
-                        setModalVisi(true);
-                      } catch (error) {
-                        console.log(error);
-                        throw error;
-                      }
-                    };
+                          );
+                          setLectureData(response.data);
+                          setModalVisi(true);
+                        } catch (error) {
+                          console.log(error);
+                          throw error;
+                        }
+                      };
 
-                    handleView(item.id);
-                  }}>
-                  <Image
-                    style={styles.actionIcon}
-                    source={require('../../assets/visible.png')}
-                  />
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-        </View>
+                      handleView(item.id);
+                    }}>
+                    <Image
+                      style={styles.actionIcon}
+                      source={require('../../assets/visible.png')}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+          </View>
+        ) : (
+          <View style={{marginTop: 20, width: '100%'}}>
+            <Text style={{textAlign: 'center', fontSize: 18}}>
+              No Record present in the database
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
       <View style={styles.pagination}>

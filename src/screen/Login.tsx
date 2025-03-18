@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   Alert,
   ActivityIndicator,
@@ -6,6 +6,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  Animated,
 } from 'react-native';
 import {
   View,
@@ -48,6 +49,7 @@ const Login = ({navigation}: any) => {
       );
 
       const data = response.data;
+      console.log(data,"Login data");
 
       // Get CSRF token from response headers
       const xsrfToken = response.headers['set-cookie']
@@ -111,6 +113,45 @@ const Login = ({navigation}: any) => {
     }
   };
 
+  const logoTranslateY = useRef(new Animated.Value(-50)).current;
+  const boxFadeIn = useRef(new Animated.Value(0)).current;
+  const input1TranslateX = useRef(new Animated.Value(-50)).current;
+  const input2TranslateX = useRef(new Animated.Value(50)).current;
+  const buttonScale = useRef(new Animated.Value(0.8)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(logoTranslateY, {
+        toValue: 0,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(boxFadeIn, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.parallel([
+        Animated.timing(input1TranslateX, {
+          toValue: 0,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(input2TranslateX, {
+          toValue: 0,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.spring(buttonScale, {
+        toValue: 1,
+        friction: 5,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+  const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
@@ -123,18 +164,27 @@ const Login = ({navigation}: any) => {
           behavior={Platform.OS === 'android' ? 'padding' : 'height'}
           style={styles.keyboardView}>
           <View style={styles.scrollContainer}>
-            <View style={styles.logoContainer}>
+            <Animated.View
+              style={[
+                styles.logoContainer,
+                {transform: [{translateY: logoTranslateY}]},
+              ]}>
               <Image
                 source={require('../assets/logo.png')}
                 style={styles.logo}
                 resizeMode="contain"
               />
-            </View>
+            </Animated.View>
 
-            <View style={styles.box}>
+            <Animated.View
+              style={[styles.box, {opacity: boxFadeIn, overflow: 'hidden'}]}>
               <Text style={styles.title}>Login</Text>
 
-              <View style={styles.inputContainer}>
+              <Animated.View
+                style={[
+                  styles.inputContainer,
+                  {transform: [{translateX: input1TranslateX}]},
+                ]}>
                 <Icon name="mail" size={20} color="gray" style={styles.icon} />
                 <TextInput
                   style={styles.input}
@@ -143,9 +193,9 @@ const Login = ({navigation}: any) => {
                   value={email.toUpperCase()}
                   onChangeText={text => setEmail(text.toLowerCase())}
                 />
-              </View>
+              </Animated.View>
 
-              <View style={styles.inputContainer}>
+              <Animated.View style={[styles.inputContainer, { transform: [{ translateX: input2TranslateX }] }]}>
                 <Icon
                   name="lock-closed"
                   size={20}
@@ -168,16 +218,17 @@ const Login = ({navigation}: any) => {
                     style={styles.icon}
                   />
                 </TouchableOpacity>
-              </View>
+                </Animated.View>
 
-              <TouchableOpacity style={styles.button} onPress={handleLogin}>
+                <AnimatedTouchable onPress={handleLogin}
+              style={[styles.button, { transform: [{ scale: buttonScale }] }]}>
                 {loading ? (
                   <ActivityIndicator size="small" color="#3B4A6B" />
                 ) : (
                   <Text style={styles.buttonText}>LOGIN</Text>
                 )}
-              </TouchableOpacity>
-            </View>
+            </AnimatedTouchable>
+            </Animated.View>
           </View>
         </KeyboardAvoidingView>
 
@@ -230,6 +281,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     elevation: 15,
     alignSelf: 'center',
+    overflow:'hidden'
   },
   title: {
     textAlign: 'center',
@@ -244,6 +296,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'gray',
     marginBottom: hp('2%'),
+    width: "100%",  
+    paddingHorizontal: 10,  
   },
   icon: {
     marginRight: 10,

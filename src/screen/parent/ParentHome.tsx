@@ -1,27 +1,17 @@
 import {
   Alert,
   BackHandler,
-  Dimensions,
   Image,
   ImageBackground,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
-import NavBar from '../../components/NavBar';
 import {TouchableOpacity} from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
-import {useQuery} from '@tanstack/react-query';
-import RenderHtml, {
-  HTMLContentModel,
-  HTMLElementModel,
-} from 'react-native-render-html';
-import {useFocusEffect} from '@react-navigation/native';
 import {RFPercentage} from 'react-native-responsive-fontsize';
 import {
   widthPercentageToDP as wp,
@@ -232,7 +222,13 @@ const ParentHome = ({navigation}: any) => {
                 }}
                 source={require('../../assets/3.png')}
               />
-              <Text>Home Work</Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  textAlign: 'center',
+                }}>
+                Home Work
+              </Text>
             </View>
           </TouchableOpacity>
 
@@ -265,7 +261,13 @@ const ParentHome = ({navigation}: any) => {
                 }}
                 source={require('../../assets/5.png')}
               />
-              <Text>Apply Leave</Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  textAlign: 'center',
+                }}>
+                Apply Leave
+              </Text>
             </View>
           </TouchableOpacity>
 
@@ -365,6 +367,24 @@ const ParentHome = ({navigation}: any) => {
                 source={require('../../assets/11.png')}
               />
               <Text style={{textAlign: 'center'}}>Complain</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ParentMeeting' as never)}>
+            <View style={styles.iconContainer}>
+              <Image
+                style={{
+                  alignSelf: 'center',
+                  width: 40,
+                  height: 33,
+                  tintColor: '#56021F',
+                }}
+                source={require('../../assets/meeting.png')}
+              />
+              <Text style={{textAlign: 'center', fontSize: 11}}>
+                Meeting Notification
+              </Text>
             </View>
           </TouchableOpacity>
         </View>

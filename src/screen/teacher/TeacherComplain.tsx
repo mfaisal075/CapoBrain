@@ -646,7 +646,7 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    marginLeft: hp('32%'),
+    marginLeft: hp('33%'),
   },
   lblText: {
     fontWeight: 'bold',

@@ -20,17 +20,26 @@ import {
 } from 'react-native-responsive-screen';
 import Modal from 'react-native-modal';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
 
-type TableRow = {
-  sr: string;
+interface Complain {
+  id: number;
   name: string;
-  email: string;
-  contact: string;
+  email: string | null;
+  contact: string | null;
   status: string;
-  action: string;
-};
+}
+
+interface ComplainData {
+  name: string;
+  email: string | null;
+  contact: string | null;
+  description: string;
+}
 
 const ParentComplain = ({navigation}: any) => {
+  const {token} = useUser();
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [desc, setDesc] = useState('');
@@ -39,6 +48,7 @@ const ParentComplain = ({navigation}: any) => {
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [complainData, setComplainData] = useState<ComplainData | null>(null);
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -70,17 +80,8 @@ const ParentComplain = ({navigation}: any) => {
     return isValid;
   };
 
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      name: 'Iftikhar',
-      email: 'Nill',
-      contact: 'Nill',
-      status: 'pending',
-      action: '',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [originalData, setOriginalData] = useState<Complain[]>([]);
+  const [tableData, setTableData] = useState<Complain[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -119,11 +120,44 @@ const ParentComplain = ({navigation}: any) => {
   //View Modal
   const [isModalVisi, setModalVisi] = useState(false);
 
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
+  const toggleModl = async (id: number) => {
+    try {
+      const response = await axios.get(
+        `https://demo.capobrain.com/complainview?id=${id}&_token=${token}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      setComplainData(response.data);
+      setModalVisi(!isModalVisi);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const res = await axios.get(
+          `https://demo.capobrain.com/fetchusercomplain`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        setOriginalData(res.data.complains);
+        setTableData(res.data.complains);
+      } catch (error) {
+        console.log(error);
+      }
+    }
   };
 
   useEffect(() => {
+    fetchData();
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -214,7 +248,7 @@ const ParentComplain = ({navigation}: any) => {
             data={currentEntries}
             nestedScrollEnabled
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -235,17 +269,17 @@ const ParentComplain = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
                 <Text style={styles.column}>{item.name}</Text>
-                <Text style={styles.column}>{item.email}</Text>
-                <Text style={styles.column}>{item.contact}</Text>
+                <Text style={styles.column}>{item.email ?? 'NILL'}</Text>
+                <Text style={styles.column}>{item.contact ?? 'NILL'}</Text>
                 <View style={styles.iconContainer}>
                   <Image
                     style={styles.statusIcon}
                     source={
-                      item.status === 'pending'
+                      item.status === 'Pending'
                         ? require('../../assets/pending.png')
-                        : item.status === 'approved'
+                        : item.status === 'Approved'
                         ? require('../../assets/approved.png')
                         : require('../../assets/rejected.png')
                     }
@@ -253,7 +287,7 @@ const ParentComplain = ({navigation}: any) => {
                 </View>
                 <TouchableOpacity
                   style={styles.iconContainer}
-                  onPress={toggleModl}>
+                  onPress={() => toggleModl(item.id)}>
                   <Image
                     style={styles.actionIcon}
                     source={require('../../assets/visible.png')}
@@ -442,7 +476,7 @@ const ParentComplain = ({navigation}: any) => {
                 flexDirection: 'row',
               }}>
               <Text style={styles.lblText}>Name</Text>
-              <Text style={styles.valueText}>Iftikhar</Text>
+              <Text style={styles.valueText}>{complainData?.name}</Text>
             </View>
             <View
               style={{
@@ -450,7 +484,9 @@ const ParentComplain = ({navigation}: any) => {
                 marginRight: 50,
               }}>
               <Text style={styles.lblText}>Email</Text>
-              <Text style={styles.valueText}>---</Text>
+              <Text style={styles.valueText}>
+                {complainData?.email ?? '--'}
+              </Text>
             </View>
           </View>
           <View
@@ -459,7 +495,9 @@ const ParentComplain = ({navigation}: any) => {
               marginLeft: 10,
             }}>
             <Text style={styles.lblText}>Contact</Text>
-            <Text style={styles.valueText}>---</Text>
+            <Text style={styles.valueText}>
+              {complainData?.contact ?? '--'}
+            </Text>
           </View>
 
           <View
@@ -468,7 +506,7 @@ const ParentComplain = ({navigation}: any) => {
               marginTop: 10,
             }}>
             <Text style={styles.lblText}>Description:</Text>
-            <Text style={styles.valueText}>abc</Text>
+            <Text style={styles.valueText}>{complainData?.description}</Text>
           </View>
         </View>
       </Modal>
@@ -513,8 +551,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,
@@ -578,18 +616,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 50,
     height: 20,
-    marginRight:70 
+    marginRight: 70,
   },
   statusIcon: {
     width: 20,
     height: 20,
-    marginLeft: 50,
+    marginLeft: 80,
   },
   actionIcon: {
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    marginLeft: 80,
+    marginLeft: 120,
   },
   lblText: {
     fontWeight: 'bold',

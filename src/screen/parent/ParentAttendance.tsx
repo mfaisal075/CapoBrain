@@ -1,8 +1,5 @@
 import {
   BackHandler,
-  Dimensions,
-  Image,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -26,153 +23,23 @@ type TableRow = {
   date: string;
 };
 
+interface Attendance {
+  id: number;
+  cls_name: string;
+  sec_name: string;
+  cand_name: string;
+  std_attendance_status: string;
+  std_date: string;
+}
+
 const ParentAttendance = ({navigation}: any) => {
   const {token} = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '14-11-2024',
-    },
-    {
-      sr: '2',
-      student: 'Nayab Fatimah',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '14-11-2024',
-    },
-    {
-      sr: '3',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '16-11-2024',
-    },
-    {
-      sr: '4',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '16-11-2024',
-    },
-    {
-      sr: '5',
-      student: 'Nayab Fatimah',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '18-11-2024',
-    },
-    {
-      sr: '6',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '19-11-2024',
-    },
-    {
-      sr: '7',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '20-11-2024',
-    },
-    {
-      sr: '8',
-      student: 'Nayab Fatimah',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '21-11-2024',
-    },
-    {
-      sr: '9',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '22-11-2024',
-    },
-    {
-      sr: '10',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '23-11-2024',
-    },
-    {
-      sr: '11',
-      student: 'Nayab Fatimah',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '24-11-2024',
-    },
-    {
-      sr: '12',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '26-11-2024',
-    },
-    {
-      sr: '13',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '28-11-2024',
-    },
-    {
-      sr: '14',
-      student: 'Nayab Fatimah',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '30-11-2024',
-    },
-    {
-      sr: '15',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '1-12-2024',
-    },
-    {
-      sr: '16',
-      student: 'Ayesha Zumar',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '4-12-2024',
-    },
-    {
-      sr: '17',
-      student: 'Nayab Fatimah',
-      class: 'Nursery',
-      section: 'A',
-      status: 'Present',
-      date: '14-12-2024',
-    },
-  ];
-
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [originalData, setOriginalData] = useState<Attendance[]>([]);
+  const [tableData, setTableData] = useState<Attendance[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -220,7 +87,8 @@ const ParentAttendance = ({navigation}: any) => {
           },
         );
 
-        return response.data.output;
+        setOriginalData(response.data.attendances);
+        setTableData(response.data.attendances);
       } catch (error) {
         console.error('Error fetching data', error);
         throw error; // Ensure the error is thrown so useQuery can handle it
@@ -301,7 +169,7 @@ const ParentAttendance = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -322,12 +190,12 @@ const ParentAttendance = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.student}</Text>
-                <Text style={styles.column}>{item.class}</Text>
-                <Text style={styles.column}>{item.section}</Text>
-                <Text style={styles.column}>{item.status}</Text>
-                <Text style={styles.column}>{item.date}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.cand_name}</Text>
+                <Text style={styles.column}>{item.cls_name}</Text>
+                <Text style={styles.column}>{item.sec_name}</Text>
+                <Text style={styles.column}>{item.std_attendance_status}</Text>
+                <Text style={styles.column}>{item.std_date}</Text>
               </View>
             )}
           />
@@ -371,8 +239,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,

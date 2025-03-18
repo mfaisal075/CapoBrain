@@ -549,7 +549,7 @@ const TeacherApplyLeave = ({navigation}: any) => {
                 color: 'red',
                 fontSize: 12,
                 position: 'absolute',
-                top: 450,
+                top: 453,
                 left: 20,
               }}>
               {descError}

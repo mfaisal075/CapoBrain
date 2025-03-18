@@ -109,10 +109,6 @@ const ParentCourses = ({navigation}: any) => {
     currentPage * entriesPerPage,
   );
 
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
-  };
-
   const onStateChange = useCallback((state: string) => {
     if (state === 'ended') {
       setPlaying(false);
@@ -215,71 +211,79 @@ const ParentCourses = ({navigation}: any) => {
 
       {/* Table */}
       <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        <View>
-          <FlatList
-            style={styles.flatList}
-            data={currentEntries}
-            keyExtractor={(item, index) =>
-              item.id ? item.id.toString() : index.toString()
-            }
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                {['Sr#', 'Title', 'Class', 'Section', 'Price', 'Action'].map(
-                  header => (
-                    <Text
-                      key={header}
-                      style={[styles.column, styles.headTable]}>
-                      {header}
-                    </Text>
-                  ),
-                )}
-              </View>
-            )}
-            renderItem={({item, index}) => (
-              <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={styles.column}>{index + 1}</Text>
-                <Text style={styles.column}>{item.title}</Text>
-                <Text style={styles.column}>{item.cls_name}</Text>
-                <Text style={styles.column}>{item.sec_name}</Text>
-                <Text style={styles.column}>
-                  {item.price === '0' ? 'Free' : item.price}
-                </Text>
-                <TouchableOpacity
-                  style={styles.iconContainer}
-                  onPress={() => {
-                    const handleView = async (id: number) => {
-                      try {
-                        const response = await axios.get(
-                          `https://demo.capobrain.com/showcourse?id=${item.id}&_token=${token}`,
-                          {
-                            headers: {
-                              Authorization: `Bearer ${token}`,
+        {currentEntries.length > 0 ? (
+          <View>
+            <FlatList
+              style={styles.flatList}
+              data={currentEntries}
+              keyExtractor={(item, index) =>
+                item.id ? `${item.id}-${index}` : index.toString()
+              }
+              ListHeaderComponent={() => (
+                <View style={styles.row}>
+                  {['Sr#', 'Title', 'Class', 'Section', 'Price', 'Action'].map(
+                    header => (
+                      <Text
+                        key={header}
+                        style={[styles.column, styles.headTable]}>
+                        {header}
+                      </Text>
+                    ),
+                  )}
+                </View>
+              )}
+              renderItem={({item, index}) => (
+                <View
+                  style={[
+                    styles.row,
+                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                  ]}>
+                  <Text style={styles.column}>{index + 1}</Text>
+                  <Text style={styles.column}>{item.title}</Text>
+                  <Text style={styles.column}>{item.cls_name}</Text>
+                  <Text style={styles.column}>{item.sec_name}</Text>
+                  <Text style={styles.column}>
+                    {item.price === '0' ? 'Free' : item.price}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.iconContainer}
+                    onPress={() => {
+                      const handleView = async (id: number) => {
+                        try {
+                          const response = await axios.get(
+                            `https://demo.capobrain.com/showcourse?id=${item.id}&_token=${token}`,
+                            {
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                              },
                             },
-                          },
-                        );
-                        setCourseData(response.data);
-                        setModalVisi(true);
-                      } catch (error) {
-                        console.log(error);
-                        throw error;
-                      }
-                    };
+                          );
+                          setCourseData(response.data);
+                          setModalVisi(true);
+                        } catch (error) {
+                          console.log(error);
+                          throw error;
+                        }
+                      };
 
-                    handleView(item.id);
-                  }}>
-                  <Image
-                    style={styles.actionIcon}
-                    source={require('../../../assets/visible.png')}
-                  />
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-        </View>
+                      handleView(item.id);
+                    }}>
+                    <Image
+                      style={styles.actionIcon}
+                      source={require('../../../assets/visible.png')}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+          </View>
+        ) : (
+          <View style={{marginTop: 20, width: '100%'}}>
+            <Text style={{fontSize: 18, textAlign: 'center'}}>
+              No record present in the database!
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
       <View style={styles.pagination}>

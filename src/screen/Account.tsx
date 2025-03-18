@@ -1,21 +1,17 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {
   BackHandler,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
   TextInput,
-  KeyboardAvoidingView,
 } from 'react-native';
 import {useUser} from '../Ctx/UserContext';
 import axios from 'axios';
 import {FlatList} from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import Modal from 'react-native-modal';
-import ViewShot from 'react-native-view-shot';
 import RNPrint from 'react-native-print';
 import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -74,16 +70,11 @@ const Account = ({navigation}: any) => {
   const {token} = useUser();
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const [isModalVisible, setModalVisible] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const viewShotRef = useRef<any>(null);
 
   const [accoutData, setAccountData] = useState<AccountData | null>(null);
-
-  const toggleModal = () => {
-    setModalVisible(!isModalVisible);
-  };
 
   const captureAndPrint = async () => {
     const uri = await viewShotRef.current.capture();
@@ -408,15 +399,7 @@ const Account = ({navigation}: any) => {
                   ]}>
                   Transaction Type
                 </Text>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 150},
-                    {padding: 1},
-                  ]}>
-                  Actions
-                </Text>
+               
               </View>
             )}
             renderItem={({item, index}) => (
@@ -462,27 +445,7 @@ const Account = ({navigation}: any) => {
                   {item.stuacc_payment_method}
                 </Text>
 
-                <TouchableOpacity
-                  onPress={
-                    item.stuacc_status === 'Y' &&
-                    parseInt(item.stuacc_balance) > 0
-                      ? () => setModalVisible(true) // Open modal if condition is met
-                      : undefined // Do nothing if condition is not met
-                  }
-                  disabled={item.stuacc_status !== 'Y'} // Disable if voucher_id is null
-                >
-                  <View style={styles.iconContainer}>
-                    <Image
-                      style={styles.statusIcon}
-                      source={
-                        item.stuacc_status === 'Y' &&
-                        parseInt(item.stuacc_balance) > 0
-                          ? require('../assets/payable.png') // Use "payable" icon for Payable Voucher
-                          : require('../assets/rejected.png') // Use "rejected" icon for Not Available
-                      }
-                    />
-                  </View>
-                </TouchableOpacity>
+               
               </View>
             )}
           />
@@ -508,154 +471,6 @@ const Account = ({navigation}: any) => {
         </View>
       </View>
 
-      {/* Modal */}
-      <Modal isVisible={isModalVisible}>
-        <KeyboardAvoidingView behavior="padding" style={{flex: 1}}>
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: 'white',
-              borderRadius: 5,
-              borderWidth: 1,
-              borderColor: '#6C757D',
-            }}>
-            {/* Make Scrollable Content */}
-            <ScrollView
-              contentContainerStyle={{flexGrow: 1, paddingBottom: 20}}
-              nestedScrollEnabled={true} // Fix for FlatList inside ScrollView
-              showsVerticalScrollIndicator={false}>
-              <ViewShot ref={viewShotRef}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    margin: 20,
-                  }}>
-                  <Text style={{color: '#6C757D', fontSize: 18}}>
-                    Fee Challan
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => setModalVisible(!isModalVisible)}>
-                    <Text style={{color: '#6C757D'}}>✖</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <Text
-                  style={{marginTop: 20, textAlign: 'center', fontSize: 18}}>
-                  Gujranwala City Grammar School
-                </Text>
-                <Text
-                  style={{marginTop: 10, textAlign: 'center', fontSize: 16}}>
-                  Main Branch
-                </Text>
-                <Text style={{marginTop: 10, marginLeft: 10}}>
-                  Issue Date 07-12-2024
-                </Text>
-
-                {/* Student Info */}
-                <FlatList
-                  scrollEnabled={false}
-                  data={studentInfo}
-                  keyExtractor={item => item.key}
-                  renderItem={({item}) => (
-                    <View style={styles.infoRow}>
-                      <Text
-                        style={[styles.text, styles.column, styles.withBorder]}>
-                        {item.key}:
-                      </Text>
-                      <Text
-                        style={[styles.value, styles.column, {marginRight: 5}]}>
-                        {item.value}
-                      </Text>
-                    </View>
-                  )}
-                />
-
-                {/* Balance Info */}
-                <FlatList
-                  scrollEnabled={false}
-                  data={balanceInfo}
-                  keyExtractor={item => item.key}
-                  style={{marginTop: 10}}
-                  renderItem={({item}) => (
-                    <View style={styles.infoRow}>
-                      <Text
-                        style={[styles.text, styles.column, styles.withBorder]}>
-                        {item.key}:
-                      </Text>
-                      <Text style={[styles.value, styles.column]}>
-                        {item.value}
-                      </Text>
-                    </View>
-                  )}
-                />
-
-                {/* Account Info */}
-                <FlatList
-                  scrollEnabled={false}
-                  data={accountInfo}
-                  keyExtractor={item => item.key}
-                  style={{marginTop: 10}}
-                  renderItem={({item}) => (
-                    <View style={styles.infoRow}>
-                      <Text
-                        style={[styles.text, styles.column, styles.withBorder]}>
-                        {item.key}:
-                      </Text>
-                      <Text style={[styles.value, styles.column]}>
-                        {item.value}
-                      </Text>
-                    </View>
-                  )}
-                />
-
-                <View
-                  style={{
-                    flexDirection: 'column',
-                    marginTop: 15,
-                    marginLeft: 10,
-                    marginRight: 10,
-                  }}>
-                  <Text style={{fontWeight: 'bold', textAlign: 'center'}}>
-                    Accountant Sign/Stamp _________
-                  </Text>
-                  <Text style={{fontWeight: 'bold', textAlign: 'center'}}>
-                    Submit Date__________
-                  </Text>
-                </View>
-              </ViewShot>
-
-              {/* Print Button */}
-              <TouchableOpacity onPress={() => captureAndPrint()}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    backgroundColor: '#218838',
-                    borderRadius: 5,
-                    borderWidth: 1,
-                    width: 80,
-                    height: 35,
-                    alignSelf: 'center',
-                    marginTop: 20,
-                    marginBottom: 10,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                  <Icon
-                    name="printer"
-                    size={18}
-                    color={'#fff'}
-                    style={{marginRight: 4}}
-                  />
-                  <Text style={{color: 'white', textAlign: 'center'}}>
-                    Print
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
     </View>
   );
 };

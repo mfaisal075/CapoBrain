@@ -444,7 +444,7 @@ const ParentApplyLeave = ({navigation}: any) => {
                 color: 'red',
                 fontSize: 12,
                 position: 'absolute',
-                top: hp('19%'),
+                top: 116,
                 left: 16,
               }}>
               {branchError}
@@ -508,7 +508,7 @@ const ParentApplyLeave = ({navigation}: any) => {
                   color: 'red',
                   fontSize: 12,
                   position: 'absolute',
-                  top: hp('7%'),
+                  top: 42,
                   left: 20,
                 }}>
                 {subjectError}
@@ -586,7 +586,7 @@ const ParentApplyLeave = ({navigation}: any) => {
                   fontSize: 12,
                   position: 'absolute',
                   top: 42,
-                  right: hp('11%'),
+                  right: hp('9%'),
                 }}>
                 {dateError}
               </Text>
@@ -642,7 +642,7 @@ const ParentApplyLeave = ({navigation}: any) => {
                 color: 'red',
                 fontSize: 12,
                 position: 'absolute',
-                top: hp('79%'),
+                top: 484,
                 left: 20,
               }}>
               {descError}

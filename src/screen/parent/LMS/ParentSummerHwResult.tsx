@@ -23,13 +23,6 @@ interface Printer {
   url: string;
 }
 
-type TableModal = {
-  sr: string | number;
-  subject: string;
-  totalmarks: string;
-  obtainmarks: string;
-};
-
 interface UserData {
   parent: {
     par_fathername: string;
@@ -61,12 +54,41 @@ interface HomeWork {
   bra_name: string;
 }
 
+interface HomeWorkResult {
+  id: number;
+  total_marks: string;
+  obtain_marks: string;
+  sub_name: string;
+}
+interface OtherData {
+  student: {
+    cand_name: string;
+    student_id: string;
+  };
+  parent: {
+    par_fathername: string;
+    parent_id: string;
+  };
+  class: {
+    cls_name: string;
+  };
+  section: {
+    sec_name: string;
+  };
+  school: {
+    scl_institute_name: string;
+  };
+  branch: {
+    bra_name: string;
+  };
+}
+
 const ParentSummerHwResult = ({navigation}: any) => {
   const {token} = useUser();
   const [selectedPrinter, setSelectedPrinter] = useState<Printer | null>(null);
   const [isModalVisible, setModalVisible] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
-
+  const [otherData, setOtherData] = useState<OtherData | null>(null);
   const [originalData, setOriginalData] = useState<HomeWork[]>([]);
   const [tableData, setTableData] = useState<HomeWork[]>(originalData);
 
@@ -107,21 +129,18 @@ const ParentSummerHwResult = ({navigation}: any) => {
   ];
 
   const stdInfo = [
-    {key: 'Student ID', value: userData?.student.student_id},
-    {key: 'Student Name', value: userData?.student.cand_name},
-    {key: 'Father Name', value: userData?.parent.par_fathername},
+    {key: 'Student ID', value: otherData?.student.student_id},
+    {key: 'Student Name', value: otherData?.student.cand_name},
+    {key: 'Father Name', value: otherData?.parent.par_fathername},
     {
       key: 'Class',
-      value: `${userData?.class.cls_name}` + ` (${userData?.section.sec_name})`,
+      value:
+        `${otherData?.class.cls_name}` + ` (${otherData?.section.sec_name})`,
     },
   ];
 
-  const originalDta: TableModal[] = [
-    {sr: '1', subject: 'English', totalmarks: '50', obtainmarks: '40'},
-    {sr: '2', subject: 'Urdu', totalmarks: '50', obtainmarks: '30'},
-    {sr: '3', subject: 'Math', totalmarks: '50', obtainmarks: '30'},
-  ];
-  const [ModalData, setModalData] = useState<TableModal[]>(originalDta);
+  const originalDta: HomeWorkResult[] = [];
+  const [ModalData, setModalData] = useState<HomeWorkResult[]>(originalDta);
 
   const fetchData = async () => {
     if (token) {
@@ -237,13 +256,16 @@ const ParentSummerHwResult = ({navigation}: any) => {
                     const handleView = async (id: number) => {
                       try {
                         const response = await axios.get(
-                          `https://demo.capobrain.com/leactureshow?id=${item.id}&_token=${token}`,
+                          `https://demo.capobrain.com/summerhomeworkmarking?id=${item.id}&_token=${token}`,
                           {
                             headers: {
                               Authorization: `Bearer ${token}`,
                             },
                           },
                         );
+                        setModalData(response.data.marking);
+                        setOtherData(response.data);
+                        setModalVisible(true);
                       } catch (error) {
                         console.log(error);
                         throw error;
@@ -302,10 +324,10 @@ const ParentSummerHwResult = ({navigation}: any) => {
               alignSelf: 'center',
             }}>
             <Text style={{fontSize: 16}}>
-              {userData?.school.scl_institute_name}
+              {otherData?.school.scl_institute_name}
             </Text>
             <Text style={{fontSize: 16, marginLeft: 90}}>
-              {userData?.branch.bra_name}
+              {otherData?.branch.bra_name}
             </Text>
           </View>
 
@@ -341,7 +363,7 @@ const ParentSummerHwResult = ({navigation}: any) => {
                 data={ModalData}
                 nestedScrollEnabled
                 keyExtractor={(item, index) =>
-                  item.sr ? item.sr.toString() : index.toString()
+                  item.id ? `${item.id}-${index}` : index.toString()
                 }
                 ListHeaderComponent={() => (
                   <View style={styles.row}>
@@ -356,19 +378,19 @@ const ParentSummerHwResult = ({navigation}: any) => {
                     )}
                   </View>
                 )}
-                renderItem={({item}) => (
+                renderItem={({item, index}) => (
                   <View style={styles.row}>
                     <Text style={[styles.column, styles.withBorder]}>
-                      {item.sr}
+                      {index + 1}
                     </Text>
                     <Text style={[styles.column, styles.withBorder]}>
-                      {item.subject}
+                      {item.sub_name}
                     </Text>
                     <Text style={[styles.column, styles.withBorder]}>
-                      {item.totalmarks}
+                      {item.total_marks}
                     </Text>
                     <Text style={[styles.column, styles.withBorder]}>
-                      {item.obtainmarks}
+                      {item.obtain_marks}
                     </Text>
                   </View>
                 )}
@@ -563,6 +585,6 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    marginLeft: 40,
+    marginLeft: 70,
   },
 });

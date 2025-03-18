@@ -160,28 +160,30 @@ const ApplyLeave = ({navigation}: any) => {
           'https://demo.capobrain.com/Leavestore',
           {
             subject,
-            leave_date: startDate,
+            leave_date: startDate.toISOString().split('T')[0],
             leave_desc: desc,
           },
-          {withCredentials: true},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              withCredentials: true,
+            },
+          },
         );
 
         const data = response.data;
 
-        if (response.status === 200) {
+        if (response.status === 200 && data.status === 200) {
           Alert.alert('Success', 'Leave added successfully');
           fetchData();
           setModalVisible(false);
           setSubject('');
           setDesc('');
           setStartDate(new Date());
-          console.log(response.data);
-          console.log(response.status);
-          console.log(data);
         } else {
           console.log('Backend validation error:', response.data);
           Alert.alert('Error', response.data.message || 'Failed to add leave');
-          console.log(data.status);
+          console.log(response.config);
         }
       } catch (error) {
         console.log(error);
@@ -828,14 +830,14 @@ const styles = StyleSheet.create({
   statusIcon: {
     width: 17,
     height: 17,
-    top: 5,
+    top: 3,
     marginLeft: 90,
   },
   actionIcon: {
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    top: 5,
+    top: 3,
     marginLeft: 170,
   },
   lblText: {

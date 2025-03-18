@@ -1,4 +1,5 @@
 import {
+  Alert,
   BackHandler,
   Image,
   ScrollView,
@@ -15,22 +16,23 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import {FlatList} from 'react-native';
 import {heightPercentageToDP as hp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import RNFS from 'react-native-fs';
 
 const srNumber: number = 5;
 const row = {
   sr: srNumber.toString(),
 };
 
-type TableRow = {
-  sr: string | number;
-  branch: string;
-  class: string;
-  section: string;
-  student: string;
-  title: string;
-  date: string;
-  action: string;
-};
+interface Download {
+  id: number;
+  cls_name: string;
+  sec_name: string;
+  cand_name: string;
+  bra_name: string;
+  file_title: string;
+  file_date: string;
+  file_notes: string;
+}
 
 const ParentDownload = ({navigation}: any) => {
   const {token} = useUser();
@@ -38,129 +40,7 @@ const ParentDownload = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
-
-  const [downloadData, setDownloadData] = useState<TableRow[]>([
-    {
-      sr: 1,
-      branch: 'Main Branch',
-      class: 'Two',
-      section: 'A',
-      student: 'Ahmad Raza',
-      title: 'BB',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 2,
-      branch: 'Main Branch',
-      class: 'Two',
-      section: 'A',
-      student: 'Muhammad Raza',
-      title: 'BB',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 3,
-      branch: 'Main Branch',
-      class: 'Eight',
-      section: 'A',
-      student: 'Saba',
-      title: 'BB',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 4,
-      branch: 'Main Branch',
-      class: 'Two',
-      section: 'A',
-      student: 'Ahmad Raza',
-      title: 'Algebra',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 5,
-      branch: 'Main Branch',
-      class: 'Two',
-      section: 'A',
-      student: 'Muhammad Raza',
-      title: 'Algebra',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 6,
-      branch: 'Main Branch',
-      class: 'Eight',
-      section: 'A',
-      student: 'Saba',
-      title: 'Algebra',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 7,
-      branch: 'Main Branch',
-      class: 'Two',
-      section: 'A',
-      student: 'Ahmad Raza',
-      title: 'Algebra',
-      date: '31-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 8,
-      branch: 'Main Branch',
-      class: 'Two',
-      section: 'A',
-      student: 'Muhammad Raza',
-      title: 'Algebra',
-      date: '31-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 9,
-      branch: 'Main Branch',
-      class: 'Eight',
-      section: 'A',
-      student: 'Saba',
-      title: 'Algebra',
-      date: '31-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 10,
-      branch: 'Main Branch',
-      class: 'Two',
-      section: 'A',
-      student: 'Ahmad Raza',
-      title: 'Everyone',
-      date: '30-01-2025',
-      action: 'Download',
-    },
-    {
-      sr: 11,
-      branch: 'Main Branch',
-      class: 'Two',
-      section: 'A',
-      student: 'Muhammad Raza',
-      title: 'Everyone',
-      date: '31-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 12,
-      branch: 'Main Branch',
-      class: 'Eight',
-      section: 'A',
-      student: 'Saba',
-      title: 'Everyone',
-      date: '30-01-2025',
-      action: 'Download',
-    },
-  ]);
+  const [downloadData, setDownloadData] = useState<Download[]>([]);
 
   const items = [
     {label: '10', value: 10},
@@ -200,6 +80,31 @@ const ParentDownload = ({navigation}: any) => {
     currentPage * entriesPerPage,
   );
 
+  const handleDownload = async (url: any) => {
+    try {
+      const fileName = url.split('/').pop();
+      const downloadDest = `${RNFS.DownloadDirectoryPath}/${fileName}`;
+
+      const options = {
+        fromUrl: url,
+        toFile: downloadDest,
+      };
+
+      const download = RNFS.downloadFile(options);
+
+      download.promise.then(response => {
+        if (response.statusCode === 200) {
+          Alert.alert('Success', `File downloaded to ${downloadDest}`);
+        } else {
+          Alert.alert('Error', 'Failed to download file');
+        }
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      Alert.alert('Error', 'An error occurred while downloading the file');
+    }
+  };
+
   const fetchData = async () => {
     if (token) {
       try {
@@ -211,7 +116,8 @@ const ParentDownload = ({navigation}: any) => {
             },
           },
         );
-        return response.data.output;
+        setDownloadData(response.data.file);
+        setFilteredDownloadData(response.data.file);
       } catch (error) {
         console.log(error);
         throw error;
@@ -281,9 +187,11 @@ const ParentDownload = ({navigation}: any) => {
           />
           <FlatList
             data={filteredDownloadData}
-            keyExtractor={(item, index) => index.toString()}
+            keyExtractor={(item, index) =>
+              item.id ? item.id.toString() : index.toString()
+            }
             renderItem={({item}) => (
-              <Text style={styles.item}>{item.title}</Text>
+              <Text style={styles.item}>{item.file_title}</Text>
             )}
           />
         </View>
@@ -294,7 +202,9 @@ const ParentDownload = ({navigation}: any) => {
           <FlatList
             style={{margin: 10, flex: 1}}
             data={currentEntries}
-            keyExtractor={(item, index) => index.toString()}
+            keyExtractor={(item, index) =>
+              item.id ? item.id.toString() : index.toString()
+            }
             ListHeaderComponent={() => (
               <View style={styles.row}>
                 <Text style={[styles.column, styles.headTable, {width: 100}]}>
@@ -329,18 +239,32 @@ const ParentDownload = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={[styles.column, {width: 100}]}>{item.sr}</Text>
-                <Text style={[styles.column, {width: 150}]}>{item.branch}</Text>
-                <Text style={[styles.column, {width: 150}]}>{item.class}</Text>
+                <Text style={[styles.column, {width: 100}]}>{index + 1}</Text>
                 <Text style={[styles.column, {width: 150}]}>
-                  {item.section}
+                  {item.bra_name}
+                </Text>
+                <Text style={[styles.column, {width: 150}]}>
+                  {item.cls_name}
+                </Text>
+                <Text style={[styles.column, {width: 150}]}>
+                  {item.sec_name}
                 </Text>
                 <Text style={[styles.column, {width: 200}]}>
-                  {item.student}
+                  {item.cand_name}
                 </Text>
-                <Text style={[styles.column, {width: 150}]}>{item.title}</Text>
-                <Text style={[styles.column, {width: 150}]}>{item.date}</Text>
-                <TouchableOpacity style={styles.iconContainer}>
+                <Text style={[styles.column, {width: 150}]}>
+                  {item.file_title}
+                </Text>
+                <Text style={[styles.column, {width: 150}]}>
+                  {item.file_date}
+                </Text>
+                <TouchableOpacity
+                  style={styles.iconContainer}
+                  onPress={() =>
+                    handleDownload(
+                      `https://demo.capobrain.com/files_download/${item.file_notes}`,
+                    )
+                  }>
                   <Image
                     style={styles.actionIcon}
                     source={require('../../assets/dpd.png')}
@@ -405,8 +329,8 @@ const styles = StyleSheet.create({
     padding: 4,
     marginBottom: 5,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   item: {
     borderBottomColor: '#ccc',

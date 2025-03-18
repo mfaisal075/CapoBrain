@@ -24,6 +24,7 @@ import TeacherCalendar from '../../screen/teacher/TeacherCalendar';
 import TeacherMessages from '../../screen/teacher/TeacherMessages';
 import TeacherComment from '../../screen/teacher/TeacherComment';
 import DailyDiary from '../../screen/teacher/DailyDiary';
+import TeacherMeeting from '../../screen/teacher/TeacherMeeting';
 
 const Stack = createNativeStackNavigator();
 
@@ -140,9 +141,14 @@ const TeacherStack = () => {
         component={TeacherComment}
         options={{headerShown: false}}
       />
-       <Stack.Screen
+      <Stack.Screen
         name="TeacherDiary"
         component={DailyDiary}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="TeacherMeeting"
+        component={TeacherMeeting}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

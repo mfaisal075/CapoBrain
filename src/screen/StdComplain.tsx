@@ -1,4 +1,5 @@
 import {
+  Alert,
   BackHandler,
   FlatList,
   Image,
@@ -17,8 +18,11 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useUser} from '../Ctx/UserContext';
+import axios from 'axios';
 
 const StdComplain = ({navigation}: any) => {
+  const {token} = useUser();
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   const [search, setSearch] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -85,7 +89,35 @@ const StdComplain = ({navigation}: any) => {
   const toggleModl = () => {
     setModalVisi(!isModalVisi);
   };
-  
+
+  const handleAddComplain = async () => {
+    if (token) {
+      try {
+        const res = await axios.post(
+          'https://demo.capobrain.com/portal_complain_store',
+          {
+            description: desc,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            withCredentials: true,
+          },
+        );
+
+        if (res.status === 200) {
+          Alert.alert('Success', 'Added');
+          console.log(res.data);
+          console.log(res.request);
+          console.log(res.headers);
+        }
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    }
+  };
 
   useEffect(() => {
     const backAction = () => {
@@ -123,7 +155,7 @@ const StdComplain = ({navigation}: any) => {
             borderRadius: 5,
             marginRight: 10,
             alignSelf: 'flex-end',
-            marginTop:10
+            marginTop: 10,
           }}>
           <Text
             style={{
@@ -164,49 +196,58 @@ const StdComplain = ({navigation}: any) => {
 
       <ScrollView horizontal>
         <View>
-        
-        <FlatList
-              style={styles.flatList}
-              data={currentComplaints}
-             
-              keyExtractor={(item, index) => item.sr ? item.sr.toString() : index.toString()}
-              ListHeaderComponent={() => (
-                <View style={styles.row}>
-                  {["Sr#", "Name", "Email", "Contact", "Status", "Action"].map((header) => (
-                    <Text key={header} style={[styles.column, styles.headTable]}>{header}</Text>
-                  ))}
-                </View>
-              )}
-              renderItem={({ item, index }) => (
-                <View style={[styles.row, { backgroundColor: index % 2 === 0 ? "white" : "#E2F0FF" }]}>
-                  <Text style={styles.column}>{item.sr}</Text>
-                  <Text style={styles.column}>{item.name}</Text>
-                  <Text style={styles.column}>{item.email}</Text>
-                  <Text style={styles.column}>{item.contact}</Text>
-              
-                  <View style={styles.iconContainer}>
+          <FlatList
+            style={styles.flatList}
+            data={currentComplaints}
+            keyExtractor={(item, index) =>
+              item.sr ? item.sr.toString() : index.toString()
+            }
+            ListHeaderComponent={() => (
+              <View style={styles.row}>
+                {['Sr#', 'Name', 'Email', 'Contact', 'Status', 'Action'].map(
+                  header => (
+                    <Text
+                      key={header}
+                      style={[styles.column, styles.headTable]}>
+                      {header}
+                    </Text>
+                  ),
+                )}
+              </View>
+            )}
+            renderItem={({item, index}) => (
+              <View
+                style={[
+                  styles.row,
+                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                ]}>
+                <Text style={styles.column}>{item.sr}</Text>
+                <Text style={styles.column}>{item.name}</Text>
+                <Text style={styles.column}>{item.email}</Text>
+                <Text style={styles.column}>{item.contact}</Text>
+
+                <View style={styles.iconContainer}>
                   <Image
                     style={styles.statusIcon}
                     source={
-                      item.status === "approved"
-                      ? require('../assets/approved.png')
-                      : require('../assets/rejected.png')
+                      item.status === 'approved'
+                        ? require('../assets/approved.png')
+                        : require('../assets/rejected.png')
                     }
                   />
                 </View>
 
-                <TouchableOpacity style={styles.iconContainer} onPress={toggleModl}>
-                  <Image 
+                <TouchableOpacity
+                  style={styles.iconContainer}
+                  onPress={toggleModl}>
+                  <Image
                     style={styles.actionIcon}
                     source={require('../assets/visible.png')}
                   />
                 </TouchableOpacity>
-              
-                </View>
-              )}
-            />
- 
-         
+              </View>
+            )}
+          />
         </View>
       </ScrollView>
 
@@ -323,7 +364,7 @@ const StdComplain = ({navigation}: any) => {
           <TouchableOpacity
             onPress={() => {
               if (validateFields()) {
-                console.log('Form is valid');
+                handleAddComplain();
               } else {
                 console.log('Form is invalid');
               }
@@ -434,7 +475,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: 'white',
     flex: 1,
-    paddingBottom:5
+    paddingBottom: 5,
   },
   header: {
     flexDirection: 'row',
@@ -442,7 +483,7 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingVertical: 15,
     paddingHorizontal: 15,
-    backgroundColor:'#3b82f6'
+    backgroundColor: '#3b82f6',
   },
   backButton: {
     width: 24,
@@ -454,15 +495,15 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: 'white',
-    textAlign:'center',
-    flex:1
+    textAlign: 'center',
+    flex: 1,
   },
   filterContainer: {
     flexDirection: 'row',
     marginVertical: 10,
     justifyContent: 'space-between',
-    marginLeft:10,
-    marginRight:10
+    marginLeft: 10,
+    marginRight: 10,
   },
   pickerContainer: {
     borderWidth: 1,
@@ -470,13 +511,13 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
     marginRight: 10,
-    height:30
+    height: 30,
   },
   picker: {
     width: 90,
     height: 50,
     color: '#000',
-    top:-15
+    top: -15,
   },
   searchBar: {
     width: 120,
@@ -485,9 +526,9 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 5,
     paddingHorizontal: 10,
-    padding:6,
-    textAlign:'center',
-    color:'gray'
+    padding: 6,
+    textAlign: 'center',
+    color: 'gray',
   },
   table: {
     minWidth: 700,
@@ -542,14 +583,14 @@ const styles = StyleSheet.create({
   },
   column: {
     width: 140,
-    padding:1
+    padding: 1,
   },
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
     width: 50,
     height: 20,
-    marginRight:90 
+    marginRight: 90,
   },
   statusIcon: {
     width: 17,
@@ -581,14 +622,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   row: {
-    flexDirection: "row",
+    flexDirection: 'row',
     borderBottomWidth: 1,
-    borderColor: "#ccc",
+    borderColor: '#ccc',
   },
   headTable: {
-    fontWeight: "bold",
-    backgroundColor: "#3b82f6",
-    color: "white",
+    fontWeight: 'bold',
+    backgroundColor: '#3b82f6',
+    color: 'white',
   },
 });
-

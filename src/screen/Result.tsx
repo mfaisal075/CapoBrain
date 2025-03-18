@@ -52,28 +52,9 @@ const Result = ({navigation}: any) => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<string | null>(null);
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      subject: 'Pakistan Studies',
-      examType: 'First Term',
-      totalMarks: '50',
-      obtainMarks: '50',
-      percentage: '100%',
-      grade: 'A+',
-    },
-    {
-      sr: 'Total',
-      subject: '',
-      examType: '',
-      totalMarks: '50',
-      obtainMarks: '50',
-      percentage: '100%',
-      grade: 'A+',
-    },
-  ];
-
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [currentValue, setCurrentValue] = useState<string | null>(
+    'Select Exams Type Filter',
+  );
 
   const items = [
     {label: 'Select Exams Type Filter', value: ''},
@@ -81,7 +62,7 @@ const Result = ({navigation}: any) => {
     {label: 'Annual', value: 'Annual'},
     {label: 'Mid', value: 'Mid'},
     {label: 'Final', value: 'Final'},
-    {label: 'MID TERM', value: 'MID'},
+    {label: 'MID TERM', value: 'MID TERM'},
     {label: 'ANNUAL TERM', value: 'ANNUAL%20TERM'},
     {label: 'MOCK TEST', value: 'MOCK%20TEST'},
     {label: 'Grand Test', value: 'Grand%20test'},
@@ -144,6 +125,344 @@ const Result = ({navigation}: any) => {
     return () => backHandler.remove();
   }, []);
 
+  {
+    /*Tables*/
+  }
+
+  const examTables: {[key: string]: TableRow[]} = {
+    'Select Exams Type Filter': [
+      {
+        sr: '1',
+        subject: 'Pakistan Studies',
+        examType: 'First Term',
+        totalMarks: '50',
+        obtainMarks: '50',
+        percentage: '100%',
+        grade: 'A+',
+      },
+      {
+        sr: 'Total',
+        subject: '',
+        examType: '',
+        totalMarks: '50',
+        obtainMarks: '50',
+        percentage: '100%',
+        grade: 'A+',
+      },
+    ],
+    Mids: [
+      {
+        sr: '1',
+        subject: 'English',
+        examType: 'Mids',
+        totalMarks: '50',
+        obtainMarks: '40',
+        percentage: '80%',
+        grade: 'B-',
+      },
+      {
+        sr: '2',
+        subject: 'Urdu',
+        examType: 'Mids',
+        totalMarks: '50',
+        obtainMarks: '45',
+        percentage: '90%',
+        grade: 'A',
+      },
+      {
+        sr: '3',
+        subject: 'Math',
+        examType: 'Mids',
+        totalMarks: '50',
+        obtainMarks: '47',
+        percentage: '94%',
+        grade: 'A',
+      },
+      {
+        sr: 'Total',
+        subject: '',
+        examType: '',
+        totalMarks: '150',
+        obtainMarks: '132',
+        percentage: '88%',
+        grade: 'B+',
+      },
+    ],
+    Annual: [
+      {
+        sr: '1',
+        subject: 'English',
+        examType: 'Annual',
+        totalMarks: '100',
+        obtainMarks: '90',
+        percentage: '90%',
+        grade: 'A',
+      },
+      {
+        sr: '2',
+        subject: 'Urdu',
+        examType: 'Annual',
+        totalMarks: '100',
+        obtainMarks: '90',
+        percentage: '90%',
+        grade: 'A',
+      },
+      {
+        sr: '3',
+        subject: 'Math',
+        examType: 'Annual',
+        totalMarks: '100',
+        obtainMarks: '80',
+        percentage: '80%',
+        grade: 'B-',
+      },
+      {
+        sr: 'Total',
+        subject: '',
+        examType: '',
+        totalMarks: '300',
+        obtainMarks: '260',
+        percentage: '85%',
+        grade: 'B',
+      },
+    ],
+    Mid: [
+      {
+        sr: '1',
+        subject: 'English',
+        examType: 'Mid',
+        totalMarks: '50',
+        obtainMarks: '0',
+        percentage: '0%',
+        grade: 'F',
+      },
+      {
+        sr: '2',
+        subject: 'Urdu',
+        examType: 'Mid',
+        totalMarks: '50',
+        obtainMarks: '0',
+        percentage: '0%',
+        grade: 'F',
+      },
+      {
+        sr: 'Total',
+        subject: '',
+        examType: '',
+        totalMarks: '100',
+        obtainMarks: '0',
+        percentage: '0%',
+        grade: 'F',
+      },
+    ],
+    Final: [
+      {
+        sr: '1',
+        subject: 'English',
+        examType: 'Final',
+        totalMarks: '75',
+        obtainMarks: '0',
+        percentage: '0%',
+        grade: 'F',
+      },
+      {
+        sr: '2',
+        subject: 'Urdu',
+        examType: 'Final',
+        totalMarks: '75',
+        obtainMarks: '0',
+        percentage: '0%',
+        grade: 'F',
+      },
+      {
+        sr: '3',
+        subject: 'Math',
+        examType: 'Final',
+        totalMarks: '75',
+        obtainMarks: '0',
+        percentage: '0%',
+        grade: 'F',
+      },
+      {
+        sr: 'Total',
+        subject: '',
+        examType: '',
+        totalMarks: '150',
+        obtainMarks: '0',
+        percentage: '0%',
+        grade: 'F',
+      },
+    ],
+    'MID TERM': [
+      {
+        sr: '1',
+        subject: 'English',
+        examType: 'MID TERM',
+        totalMarks: '50',
+        obtainMarks: '40',
+        percentage: '80%',
+        grade: 'B-',
+      },
+      {
+        sr: '2',
+        subject: 'Urdu',
+        examType: 'MID TERM',
+        totalMarks: '50',
+        obtainMarks: '45',
+        percentage: '90%',
+        grade: 'A',
+      },
+      {
+        sr: 'Total',
+        subject: '',
+        examType: '',
+        totalMarks: '100',
+        obtainMarks: '80',
+        percentage: '80%',
+        grade: 'B',
+      },
+    ],
+    'ANNUAL%20TERM': [
+      {
+        sr: '1',
+        subject: 'Science',
+        examType: 'ANNUAL TERM',
+        totalMarks: '100',
+        obtainMarks: '80',
+        percentage: '80%',
+        grade: 'B',
+      },
+      {
+        sr: '2',
+        subject: 'Math',
+        examType: 'ANNUAL TERM',
+        totalMarks: '100',
+        obtainMarks: '90',
+        percentage: '90%',
+        grade: 'A',
+      },
+      {
+        sr: 'Total',
+        subject: '',
+        examType: '',
+        totalMarks: '200',
+        obtainMarks: '170',
+        percentage: '85%',
+        grade: 'B+',
+      },
+    ],
+    'MOCK%20TEST': [
+      {
+        sr: '1',
+        subject: 'Biology',
+        examType: 'Mock Test',
+        totalMarks: '50',
+        obtainMarks: '48',
+        percentage: '96%',
+        grade: 'A+',
+      },
+      {
+        sr: 'Total',
+        subject: '',
+        examType: '',
+        totalMarks: '50',
+        obtainMarks: '48',
+        percentage: '96%',
+        grade: 'A+',
+      },
+    ],
+    'Grand%20test': [
+      {
+        sr: '1',
+        subject: 'Computer',
+        examType: 'Grand Test',
+        totalMarks: '100',
+        obtainMarks: '92',
+        percentage: '92%',
+        grade: 'A',
+      },
+      {
+        sr: 'Total',
+        subject: '',
+        examType: '',
+        totalMarks: '100',
+        obtainMarks: '92',
+        percentage: '92%',
+        grade: 'A',
+      },
+    ],
+    'december%20test': [
+      {
+        sr: '1',
+        subject: 'Computer',
+        examType: 'December Test',
+        totalMarks: '100',
+        obtainMarks: '92',
+        percentage: '92%',
+        grade: 'A',
+      },
+      {
+        sr: 'Total',
+        subject: '',
+        examType: '',
+        totalMarks: '100',
+        obtainMarks: '92',
+        percentage: '92%',
+        grade: 'A',
+      },
+    ],
+    'phase%20test': [
+      {
+        sr: '1',
+        subject: 'Computer',
+        examType: 'Phase Test',
+        totalMarks: '100',
+        obtainMarks: '92',
+        percentage: '92%',
+        grade: 'A',
+      },
+      {
+        sr: 'Total',
+        subject: '',
+        examType: '',
+        totalMarks: '100',
+        obtainMarks: '92',
+        percentage: '92%',
+        grade: 'A',
+      },
+    ],
+    Annualism: [
+      {
+        sr: '1',
+        subject: 'Computer',
+        examType: 'Annualism',
+        totalMarks: '100',
+        obtainMarks: '92',
+        percentage: '92%',
+        grade: 'A',
+      },
+      {
+        sr: 'Total',
+        subject: '',
+        examType: '',
+        totalMarks: '100',
+        obtainMarks: '92',
+        percentage: '92%',
+        grade: 'A',
+      },
+    ],
+  };
+
+  useEffect(() => {
+    if (currentValue) {
+      setTableData(examTables[currentValue] || []);
+    }
+  }, [currentValue]);
+
+  const [tableData, setTableData] = useState<TableRow[]>(
+    examTables['Select Exams Type Filter'],
+  );
+
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
       <View style={styles.header}>
@@ -159,7 +478,12 @@ const Result = ({navigation}: any) => {
       </View>
 
       <View
-        style={{flexDirection: 'column', marginTop: 10, marginHorizontal: 10, alignItems:'center' }}>
+        style={{
+          flexDirection: 'column',
+          marginTop: 10,
+          marginHorizontal: 10,
+          alignItems: 'center',
+        }}>
         <Text
           style={{
             fontSize: 18,
@@ -176,9 +500,9 @@ const Result = ({navigation}: any) => {
           <DropDownPicker
             listMode="SCROLLVIEW"
             open={open}
-            value={value}
             setOpen={setOpen}
-            setValue={setValue}
+            value={currentValue}
+            setValue={setCurrentValue}
             placeholder="Select Exams Type Filter"
             items={items}
             style={{
@@ -232,10 +556,7 @@ const Result = ({navigation}: any) => {
           <FlatList
             style={styles.flatList}
             data={tableData}
-            nestedScrollEnabled
-            keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
-            }
+            keyExtractor={(item, index) => index.toString()}
             ListHeaderComponent={() => (
               <View style={styles.row}>
                 {[
@@ -271,6 +592,7 @@ const Result = ({navigation}: any) => {
           />
         </View>
       </ScrollView>
+
       <View style={{bottom: hp('2%')}}>
         <Text style={styles.label}>Teacher Review for Student:</Text>
         <Text style={styles.valueText}>

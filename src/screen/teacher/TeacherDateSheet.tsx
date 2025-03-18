@@ -387,7 +387,7 @@ const TeacherDateSheet = ({navigation}: any) => {
                     <Text style={[styles.column, styles.withBorder]}>
                       {item.startTime}
                     </Text>
-                    <Text style={[styles.column, styles.withBorder]}>
+                    <Text style={styles.column}>
                       {item.endTime}
                     </Text>
                   </View>

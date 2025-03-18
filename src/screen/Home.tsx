@@ -413,7 +413,7 @@ const Home = ({navigation}: any) => {
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => navigation.navigate('Feedback' as never)}>
-        <View style={[styles.update, {marginBottom: hp('5%')}]}>
+        <View style={styles.update}>
           <Image
             style={{
               width: 30,
@@ -447,6 +447,34 @@ const Home = ({navigation}: any) => {
         </View>
       </TouchableOpacity>
 
+
+      <TouchableOpacity  onPress={() => navigation.navigate('MeetingNotifications' as never)}>
+  
+  <View style={[styles.update,{marginBottom:hp('5%')}]}>
+  
+    <Image
+    style={{
+      width:40,
+      height:40,marginLeft:hp('2%'),
+      alignSelf:'center',tintColor:'white'
+    }}
+    source={require('../assets/meeting.png')}
+    />
+  <Text style={{color:'white',
+  fontWeight:'bold',marginLeft:hp('1%'),alignSelf:'center',fontSize:20
+  }}>
+   Meeting Notifications
+   
+  </Text>
+  <Image 
+  style={{
+  width:50,height:50,alignSelf:'center',tintColor:'white',marginRight:hp('2%')
+  }
+  }
+  source={require('../assets/arrowc.png')}
+  />
+  </View>
+  </TouchableOpacity>
       {/* Footer */}
       <View style={styles.footer}>
         <Text style={{color: '#3b82f6', fontSize: RFPercentage(2)}}>
