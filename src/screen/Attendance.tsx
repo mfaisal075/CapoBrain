@@ -1,28 +1,17 @@
 import {
+  Animated,
   BackHandler,
   FlatList,
-  ScrollView,
+  ImageBackground,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useUser} from '../Ctx/UserContext';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
-interface UserData {
-  applicant: {
-    cand_name: string;
-  };
-  class: {
-    cls_name: string;
-  };
-  section: {
-    sec_name: string;
-  };
-}
 
 interface AttendanceData {
   id: number;
@@ -32,14 +21,7 @@ interface AttendanceData {
 
 const Attendance = ({navigation}: any) => {
   const {token} = useUser();
-  const [userData, setUserData] = useState<UserData | null>(null);
   const [attendanceData, setAttendanceData] = useState<AttendanceData[]>([]);
-
-  const studentInfo = [
-    {key: 'Student', value: userData?.applicant.cand_name},
-    {key: 'Class', value: userData?.class.cls_name},
-    {key: 'Section', value: userData?.section.sec_name},
-  ];
 
   const fetchData = async () => {
     if (token) {
@@ -54,7 +36,6 @@ const Attendance = ({navigation}: any) => {
         );
 
         setAttendanceData(response.data.attendances);
-        setUserData(response.data);
 
         // Return the "output" field for the table
         return response.data.output;
@@ -68,9 +49,25 @@ const Attendance = ({navigation}: any) => {
     }
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     fetchData();
-    // Hardware Back Press
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -84,66 +81,61 @@ const Attendance = ({navigation}: any) => {
     return () => backHandler.remove();
   }, []);
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''; // Handle empty or invalid dates
+
+    const date = new Date(dateString); // Parse the date string
+    const day = String(date.getDate()).padStart(2, '0'); // Ensure 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Return formatted date
+  };
+
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.navigate('Home' as never)}>
           <Icon
             name="arrow-left"
             size={38}
             color={'#fff'}
-            style={{paddingHorizontal: 10}}
+            style={{paddingHorizontal: 10, paddingVertical: 10}}
           />
         </TouchableOpacity>
         <Text style={styles.headerText}>Student Attendance</Text>
       </View>
 
-      <View style={{margin: 10}}>
-        <FlatList
-          data={studentInfo}
-          keyExtractor={item => item.key}
-          renderItem={({item}) => (
-            <View style={styles.infoRow}>
-              <Text style={styles.text}>{item.key}:</Text>
-              <Text style={styles.value}>{item.value}</Text>
+      <FlatList
+        data={attendanceData}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({item}) => (
+          <View style={styles.card}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={styles.title}>{item.std_attendance_status}</Text>
+              <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                {formatDate(item.std_date)}
+              </Text>
             </View>
-          )}
-        />
-      </View>
-
-      {/* Table */}
-      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        <View>
-          <FlatList
-            style={styles.flatList}
-            data={attendanceData}
-            nestedScrollEnabled
-            keyExtractor={(item, index) =>
-              item.id ? item.id.toString() : index.toString()
-            }
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                {['Sr#', 'Status', 'Date'].map(header => (
-                  <Text key={header} style={[styles.column, styles.headTable]}>
-                    {header}
-                  </Text>
-                ))}
-              </View>
-            )}
-            renderItem={({item, index}) => (
-              <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={styles.column}>{index + 1}</Text>
-                <Text style={styles.column}>{item.std_attendance_status}</Text>
-                <Text style={styles.column}>{item.std_date}</Text>
-              </View>
-            )}
-          />
-        </View>
-      </ScrollView>
+          </View>
+        )}
+      />
     </View>
   );
 };
@@ -171,39 +163,34 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
+  card: {
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 20,
+    marginLeft: '2%',
+    marginRight: '2%',
+    marginTop: '1%',
+    borderWidth: 1,
+    borderColor: '#3b82f6',
   },
-  column: {
-    width: 125,
-    padding: 1,
-    textAlign: 'center',
-  },
-  headTable: {
+  title: {
+    fontSize: 16,
     fontWeight: 'bold',
-    backgroundColor: '#3b82f6',
-    color: 'white',
+    color: '#3b82f6',
   },
-  flatList: {
-    margin: 10,
-    flex: 1,
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
   },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  text: {
-    fontWeight: 'bold',
-    marginLeft: 15,
-    padding: 5,
-    textAlign: 'center',
-  },
-  value: {
-    padding: 5,
-    marginLeft: 10,
-    textAlign: 'center',
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });

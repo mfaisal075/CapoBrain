@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   BackHandler,
   StyleSheet,
@@ -8,6 +8,8 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  Animated,
+  ImageBackground,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useUser} from '../Ctx/UserContext';
@@ -54,7 +56,7 @@ const Std_Notification = ({navigation}: any) => {
     return noteColors[index % noteColors.length];
   };
 
-  // Fetch notifications from the API
+  const moveAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -78,6 +80,21 @@ const Std_Notification = ({navigation}: any) => {
 
   // Handle back button press
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -93,18 +110,25 @@ const Std_Notification = ({navigation}: any) => {
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require('../assets/corkboard.png')}
-        style={styles.background}
-      />
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../assets/bgimg.jpg')}
+        />
+      </Animated.View>
 
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={() => navigation.navigate('Home' as never)}>
           <Icon
             name="arrow-left"
-            size={34}
+            size={38}
             color={'#fff'}
-            style={{marginRight: 10}}
+            style={{paddingHorizontal: 10}}
           />
         </TouchableOpacity>
         <Text style={styles.headerText}>Messages</Text>
@@ -144,38 +168,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'white',
   },
-  background: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
   listContainer: {
-    paddingTop: 30,
+    paddingTop: 20,
     paddingBottom: 100,
   },
   note: {
     padding: 15,
     width: 160,
-    height: 120,
+    height: 130,
     margin: 10,
     borderRadius: 10,
     shadowColor: '#000',
-    shadowOffset: {width: 4, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 6,
+    shadowOffset: {width: 8, height: 8},
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 20,
   },
   title: {
     fontWeight: 'bold',
     fontSize: 14,
+    color: '#3b82f6',
   },
   date: {
     position: 'absolute',
     bottom: 10,
     right: 10,
     fontSize: 12,
-    color: '#555',
+    color: '#3b82f6',
   },
   headerContainer: {
     flexDirection: 'row',
@@ -184,9 +203,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp('5%'),
     paddingVertical: hp('2%'),
     position: 'absolute',
-    top: hp('2%'),
-    left: 0,
-    zIndex: 1,
+    backgroundColor: '#3b82f6',
   },
   backButton: {
     width: 25,
@@ -197,11 +214,23 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 18,
     color: 'white',
-    marginLeft: wp('3%'),
+    textAlign: 'center',
+    flex: 1,
   },
+
   message: {
     fontSize: 12,
-    color: '#444',
+    color: '#3b82f6',
     marginTop: 5,
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });

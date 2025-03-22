@@ -1,4 +1,5 @@
 import {
+  Alert,
   BackHandler,
   FlatList,
   Image,
@@ -21,15 +22,16 @@ import DocumentPicker, {
   DocumentPickerResponse,
 } from '@react-native-documents/picker';
 import Modal from 'react-native-modal';
+import RNFS from 'react-native-fs';
 
-type TableRow = {
-  sr: string;
-  class: string;
-  section: string;
-  title: string;
-  date: string;
-  action: string;
-};
+interface Upload {
+  id: number;
+  file_date: string;
+  cls_name: string;
+  sec_name: string;
+  file_title: string;
+  file_notes: string;
+}
 
 const TeacherUpload = ({navigation}: any) => {
   const {token} = useUser();
@@ -49,6 +51,31 @@ const TeacherUpload = ({navigation}: any) => {
   const [isModalV, setModalV] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
 
+  const downloadFile = async (url: any) => {
+    try {
+      const fileName = url.split('/').pop();
+      const downloadDest = `${RNFS.DownloadDirectoryPath}/${fileName}`;
+
+      const options = {
+        fromUrl: url,
+        toFile: downloadDest,
+      };
+
+      const download = RNFS.downloadFile(options);
+
+      download.promise.then(response => {
+        if (response.statusCode === 200) {
+          Alert.alert('Success', `File downloaded to ${downloadDest}`);
+        } else {
+          Alert.alert('Error', 'Failed to download file');
+        }
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      Alert.alert('Error', 'An error occurred while downloading the file');
+    }
+  };
+
   const handleDocumentSelection = useCallback(async () => {
     try {
       const response = await DocumentPicker.pick({
@@ -63,177 +90,8 @@ const TeacherUpload = ({navigation}: any) => {
     } catch (err) {}
   }, []);
 
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      class: 'Ten',
-      section: 'A',
-      title: 'Algebra',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: '2',
-      class: 'Ten',
-      section: 'A',
-      title: 'Abc',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: '3',
-      class: 'Ten',
-      section: 'A',
-      title: 'MMMMMM',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: '4',
-      class: 'Ten',
-      section: 'A',
-      title: 'Text Tile 1',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: '5',
-      class: 'Ten',
-      section: 'A',
-      title: 'o0o0o0',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: '6',
-      class: 'Ten',
-      section: 'A',
-      title: 'Management',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: '7',
-      class: 'Ten',
-      section: 'A',
-      title: 'Management',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: '8',
-      class: 'Ten',
-      section: 'A',
-      title: 'Economics',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: '9',
-      class: 'Ten',
-      section: 'A',
-      title: 'Pakistan',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: '10',
-      class: 'Ten',
-      section: 'A',
-      title: 'India',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: '11',
-      class: 'Ten',
-      section: 'A',
-      title: 'London',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: '12',
-      class: 'Ten',
-      section: 'A',
-      title: 'Title 4',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: '13',
-      class: 'Ten',
-      section: 'A',
-      title: 'Algebra',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: '14',
-      class: 'Ten',
-      section: 'A',
-      title: 'Abc',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: '15',
-      class: 'Ten',
-      section: 'A',
-      title: 'MMMMMM',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: '16',
-      class: 'Ten',
-      section: 'A',
-      title: 'Text Tile 1',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: '17',
-      class: 'Ten',
-      section: 'A',
-      title: 'o0o0o0',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: '18',
-      class: 'Ten',
-      section: 'A',
-      title: 'Management',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: '19',
-      class: 'Ten',
-      section: 'A',
-      title: 'Management',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: '20',
-      class: 'Ten',
-      section: 'A',
-      title: 'Economics',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: '21',
-      class: 'Ten',
-      section: 'A',
-      title: 'Pakistan',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [originalData, setOriginalData] = useState<Upload[]>([]);
+  const [tableData, setTableData] = useState<Upload[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -329,7 +187,8 @@ const TeacherUpload = ({navigation}: any) => {
             },
           },
         );
-        return response.data.output;
+        setOriginalData(response.data.file);
+        setTableData(response.data.file);
       } catch (error) {
         console.log(error);
         throw error;
@@ -425,7 +284,7 @@ const TeacherUpload = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -446,24 +305,21 @@ const TeacherUpload = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.class}</Text>
-                <Text style={styles.column}>{item.section}</Text>
-                <Text style={styles.column}>{item.title}</Text>
-                <Text style={styles.column}>{item.date}</Text>
-                <TouchableOpacity>
-                  <View
-                    style={[
-                      item.action === 'Not Available'
-                        ? styles.notAvailable
-                        : styles.available,
-                      styles.actionView,
-                    ]}>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.cls_name}</Text>
+                <Text style={styles.column}>{item.sec_name}</Text>
+                <Text style={styles.column}>{item.file_title}</Text>
+                <Text style={styles.column}>{item.file_date}</Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    downloadFile(
+                      `https://demo.capobrain.com/files_download/${item.file_notes}`,
+                    )
+                  }>
+                  <View style={[styles.available, styles.actionView]}>
                     <Image
                       style={[
-                        item.action === 'Not Available'
-                          ? styles.notAvailable
-                          : styles.available,
+                        styles.available,
                         {width: 13},
                         {height: 13},
                         {marginLeft: 45},
@@ -473,7 +329,6 @@ const TeacherUpload = ({navigation}: any) => {
                     />
                   </View>
                 </TouchableOpacity>
-
                 <TouchableOpacity onPress={tglModal}>
                   <View style={[styles.availble, styles.actionView]}>
                     <Image
@@ -1014,8 +869,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,

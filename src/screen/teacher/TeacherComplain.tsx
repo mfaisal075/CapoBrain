@@ -32,21 +32,6 @@ interface Complain {
   description: string;
 }
 
-type TableRow = {
-  sr: string;
-  name: string;
-  email: string;
-  contact: string;
-  status: string;
-  action: string;
-};
-
-interface Complain {
-  id: number;
-  name: string;
-  status: string
-}
-
 const TeacherComplain = ({navigation}: any) => {
   const {token} = useUser();
   const [loading, setLoading] = useState(false);
@@ -58,7 +43,6 @@ const TeacherComplain = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisi, setModalVisi] = useState(false);
-  const [complainData, setComplainData] = useState<Complain[]>([]);
   const [selectedComplainId, setSelectedComplainId] = useState<number | null>(
     null,
   );
@@ -97,17 +81,8 @@ const TeacherComplain = ({navigation}: any) => {
     return isValid;
   };
 
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      name: 'Ahmad',
-      email: 'ahmad@gmail.com',
-      contact: '0333-333366',
-      status: 'approved',
-      action: '',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [originalData, setOriginalData] = useState<Complain[]>([]);
+  const [tableData, setTableData] = useState<Complain[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -154,7 +129,8 @@ const TeacherComplain = ({navigation}: any) => {
             },
           },
         );
-        setComplainData(response.data.complains);
+        setTableData(response.data.complains);
+        setOriginalData(response.data.complains);
       } catch (error) {
         console.log(error);
         throw error;
@@ -253,7 +229,7 @@ const TeacherComplain = ({navigation}: any) => {
         <View>
           <FlatList
             style={styles.flatList}
-            data={complainData}
+            data={currentEntries}
             nestedScrollEnabled
             keyExtractor={(item, index) =>
               item.id ? item.id.toString() : index.toString()
@@ -486,9 +462,8 @@ const TeacherComplain = ({navigation}: any) => {
               }}>
               <Text style={styles.lblText}>Name</Text>
               <Text>
-                {complainData.find(
-                  complain => complain.id === selectedComplainId,
-                )?.name || 'N/A'}
+                {tableData.find(complain => complain.id === selectedComplainId)
+                  ?.name || 'N/A'}
               </Text>
             </View>
             <View
@@ -498,9 +473,8 @@ const TeacherComplain = ({navigation}: any) => {
               }}>
               <Text style={styles.lblText}>Email</Text>
               <Text style={styles.valueText}>
-                {complainData.find(
-                  complain => complain.id === selectedComplainId,
-                )?.email || '--'}
+                {tableData.find(complain => complain.id === selectedComplainId)
+                  ?.email || '--'}
               </Text>
             </View>
           </View>
@@ -511,7 +485,7 @@ const TeacherComplain = ({navigation}: any) => {
             }}>
             <Text style={styles.lblText}>Contact</Text>
             <Text style={styles.valueText}>
-              {complainData.find(complain => complain.id === selectedComplainId)
+              {tableData.find(complain => complain.id === selectedComplainId)
                 ?.contact || '--'}
             </Text>
           </View>
@@ -523,7 +497,7 @@ const TeacherComplain = ({navigation}: any) => {
             }}>
             <Text style={styles.lblText}>Description:</Text>
             <Text style={styles.valueText}>
-              {complainData.find(complain => complain.id === selectedComplainId)
+              {tableData.find(complain => complain.id === selectedComplainId)
                 ?.description || '--'}
             </Text>
           </View>
@@ -570,8 +544,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,
@@ -635,7 +609,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 50,
     height: 20,
-  
   },
   statusIcon: {
     width: 20,

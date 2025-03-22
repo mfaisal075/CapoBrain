@@ -25,6 +25,16 @@ type TableRow = {
   endTime: string;
 };
 
+interface Timetable {
+  id: number;
+  bra_name: string;
+  cls_name: string;
+  app_name: string;
+  sec_name: string;
+  time: string;
+  endtime: string;
+}
+
 const TimeTable = ({navigation}: any) => {
   const {token} = useUser();
   const [isOpen, setIsOpen] = useState(false);
@@ -32,27 +42,8 @@ const TimeTable = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      branch: 'Main Branch',
-      class: 'Three',
-      teacher: 'Ahmad Mirza',
-      section: 'A',
-      startTime: '9:45AM',
-      endTime: '10:46AM',
-    },
-    {
-      sr: '2',
-      branch: 'Main Branch',
-      class: 'Ten',
-      teacher: 'Ahmad Mirza',
-      section: 'A',
-      startTime: '8:00AM',
-      endTime: '9:00AM',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [originalData, setOriginalData] = useState<Timetable[]>([]);
+  const [tableData, setTableData] = useState<Timetable[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -99,9 +90,9 @@ const TimeTable = ({navigation}: any) => {
             },
           },
         );
-        console.log('Fetched Data: ', response.data.output);
 
-        return response.data.output;
+        setOriginalData(response.data.classtime);
+        setTableData(response.data.classtime);
       } catch (error) {
         console.log(error);
         throw error;
@@ -125,6 +116,15 @@ const TimeTable = ({navigation}: any) => {
 
     return () => backHandler.remove();
   }, []);
+
+  const convertTime = (time: string) => {
+    const [hour, minute] = time.split(':').map(Number);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const adjustedHour = hour % 12 || 12;
+    return `${adjustedHour.toString().padStart(2, '0')}:${minute
+      .toString()
+      .padStart(2, '0')} ${ampm}`;
+  };
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
       <View style={styles.header}>
@@ -180,7 +180,7 @@ const TimeTable = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -205,13 +205,13 @@ const TimeTable = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.branch}</Text>
-                <Text style={styles.column}>{item.class}</Text>
-                <Text style={styles.column}>{item.teacher}</Text>
-                <Text style={styles.column}>{item.section}</Text>
-                <Text style={styles.column}>{item.startTime}</Text>
-                <Text style={styles.column}>{item.endTime}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.bra_name}</Text>
+                <Text style={styles.column}>{item.cls_name}</Text>
+                <Text style={styles.column}>{item.app_name}</Text>
+                <Text style={styles.column}>{item.sec_name}</Text>
+                <Text style={styles.column}>{convertTime(item.time)}</Text>
+                <Text style={styles.column}>{convertTime(item.endtime)}</Text>
               </View>
             )}
           />
@@ -255,8 +255,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,

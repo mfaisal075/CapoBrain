@@ -234,6 +234,9 @@ const Feedback = ({navigation}: any) => {
           maxHeight={200}
           placeholder="Feedback"
           style={styles.dropdown}
+          dropDownContainerStyle={{
+            marginLeft: 10,
+          }}
         />
       </View>
       <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
@@ -679,6 +682,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     minHeight: 30,
     marginLeft: 10,
+    zIndex: 100,
   },
   row: {
     flexDirection: 'row',

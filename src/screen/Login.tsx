@@ -29,7 +29,7 @@ const Login = ({navigation}: any) => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const {setUserName, setUserRole, userRole, setToken} = useUser();
+  const {setUserName, setUserRole, userRole, setToken, setUserId} = useUser();
   const [loading, setLoading] = useState(false);
 
   const togglePasswordVisibility = () => {
@@ -49,7 +49,7 @@ const Login = ({navigation}: any) => {
       );
 
       const data = response.data;
-      console.log(data,"Login data");
+      console.log(data, 'Login data');
 
       // Get CSRF token from response headers
       const xsrfToken = response.headers['set-cookie']
@@ -74,6 +74,7 @@ const Login = ({navigation}: any) => {
         );
         setUserRole(userData.data.user.role);
         setUserName(userData.data.user.name);
+        setUserId(userData.data.user.id);
       }
 
       if (response.status === 200 && data.status === 200) {
@@ -195,7 +196,11 @@ const Login = ({navigation}: any) => {
                 />
               </Animated.View>
 
-              <Animated.View style={[styles.inputContainer, { transform: [{ translateX: input2TranslateX }] }]}>
+              <Animated.View
+                style={[
+                  styles.inputContainer,
+                  {transform: [{translateX: input2TranslateX}]},
+                ]}>
                 <Icon
                   name="lock-closed"
                   size={20}
@@ -218,16 +223,17 @@ const Login = ({navigation}: any) => {
                     style={styles.icon}
                   />
                 </TouchableOpacity>
-                </Animated.View>
+              </Animated.View>
 
-                <AnimatedTouchable onPress={handleLogin}
-              style={[styles.button, { transform: [{ scale: buttonScale }] }]}>
+              <AnimatedTouchable
+                onPress={handleLogin}
+                style={[styles.button, {transform: [{scale: buttonScale}]}]}>
                 {loading ? (
                   <ActivityIndicator size="small" color="#3B4A6B" />
                 ) : (
                   <Text style={styles.buttonText}>LOGIN</Text>
                 )}
-            </AnimatedTouchable>
+              </AnimatedTouchable>
             </Animated.View>
           </View>
         </KeyboardAvoidingView>
@@ -281,7 +287,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     elevation: 15,
     alignSelf: 'center',
-    overflow:'hidden'
+    overflow: 'hidden',
   },
   title: {
     textAlign: 'center',
@@ -296,8 +302,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'gray',
     marginBottom: hp('2%'),
-    width: "100%",  
-    paddingHorizontal: 10,  
+    width: '100%',
+    paddingHorizontal: 10,
   },
   icon: {
     marginRight: 10,

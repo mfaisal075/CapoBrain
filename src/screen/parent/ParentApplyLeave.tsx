@@ -37,6 +37,11 @@ interface Leave {
   cand_name: string;
 }
 
+interface Child {
+  id: number;
+  cand_name: string;
+}
+
 const ParentApplyLeave = ({navigation}: any) => {
   const {token} = useUser();
   const [isModalVisible, setModalVisible] = useState(false);
@@ -50,12 +55,18 @@ const ParentApplyLeave = ({navigation}: any) => {
   const [descError, setDescError] = useState('');
   const [branchError, setBranchError] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const [currentValue, setCurrentValue] = useState(null);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisi, setModalVisi] = useState(false);
   const [leaveData, setLeaveData] = useState<LeaveData | null>(null);
+  const [children, setChildren] = useState<Child[]>([]);
+  const [selectedChild, setSelectedChild] = useState<number | null>(null);
+
+  const transformedChildren = children.map(child => ({
+    label: child.cand_name, // Display the child's name
+    value: child.id, // Use the child's ID as the value
+  }));
 
   const onStartDateChange = (
     event: DateTimePickerEvent,
@@ -101,12 +112,6 @@ const ParentApplyLeave = ({navigation}: any) => {
 
     return isValid;
   };
-
-  const items = [
-    {label: 'Ahmad Raza', value: 1},
-    {label: 'Muhammad Raza', value: 2},
-    {label: 'Saba', value: 3},
-  ];
 
   const item = [
     {label: '10', value: 10},
@@ -167,8 +172,25 @@ const ParentApplyLeave = ({navigation}: any) => {
     }
   };
 
+  const fetchChildren = async () => {
+    try {
+      const res = await axios.get(
+        'https://demo.capobrain.com/fetchparentwisestudents',
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      setChildren(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     fetchData();
+    fetchChildren();
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -243,6 +265,9 @@ const ParentApplyLeave = ({navigation}: any) => {
             maxHeight={200}
             placeholder=""
             style={styles.dropdown}
+            dropDownContainerStyle={{
+              marginLeft: 10,
+            }}
           />
         </View>
 
@@ -422,11 +447,11 @@ const ParentApplyLeave = ({navigation}: any) => {
                 borderColor: 'gray',
               }}>
               <DropDownPicker
-                items={items}
+                items={transformedChildren}
                 open={isOpen}
                 setOpen={() => setIsOpen(!isOpen)}
-                value={currentValue}
-                setValue={val => setCurrentValue(val)}
+                value={selectedChild}
+                setValue={setSelectedChild}
                 maxHeight={200}
                 placeholder="Select Student"
                 style={{
@@ -866,7 +891,7 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    marginLeft: hp('35%'),
+    marginLeft: hp('32%'),
   },
   lblText: {
     fontWeight: 'bold',

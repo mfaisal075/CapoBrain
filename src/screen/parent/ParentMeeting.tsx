@@ -12,61 +12,33 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface Notification {
   id: string;
-  purpose: string;
   memberName: string;
-  class: string;
-  visitorName: string;
-  contact: string;
-  cnic: string;
-  persons: number;
   date: string;
   inTime: string;
-  outTime: string;
   note: string;
 }
 
 const notifications: Notification[] = [
   {
     id: "1",
-    purpose: "Monthly Meeting",
     memberName: "Hanzala Ahmad",
-    class: "Three (A)",
-    visitorName: "Abiha",
-    contact: "31010981908",
-    cnic: "341019789237",
-    persons: 2,
     date: "21-11-2024",
     inTime: "2:57 PM",
-    outTime: "2:58 PM",
-    note:'The Quick Brown Fox Jumps Over The Lazy Dog...'
+    note:'https://demo.capobrain.com/dashboard'
   },
   {
     id: "2",
-    purpose: "PTA Meeting",
     memberName: "Ali Raza",
-    class: "Four (B)",
-    visitorName: "Fatima",
-    contact: "30012345678",
-    cnic: "421019789111",
-    persons: 3,
     date: "22-11-2024",
     inTime: "3:00 PM",
-    outTime: "3:30 PM",
-    note:'The Quick Brown Fox Jumps Over The Lazy Dog...'
+    note:'https://demo.capobrain.com/dashboard'
   },
   {
     id: "3",
-    purpose: "Annual Function",
     memberName: "Ahmed Khan",
-    class: "Five (C)",
-    visitorName: "Zainab",
-    contact: "31234567890",
-    cnic: "351019789333",
-    persons: 1,
     date: "25-11-2024",
     inTime: "10:00 AM",
-    outTime: "12:00 PM",
-    note:'The quick Brown Fox Jumps Over The Lazy Dog...'
+    note:'https://demo.capobrain.com/dashboard'
   },
 
  
@@ -106,17 +78,32 @@ const ParentMeeting = ({navigation}: any) => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Text style={styles.title}>{item.purpose}</Text>
-            <Text>👤 {item.memberName} ({item.class})</Text>
-            <Text>🧑 Visitor: {item.visitorName} ({item.persons} Persons)</Text>
-            <Text>📞 Contact: {item.contact}</Text>
-            <Text>🆔 CNIC: {item.cnic}</Text>
-            <Text>📅 {item.date}</Text>
-            <Text>🕒 {item.inTime} - {item.outTime}</Text>
-            <Text>📝 Note: {item.note}</Text>
+            <Text style={styles.title}>{item.memberName}</Text>
+         <View style={{flexDirection:'row',
+          justifyContent:'center'
+         }}>
+
+          <View style={styles.datebtn}>
+          <Text style={{
+            textAlign:'center',
+            color:'white',
+            fontWeight:'bold'
+          }}>{item.date}</Text>
+          </View>
+          <View style={styles.datebtn}>
+            <Text style={{
+            textAlign:'center',
+            color:'white',
+            fontWeight:'bold'
+          }}>{item.inTime}</Text></View>
+          
+          </View>
+
+            <Text>{item.note}</Text>
           </View>
         )}
       />
+
 
     </View>
   );
@@ -161,4 +148,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  datebtn:{
+    backgroundColor:'#3b82f6',
+    width:100,
+    height:30,
+    justifyContent:'center',
+    borderRadius:5,
+    margin:5
+  }
 });

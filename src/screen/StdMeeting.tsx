@@ -2,78 +2,71 @@ import {
   StyleSheet,
   Text,
   View,
-  Image,
   TouchableOpacity,
   FlatList,
   BackHandler,
+  Animated,
+  Linking,
+  ImageBackground,
 } from 'react-native';
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface Notification {
   id: string;
-  purpose: string;
   memberName: string;
-  class: string;
-  visitorName: string;
-  contact: string;
-  cnic: string;
-  persons: number;
   date: string;
   inTime: string;
-  outTime: string;
+  title: string;
   note: string;
 }
 
 const notifications: Notification[] = [
   {
-    id: "1",
-    purpose: "Monthly Meeting",
-    memberName: "Hanzala Ahmad",
-    class: "Three (A)",
-    visitorName: "Abiha",
-    contact: "31010981908",
-    cnic: "341019789237",
-    persons: 2,
-    date: "21-11-2024",
-    inTime: "2:57 PM",
-    outTime: "2:58 PM",
-    note:'The Quick Brown Fox Jumps Over The Lazy Dog...'
+    id: '1',
+    memberName: 'Hanzala Ahmad',
+    date: '21-11-2024',
+    inTime: '2:57 PM',
+    title: 'Monthly Meeting',
+    note: 'https://demo.capobrain.com/dashboard',
   },
   {
-    id: "2",
-    purpose: "PTA Meeting",
-    memberName: "Ali Raza",
-    class: "Four (B)",
-    visitorName: "Fatima",
-    contact: "30012345678",
-    cnic: "421019789111",
-    persons: 3,
-    date: "22-11-2024",
-    inTime: "3:00 PM",
-    outTime: "3:30 PM",
-    note:'The Quick Brown Fox Jumps Over The Lazy Dog...'
+    id: '2',
+    memberName: 'Ali Raza',
+    date: '22-11-2024',
+    inTime: '3:00 PM',
+    title: 'Monthly Meeting',
+    note: 'https://demo.capobrain.com/dashboard',
   },
   {
-    id: "3",
-    purpose: "Annual Function",
-    memberName: "Ahmed Khan",
-    class: "Five (C)",
-    visitorName: "Zainab",
-    contact: "31234567890",
-    cnic: "351019789333",
-    persons: 1,
-    date: "25-11-2024",
-    inTime: "10:00 AM",
-    outTime: "12:00 PM",
-    note:'The quick Brown Fox Jumps Over The Lazy Dog...'
+    id: '3',
+    memberName: 'Ahmed Khan',
+    date: '25-11-2024',
+    inTime: '10:00 AM',
+    title: 'PTM',
+    note: 'https://demo.capobrain.com/dashboard',
   },
-
- 
 ];
 
 const StdMeeting = ({navigation}: any) => {
+  const moveAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+
     const backAction = () => {
       navigation.navigate('Home');
       return true;
@@ -88,7 +81,19 @@ const StdMeeting = ({navigation}: any) => {
   }, []);
 
   return (
-    <View style={{backgroundColor: 'white', flex: 1}}>
+    <View style={styles.container}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.navigate('Home' as never)}>
           <Icon
@@ -100,23 +105,27 @@ const StdMeeting = ({navigation}: any) => {
         </TouchableOpacity>
         <Text style={styles.headerText}>Meeting Notifications</Text>
       </View>
+
       <FlatList
         data={notifications}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
+        keyExtractor={item => item.id}
+        renderItem={({item}) => (
           <View style={styles.card}>
-            <Text style={styles.title}>{item.purpose}</Text>
-            <Text>👤 {item.memberName} ({item.class})</Text>
-            <Text>🧑 Visitor: {item.visitorName} ({item.persons} Persons)</Text>
-            <Text>📞 Contact: {item.contact}</Text>
-            <Text>🆔 CNIC: {item.cnic}</Text>
-            <Text>📅 {item.date}</Text>
-            <Text>🕒 {item.inTime} - {item.outTime}</Text>
-            <Text>📝 Note: {item.note}</Text>
+            <Text style={styles.title}>{item.memberName}</Text>
+            <View style={{flexDirection: 'row'}}>
+              <Text style={{color: '#3b82f6'}}>📅 {item.date}</Text>
+              <Text style={{marginLeft: 6, color: '#3b82f6'}}>
+                🕒 {item.inTime}
+              </Text>
+            </View>
+            <Text style={styles.meetingTitle}>{item.title}</Text>
+
+            <TouchableOpacity onPress={() => Linking.openURL(item.note)}>
+              <Text style={styles.linkText}>🔗 {item.note}</Text>
+            </TouchableOpacity>
           </View>
         )}
       />
-
     </View>
   );
 };
@@ -124,10 +133,25 @@ const StdMeeting = ({navigation}: any) => {
 export default StdMeeting;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
+    marginBottom: 20,
     backgroundColor: '#3b82f6',
   },
   backButton: {
@@ -138,26 +162,39 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   headerText: {
-    textAlign: 'center',
-    flex: 1,
     fontSize: 20,
     fontWeight: 'bold',
     color: 'white',
+    textAlign: 'center',
+    flex: 1,
   },
   card: {
-    backgroundColor: "#FFF",
+    backgroundColor: '#FFF',
     padding: 12,
-    borderRadius: 8,
-    marginBottom: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.4,
     shadowRadius: 4,
     elevation: 20,
-    margin:('4%'),
+    marginHorizontal: '2%',
+    marginVertical: '1%',
+    borderTopEndRadius: 30,
+    borderTopRightRadius: 30,
+    borderTopLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   title: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
+    color: '#3b82f6',
+  },
+  meetingTitle: {
+    fontWeight: 'bold',
+    fontSize: 15,
+    color: '#3b82f6',
+  },
+  linkText: {
+    color: '#3b82f6',
   },
 });

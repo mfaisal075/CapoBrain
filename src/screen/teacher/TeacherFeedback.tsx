@@ -92,7 +92,7 @@ const TeacherFeedback = ({navigation}: any) => {
     {label: 'Feedback', value: 'Feedback'},
     {label: 'Review', value: 'Review'},
   ];
-  const [tableData, setTableData] = useState<FeedbackData[]>([]);
+  const [tableData, setTableData] = useState<(FeedbackData | ReviewData)[]>([]);
 
   const items = [
     {label: '10', value: 10},
@@ -106,14 +106,25 @@ const TeacherFeedback = ({navigation}: any) => {
     if (text.trim() === '') {
       if (type === 'Feedback') {
         setTableData(feedbackData);
+      } else if (type === 'Review') {
+        setTableData(reviewData);
       }
     } else {
-      const filtered = feedbackData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered);
+      if (type === 'Feedback') {
+        const filteredFeedback = feedbackData.filter(item =>
+          Object.values(item).some(value =>
+            String(value).toLowerCase().includes(text.toLowerCase()),
+          ),
+        );
+        setTableData(filteredFeedback);
+      } else if (type === 'Review') {
+        const filteredReview = reviewData.filter(item =>
+          Object.values(item).some(value =>
+            String(value).toLowerCase().includes(text.toLowerCase()),
+          ),
+        );
+        setTableData(filteredReview);
+      }
     }
   };
 
@@ -144,9 +155,11 @@ const TeacherFeedback = ({navigation}: any) => {
         );
         if (type === 'Feedback') {
           setFeedbackData(response.data.feedback);
+          setTableData(response.data.feedback);
         }
         if (type === 'Review') {
           setReviewData(response.data.staffreview);
+          setTableData(response.data.staffreview);
         }
       } catch (error) {
         console.log(error);
@@ -210,6 +223,9 @@ const TeacherFeedback = ({navigation}: any) => {
           maxHeight={200}
           placeholder="Feedback"
           style={styles.dropdown}
+          dropDownContainerStyle={{
+            marginLeft: 10,
+          }}
         />
       </View>
       <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
@@ -227,6 +243,9 @@ const TeacherFeedback = ({navigation}: any) => {
             maxHeight={200}
             placeholder=""
             style={styles.dropdown}
+            dropDownContainerStyle={{
+              marginLeft: 10,
+            }}
           />
         </View>
 
@@ -246,7 +265,7 @@ const TeacherFeedback = ({navigation}: any) => {
           {type === 'Feedback' ? (
             <FlatList
               style={styles.flatList}
-              data={feedbackData}
+              data={currentEntries}
               keyExtractor={(item, index) =>
                 item.id ? item.id.toString() : index.toString()
               }
@@ -277,10 +296,18 @@ const TeacherFeedback = ({navigation}: any) => {
                   ]}>
                   <Text style={styles.column}>{index + 1}</Text>
                   <Text style={styles.column}>{item.bra_name}</Text>
-                  <Text style={styles.column}>{item.cls_name}</Text>
-                  <Text style={styles.column}>{item.sec_name}</Text>
-                  <Text style={styles.column}>{item.feed_date}</Text>
-                  <Text style={styles.column}>{item.feed_feedbackby}</Text>
+                  <Text style={styles.column}>
+                    {'cls_name' in item ? item.cls_name : ''}
+                  </Text>
+                  <Text style={styles.column}>
+                    {'sec_name' in item ? item.sec_name : ''}
+                  </Text>
+                  <Text style={styles.column}>
+                    {'feed_date' in item ? item.feed_date : ''}
+                  </Text>
+                  <Text style={styles.column}>
+                    {'feed_feedbackby' in item ? item.feed_feedbackby : ''}
+                  </Text>
                   <TouchableOpacity
                     style={styles.iconContainer}
                     onPress={() => {
@@ -318,7 +345,7 @@ const TeacherFeedback = ({navigation}: any) => {
           ) : (
             <FlatList
               style={styles.flatList}
-              data={reviewData}
+              data={currentEntries}
               keyExtractor={(item, index) =>
                 item.id ? item.id.toString() : index.toString()
               }
@@ -343,8 +370,12 @@ const TeacherFeedback = ({navigation}: any) => {
                   ]}>
                   <Text style={styles.column}>{index + 1}</Text>
                   <Text style={styles.column}>{item.bra_name}</Text>
-                  <Text style={styles.column}>{item.staff_id}</Text>
-                  <Text style={styles.column}>{item.app_name}</Text>
+                  <Text style={styles.column}>
+                    {'staff_id' in item ? item.staff_id : ''}
+                  </Text>
+                  <Text style={styles.column}>
+                    {'app_name' in item ? item.app_name : ''}
+                  </Text>
                   <TouchableOpacity
                     style={styles.iconContainer}
                     onPress={() => {
@@ -674,8 +705,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,
@@ -683,6 +714,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     minHeight: 30,
     marginLeft: 10,
+    zIndex: 100,
   },
   row: {
     flexDirection: 'row',

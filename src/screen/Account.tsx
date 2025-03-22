@@ -1,20 +1,18 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {
   BackHandler,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  TextInput,
+  Animated,
+  ImageBackground,
 } from 'react-native';
 import {useUser} from '../Ctx/UserContext';
 import axios from 'axios';
 import {FlatList} from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
-import RNPrint from 'react-native-print';
-import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Modal from 'react-native-modal';
 
 interface AccountData {
   cand: {
@@ -68,92 +66,14 @@ interface AccountInfo {
 
 const Account = ({navigation}: any) => {
   const {token} = useUser();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const viewShotRef = useRef<any>(null);
 
   const [accoutData, setAccountData] = useState<AccountData | null>(null);
 
-  const captureAndPrint = async () => {
-    const uri = await viewShotRef.current.capture();
-    await RNPrint.print({filePath: uri});
-  };
-
   const [originalData, setOriginalData] = useState<AccountInfo[]>([]);
-  const [tableData, setTableData] = useState<AccountInfo[]>(originalData);
-
-  const items = [
-    {label: '10', value: 10},
-    {label: '25', value: 25},
-    {label: '50', value: 50},
-    {label: '100', value: 100},
-  ];
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setTableData(originalData); // Reset to original data if search query is empty
-    } else {
-      const filtered = originalData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered); // Update tableData with filtered results
-    }
-  };
-
-  const totalPages = Math.ceil(tableData.length / entriesPerPage);
-
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const currentEntries = tableData.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage,
-  );
-
-  {
-    /*modal data*/
-  }
-  const studentInfo = [
-    {key: 'Student Name', value: 'Hanzala Ahmad'},
-    {key: 'Father Name', value: 'Aftab Ahmad'},
-    {key: 'Class', value: 'Three'},
-    {key: 'Section', value: 'A'},
-  ];
-
-  const balanceInfo = [
-    {key: 'Total Amount', value: '2500'},
-    {key: 'Paid Amount', value: '0'},
-    {key: 'Payable Amount', value: '2500'},
-  ];
-  const accountInfo = [
-    {key: 'Admission Fee', value: '2000'},
-    {key: 'Security Charges', value: '1200'},
-    {key: 'Medical Charges', value: '500'},
-    {key: 'Computer Charges', value: '0'},
-    {key: 'Examination', value: '1000'},
-    {key: 'Stationary Charges', value: '0'},
-    {key: 'Annual Charges', value: '1500'},
-    {key: 'Monthly Charges', value: '2500'},
-    {key: 'Library Charges', value: '0'},
-    {key: 'Lab Charges', value: '0'},
-    {key: 'Id Charges', value: '200'},
-    {key: 'AC Charges', value: '0'},
-    {key: 'Generator Charges', value: '0'},
-  ];
 
   const fetchData = async () => {
     if (token) {
       try {
-        setTableData([]);
-
         const response = await axios.get(
           `https://demo.capobrain.com/fetchstd_account?_token=${token}`,
           {
@@ -164,7 +84,6 @@ const Account = ({navigation}: any) => {
         );
 
         setOriginalData(response.data.accounts);
-        setTableData(response.data.accounts);
       } catch (error) {
         console.error('Error fetching data', error);
         throw error; // Ensure the error is thrown so useQuery can handle it
@@ -203,10 +122,26 @@ const Account = ({navigation}: any) => {
     {key: 'Balance', value: accoutData?.student_account.stuacc_balance},
   ];
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     fetchData();
     fetchAccountData();
-    // Hardware Back Press
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -219,24 +154,48 @@ const Account = ({navigation}: any) => {
     return () => backHandler.remove();
   }, []);
 
+  const [selectedTransaction, setSelectedTransaction] = useState<number | null>(
+    null,
+  );
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''; // Handle empty or invalid dates
+
+    const date = new Date(dateString); // Parse the date string
+    const day = String(date.getDate()).padStart(2, '0'); // Ensure 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Return formatted date
+  };
+
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.navigate('Home' as never)}>
           <Icon
             name="arrow-left"
             size={38}
             color={'#fff'}
-            style={{paddingHorizontal: 10}}
+            style={{paddingHorizontal: 10, paddingVertical: 10}}
           />
         </TouchableOpacity>
         <Text style={styles.headerText}>Student Accounts</Text>
       </View>
 
-      <View
-        style={{
-          marginTop: 10,
-        }}>
+      <View style={styles.box}>
         <FlatList
           data={Info}
           keyExtractor={item => item.key}
@@ -248,291 +207,140 @@ const Account = ({navigation}: any) => {
           )}
         />
       </View>
-
-      <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-        <View style={{width: 80, marginTop: 9}}>
-          <DropDownPicker
-            items={items}
-            open={isOpen}
-            setOpen={setIsOpen}
-            value={entriesPerPage}
-            setValue={callback => {
-              setEntriesPerPage(prev =>
-                typeof callback === 'function' ? callback(prev) : callback,
-              );
-            }}
-            maxHeight={200}
-            placeholder=""
-            style={styles.dropdown}
-          />
-        </View>
-
-        <View style={styles.container}>
-          <TextInput
-            style={styles.input}
-            placeholder="Search..."
-            placeholderTextColor={'gray'}
-            value={searchQuery}
-            onChangeText={text => handleSearch(text)}
-          />
-        </View>
-      </View>
-
-      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        <View>
-          <FlatList
-            style={{
-              margin: 10,
-              flex: 1,
-            }}
-            data={currentEntries}
-            keyExtractor={(item, index) =>
-              item.id ? item.id.toString() : index.toString()
-            }
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 100},
-                    {padding: 1},
-                  ]}>
-                  Sr#
-                </Text>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 150},
-                    {padding: 1},
-                  ]}>
-                  Transaction
-                </Text>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 150},
-                    {padding: 1},
-                  ]}>
-                  Date
-                </Text>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 200},
-                    {padding: 1},
-                  ]}>
-                  Fee
-                </Text>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 150},
-                    {padding: 1},
-                  ]}>
-                  Transport
-                </Text>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 100},
-                    {padding: 1},
-                  ]}>
-                  Inventory
-                </Text>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 150},
-                    {padding: 1},
-                  ]}>
-                  Arrears
-                </Text>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 150},
-                    {padding: 1},
-                  ]}>
-                  Others
-                </Text>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 200},
-                    {padding: 1},
-                  ]}>
-                  Payable
-                </Text>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 150},
-                    {padding: 1},
-                  ]}>
-                  Paid
-                </Text>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 150},
-                    {padding: 1},
-                  ]}>
-                  Balance
-                </Text>
-                <Text
-                  style={[
-                    styles.column,
-                    styles.headTable,
-                    {width: 200},
-                    {padding: 1},
-                  ]}>
-                  Transaction Type
-                </Text>
-               
-              </View>
-            )}
-            renderItem={({item, index}) => (
+      <Text
+        style={{
+          marginLeft: '3%',
+          fontWeight: 'bold',
+          fontSize: 18,
+          color: '#3b82f6',
+        }}>
+        Account Details
+      </Text>
+      <FlatList
+        style={{marginBottom: 20}}
+        data={originalData}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({item}) => (
+          <TouchableOpacity onPress={() => setSelectedTransaction(item.id)}>
+            <View style={styles.card}>
               <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                  {index + 1}
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={styles.title}>{item.transaction_id}</Text>
+                <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                  {formatDate(item.stuacc_date)}
                 </Text>
-                <Text style={[styles.column, {width: 150}, {padding: 5}]}>
-                  {item.transaction_id}
-                </Text>
-                <Text style={[styles.column, {width: 150}, {padding: 5}]}>
-                  {item.stuacc_date}
-                </Text>
-                <Text style={[styles.column, {width: 200}, {padding: 5}]}>
-                  {item.monthly_fee}
-                </Text>
-                <Text style={[styles.column, {width: 150}, {padding: 5}]}>
-                  {item.transportation_fee}
-                </Text>
-                <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                  {item.inventory_amount}
-                </Text>
-                <Text style={[styles.column, {width: 150}, {padding: 5}]}>
-                  {item.arrears_amount}
-                </Text>
-                <Text style={[styles.column, {width: 150}, {padding: 5}]}>
-                  {item.miscfee_receivable}
-                </Text>
-                <Text style={[styles.column, {width: 200}, {padding: 5}]}>
-                  {item.stuacc_payable}
-                </Text>
-                <Text style={[styles.column, {width: 150}, {padding: 5}]}>
-                  {item.stuacc_paid_amount}
-                </Text>
-                <Text style={[styles.column, {width: 150}, {padding: 5}]}>
-                  {item.stuacc_balance}
-                </Text>
-                <Text style={[styles.column, {width: 200}, {padding: 5}]}>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={{color: '#3b82f6'}}>
                   {item.stuacc_payment_method}
                 </Text>
+                <Text style={{color: '#3b82f6'}}>{item.monthly_fee}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
+      />
 
-               
+      <Modal isVisible={!!selectedTransaction}>
+        <View style={[styles.cards, {overflow: 'hidden'}]}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../assets/bgimg.jpg')}
+            />
+          </Animated.View>
+
+          {selectedTransaction && (
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: 'bold',
+                color: '#3b82f6',
+                textAlign: 'center',
+                marginVertical: 10,
+              }}>
+              {
+                originalData.find(item => item.id === selectedTransaction)
+                  ?.transaction_id
+              }
+            </Text>
+          )}
+
+          <FlatList
+            data={originalData.filter(
+              entry => entry.id === selectedTransaction,
+            )}
+            keyExtractor={item => item.id.toString()}
+            renderItem={({item}) => (
+              <View
+                style={{
+                  marginLeft: '15%',
+                  marginRight: '15%',
+                  marginTop: 5,
+                }}>
+                <EntryRow label="Transport:" value={item.transport_received} />
+                <EntryRow label="Inventory:" value={item.inventory_amount} />
+                <EntryRow label="Arrears:" value={item.arrears_amount} />
+                <EntryRow label="Others:" value={item.miscfee_receivable} />
+                <EntryRow label="Payable:" value={item.stuacc_payable} />
+                <EntryRow label="Paid:" value={item.stuacc_paid_amount} />
+                <EntryRow label="Balance:" value={item.stuacc_balance} />
               </View>
             )}
           />
-        </View>
-      </ScrollView>
-
-      <View style={styles.pagination}>
-        <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to 
-          {Math.min(currentPage * entriesPerPage, tableData.length)} of
-          {tableData.length} entries
-        </Text>
-        <View style={styles.paginationButtons}>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
-            <Text style={styles.paginationText}>Previous</Text>
-          </TouchableOpacity>
-          <View style={styles.pageNumber}>
-            <Text style={styles.pageText}>{currentPage}</Text>
-          </View>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
-            <Text style={styles.paginationText}>Next</Text>
+          <TouchableOpacity onPress={() => setSelectedTransaction(null)}>
+            <View
+              style={{
+                backgroundColor: '#3b82f6',
+                borderRadius: 5,
+                width: 50,
+                height: 23,
+                alignSelf: 'center',
+                marginBottom: 15,
+              }}>
+              <Text style={{color: 'white', fontSize: 16, textAlign: 'center'}}>
+                Close
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
-      </View>
-
+      </Modal>
     </View>
   );
 };
+const EntryRow = ({label, value}: {label: string; value: string}) => (
+  <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+    <Text style={{fontWeight: 'bold', color: '#3b82f6'}}>{label}</Text>
+    <Text
+      style={{
+        color: '#3b82f6',
+      }}>
+      {value}
+    </Text>
+  </View>
+);
 
 export default Account;
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    marginTop: 12,
-    width: 90,
-    height: 30,
-    marginRight: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 4,
-    marginBottom: 5,
-    borderRadius: 4,
-    textAlign: 'center',
-    color: 'gray',
-  },
-  item: {
-    borderBottomColor: '#ccc',
-  },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  column: {
-    width: '50%',
-    textAlign: 'center',
-  },
-  withBorder: {
-    borderRightWidth: 1,
-    borderColor: '#ccc',
-  },
-  headTable: {
-    fontWeight: 'bold',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-  },
-  label: {
-    position: 'absolute',
-    top: -10,
-    left: 14,
-    fontSize: 14,
-    color: 'black',
-    backgroundColor: 'white',
-    paddingHorizontal: 4,
-  },
-  head: {
-    backgroundColor: '#008604',
-    height: 25,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
     backgroundColor: '#3b82f6',
+    top: -6,
   },
   backButton: {
     width: 24,
@@ -548,71 +356,69 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
-  iconContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 60,
-    height: 20,
-  },
-  statusIcon: {
-    width: 20,
-    height: 20,
-    marginLeft: 90,
-  },
-  actionIcon: {
-    width: 15,
-    height: 15,
-    tintColor: '#3b82f6',
-  },
-  infoRow: {
+
+  info: {
     flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    width: wp('85%'),
-    alignSelf: 'center',
-    borderColor: 'gray',
+    justifyContent: 'space-between',
+    marginTop: 5,
   },
   text: {
     fontWeight: 'bold',
-    marginLeft: 15,
     padding: 2,
+    color: 'white',
   },
   value: {
     padding: 2,
-    marginLeft: 10,
-  },
-  dropdown: {
-    borderWidth: 1,
-    borderColor: '#d5d5d9',
-    borderRadius: 5,
-    minHeight: 30,
-    marginLeft: 10,
-  },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    margin: 10,
-  },
-  paginationButtons: {
-    flexDirection: 'row',
-  },
-  paginationText: {
-    fontWeight: 'bold',
-  },
-  pageNumber: {
-    width: 22,
-    height: 22,
-    backgroundColor: '#3b82f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
-    marginRight: 10,
-  },
-  pageText: {
     color: 'white',
-    fontWeight: 'bold',
   },
-  info: {
-    flexDirection: 'row',
+  box: {
+    marginTop: 10,
+    width: '96%',
+    borderRadius: 10,
+    padding: 7,
+    alignSelf: 'center',
+    backgroundColor: '#3b82f6',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 5},
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 10,
+    opacity: 1,
+    marginBottom: 5,
+    height: 130,
+  },
+  cards: {
+    borderRadius: 10,
+    marginBottom: 10,
+    margin: '2%',
+    height: 240,
+    backgroundColor: 'white',
+  },
+  card: {
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 8,
+    marginLeft: '2%',
+    elevation: 5,
+    opacity: 1,
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+    marginRight: '2%',
+    marginTop: '1%',
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#3b82f6',
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });

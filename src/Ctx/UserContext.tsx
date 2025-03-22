@@ -8,6 +8,8 @@ interface UserContextProps {
   userRole: string | null;
   setUserRole: (userRole: string | null) => void;
   token: string | null;
+  userId: number | null;
+  setUserId: (userId: number | null) => void;
   setToken: (token: string | null) => void;
   logout: () => void; // Add logout function
 }
@@ -17,6 +19,7 @@ const UserContext = createContext<UserContextProps | undefined>(undefined);
 export const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
   const [userName, setUserName] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const navigation = useNavigation();
 
@@ -25,6 +28,7 @@ export const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
     setUserName(null);
     setUserRole(null);
     setToken(null); // Clear the token on logout
+    setUserId(null);
     await AsyncStorage.clear();
 
     // Navigate to the AuthStack after logout
@@ -40,7 +44,9 @@ export const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
     <UserContext.Provider
       value={{
         userName,
+        userId,
         setUserName,
+        setUserId,
         userRole,
         setUserRole,
         token,

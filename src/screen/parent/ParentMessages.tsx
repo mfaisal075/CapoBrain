@@ -86,10 +86,7 @@ const ParentMessages = ({navigation}: any) => {
   }, []);
   return (
     <View style={styles.container}>
-      <Image
-        source={require('../../assets/corkboard.png')}
-        style={styles.background}
-      />
+     
 
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -137,12 +134,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'white',
   },
-  background: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
   listContainer: {
     paddingTop: 20,
     paddingBottom: 100,
@@ -150,52 +141,50 @@ const styles = StyleSheet.create({
   note: {
     padding: 15,
     width: 160,
-    height: 150,
+    height: 130,
     margin: 10,
     borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: {width: 4, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 8, height: 8},
+    shadowOpacity: 0.8, 
+    shadowRadius: 10,
+    elevation: 20, 
   },
   title: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 14,
   },
   date: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 10,
     right: 10,
     fontSize: 12,
-    color: '#555',
+    color: "#555",
   },
   headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: wp('5%'),
-    paddingVertical: hp('1%'),
-    position: 'absolute',
-    top: hp('1%'),
-    left: 0,
-    zIndex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",  
+    paddingHorizontal: wp("5%"), 
+    paddingVertical: hp("2%"),
+    position: "absolute",
+    backgroundColor:'#3b82f6'
   },
   backButton: {
     width: 25,
     height: 25,
-    tintColor: 'white',
+    tintColor: "white",
   },
   headerText: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 18,
-    color: 'white',
-    marginLeft: wp('3%'),
+    color: "white",
+    textAlign:'center',
+    flex:1
   },
-
-  message: {
-    fontSize: 12,
-    color: '#444',
+  message:{
+  fontSize: 12,
+    color: "#444",
     marginTop: 5,
-  },
+}
 });

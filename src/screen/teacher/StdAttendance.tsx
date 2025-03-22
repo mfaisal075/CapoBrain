@@ -382,7 +382,7 @@ const StdAttendance = ({navigation}: any) => {
                     },
                     tr: {
                       backgroundColor: '#fff',
-                      marginLeft: -3
+                      marginLeft: -3,
                     },
                     a: {
                       width: 100,

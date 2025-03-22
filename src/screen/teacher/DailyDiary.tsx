@@ -9,7 +9,7 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {DateTimePickerEvent} from '@react-native-community/datetimepicker';
@@ -21,19 +21,66 @@ import {
 } from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {Picker} from '@react-native-picker/picker';
+import {BackHandler} from 'react-native';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
 
-type TableRow = {
-  sr: string;
-  class: string;
-  subject: string;
+interface Dailydiary {
+  id: number;
   date: string;
-  action: string;
-};
+  bra_name: string;
+  cls_name: string;
+  sec_name: string;
+  sub_name: string;
+}
 
-export default function DailyDiary() {
-  const navigation = useNavigation();
+interface DailydiaryData {
+  branch: {
+    bra_name: string;
+  };
+  class: {
+    cls_name: string;
+  };
+  section: {
+    sec_name: string;
+  };
+  diary: {
+    date: string;
+    diary: string;
+  };
+  subject: {
+    sub_name: string;
+  };
+}
+
+export default function DailyDiary({navigation}: any) {
+  const {token} = useUser();
   const [startDate, setStartDate] = useState(new Date());
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedSection, setSelectedSection] = useState('');
+  const [startDte, setStartDte] = useState(new Date());
+  const [showStartDtePicker, setShowStartDtePicker] = useState(false);
+  const [formData, setFormData] = useState({
+    english: '',
+    urdu: '',
+    math: '',
+    pakistanStudies: '',
+    chemistry: '',
+    biology: '',
+    physics: '',
+    islamiyat: '',
+  });
+  const [endDate, setEndDate] = useState(new Date());
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [originalData, setOriginalData] = useState<Dailydiary[]>([]);
+  const [tableData, setTableData] = useState<Dailydiary[]>(originalData);
+  const [dailydiaryData, setDailydiaryData] = useState<DailydiaryData | null>(
+    null,
+  );
 
   const onStartDateChange = (
     event: DateTimePickerEvent,
@@ -44,65 +91,11 @@ export default function DailyDiary() {
     setStartDate(currentDate);
   };
 
-  const [endDate, setEndDate] = useState(new Date());
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
-
   const onEndDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     const currentDate = selectedDate || endDate;
     setShowEndDatePicker(false);
     setEndDate(currentDate);
   };
-
-  const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      class: 'Three(A)',
-      subject: 'English',
-      date: '07-03-2025',
-      action: '',
-    },
-    {
-      sr: '2',
-      class: 'Three(A)',
-      subject: 'Urdu',
-      date: '07-03-2025',
-      action: '',
-    },
-    {
-      sr: '3',
-      class: 'Three(A)',
-      subject: 'Math',
-      date: '07-03-2025',
-      action: '',
-    },
-    {
-      sr: '4',
-      class: 'Three(A)',
-      subject: 'Pakistan Studies',
-      date: '07-03-2025',
-      action: '',
-    },
-    {
-      sr: '5',
-      class: 'Three(A)',
-      subject: 'Science',
-      date: '07-03-2025',
-      action: '',
-    },
-    {
-      sr: '6',
-      class: 'Three(A)',
-      subject: 'Islamiyat',
-      date: '07-03-2025',
-      action: '',
-    },
-  ];
-
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -143,8 +136,21 @@ export default function DailyDiary() {
   }
   const [isModalVisi, setModalVisi] = useState(false);
 
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
+  const toggleModl = async (id: number) => {
+    try {
+      const res = await axios.get(
+        `https://demo.capobrain.com/showdiary?id=${id}&_token=${token}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      setModalVisi(!isModalVisi);
+      setDailydiaryData(res.data);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   {
@@ -154,21 +160,6 @@ export default function DailyDiary() {
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
-
-  const [selectedClass, setSelectedClass] = useState('');
-  const [selectedSection, setSelectedSection] = useState('');
-  const [startDte, setStartDte] = useState(new Date());
-  const [showStartDtePicker, setShowStartDtePicker] = useState(false);
-  const [formData, setFormData] = useState({
-    english: '',
-    urdu: '',
-    math: '',
-    pakistanStudies: '',
-    chemistry: '',
-    biology: '',
-    physics: '',
-    islamiyat: '',
-  });
 
   const onStartDteChange = (_event: any, selectedDate?: Date) => {
     if (selectedDate) {
@@ -196,6 +187,53 @@ export default function DailyDiary() {
     return true;
   };
 
+  const fetchData = async () => {
+    if (token) {
+      try {
+        const res = await axios.get(
+          `https://demo.capobrain.com/fetchdailydiary?from=${
+            startDate.toISOString().split('T')[0]
+          }&to=${endDate.toISOString().split('T')[0]}&_token=${token}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        setOriginalData(res.data.dailydiary);
+        setTableData(res.data.dailydiary);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    const backAction = () => {
+      navigation.goBack();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, [startDate, endDate]);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''; // Handle empty or invalid dates
+
+    const date = new Date(dateString); // Parse the date string
+    const day = String(date.getDate()).padStart(2, '0'); // Ensure 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Return formatted date
+  };
+
   return (
     <View
       style={{
@@ -203,8 +241,7 @@ export default function DailyDiary() {
         flex: 1,
       }}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Teacher' as never)}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon
             name="arrow-left"
             size={38}
@@ -236,6 +273,224 @@ export default function DailyDiary() {
           </Text>
         </View>
       </TouchableOpacity>
+
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          marginTop: hp('2%'),
+        }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderTopWidth: 1,
+            borderBottomWidth: 1,
+            width: 140,
+            borderRightWidth: 1,
+            borderLeftWidth: 1,
+            borderRadius: 5,
+            borderColor: 'gray',
+            marginLeft: hp('1%'),
+            height: 30,
+          }}>
+          <Text style={styles.label}>From</Text>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              borderRadius: 5,
+              borderColor: 'gray',
+            }}>
+            <Text style={{marginLeft: 10}}>
+              {`${startDate.toLocaleDateString()}`}
+            </Text>
+            <TouchableOpacity onPress={() => setShowStartDatePicker(true)}>
+              <Image
+                style={{
+                  height: 20,
+                  width: 20,
+                  resizeMode: 'stretch',
+                  alignItems: 'center',
+                  marginLeft: 25,
+                }}
+                source={require('../../assets/calendar.png')}
+              />
+              {showStartDatePicker && (
+                <DateTimePicker
+                  testID="startDatePicker"
+                  value={startDate}
+                  mode="date"
+                  is24Hour={true}
+                  display="default"
+                  onChange={onStartDateChange}
+                />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderTopWidth: 1,
+            borderBottomWidth: 1,
+            width: 140,
+            borderRightWidth: 1,
+            borderLeftWidth: 1,
+            borderRadius: 5,
+            borderColor: 'gray',
+            marginLeft: hp('1%'),
+            marginRight: hp('1%'),
+          }}>
+          <Text style={styles.label}>To</Text>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              borderRadius: 5,
+              borderColor: 'gray',
+            }}>
+            <Text
+              style={{
+                marginLeft: 10,
+              }}>
+              {`${endDate.toLocaleDateString()}`}
+            </Text>
+            <TouchableOpacity onPress={() => setShowEndDatePicker(true)}>
+              <Image
+                style={{
+                  height: 20,
+                  width: 20,
+                  resizeMode: 'stretch',
+                  alignItems: 'center',
+                  marginLeft: 25,
+                }}
+                source={require('../../assets/calendar.png')}
+              />
+              {showEndDatePicker && (
+                <DateTimePicker
+                  testID="endDatePicker"
+                  value={endDate}
+                  mode="date"
+                  is24Hour={true}
+                  display="default"
+                  onChange={onEndDateChange}
+                />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+        <View style={{width: 80, marginTop: 9}}>
+          <DropDownPicker
+            items={items}
+            open={isOpen}
+            setOpen={setIsOpen}
+            value={entriesPerPage}
+            setValue={callback => {
+              setEntriesPerPage(prev =>
+                typeof callback === 'function' ? callback(prev) : callback,
+              );
+            }}
+            maxHeight={200}
+            placeholder=""
+            style={styles.dropdown}
+          />
+        </View>
+
+        <View style={styles.container}>
+          <TextInput
+            style={styles.input}
+            placeholder="Search..."
+            placeholderTextColor={'gray'}
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+        </View>
+      </View>
+
+      {/* Table */}
+      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
+        {currentEntries.length > 0 ? (
+          <View>
+            <FlatList
+              style={styles.flatList}
+              data={currentEntries}
+              keyExtractor={(item, index) =>
+                item.id ? item.id.toString() : index.toString()
+              }
+              ListHeaderComponent={() => (
+                <View style={styles.row}>
+                  {['Sr#', 'Class', 'Subject', 'Date', 'Action'].map(header => (
+                    <Text
+                      key={header}
+                      style={[styles.column, styles.headTable]}>
+                      {header}
+                    </Text>
+                  ))}
+                </View>
+              )}
+              renderItem={({item, index}) => (
+                <View
+                  style={[
+                    styles.row,
+                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                  ]}>
+                  <Text style={styles.column}>{index + 1}</Text>
+                  <Text
+                    style={
+                      styles.column
+                    }>{`${item.cls_name} (${item.sec_name})`}</Text>
+                  <Text style={styles.column}>{item.sub_name}</Text>
+                  <Text style={styles.column}>{item.date}</Text>
+                  <TouchableOpacity
+                    style={styles.iconContainer}
+                    onPress={() => toggleModl(item.id)}>
+                    <Image
+                      style={styles.actionIcon}
+                      source={require('../../assets/visible.png')}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+          </View>
+        ) : (
+          <View style={{width: '100%', marginTop: 20}}>
+            <Text
+              style={{fontSize: 18, fontWeight: 'bold', textAlign: 'center'}}>
+              No record present in the database!
+            </Text>
+          </View>
+        )}
+      </ScrollView>
+
+      <View style={styles.pagination}>
+        <Text>
+          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
+          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
+          {tableData.length} entries
+        </Text>
+        <View style={styles.paginationButtons}>
+          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
+            <Text style={styles.paginationText}>Previous</Text>
+          </TouchableOpacity>
+          <View style={styles.pageNumber}>
+            <Text style={styles.pageText}>{currentPage}</Text>
+          </View>
+          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
+            <Text style={styles.paginationText}>Next</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Modal */}
       <Modal isVisible={isModalVisible}>
         <ScrollView
           style={{
@@ -381,282 +636,84 @@ export default function DailyDiary() {
         </ScrollView>
       </Modal>
 
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: hp('2%'),
-        }}>
+      {/* View Modal */}
+      <Modal isVisible={isModalVisi}>
         <View
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            borderTopWidth: 1,
-            borderBottomWidth: 1,
-            width: 140,
-            borderRightWidth: 1,
-            borderLeftWidth: 1,
+            flex: 1,
+            backgroundColor: 'white',
+            width: 'auto',
+            maxHeight: 300,
             borderRadius: 5,
-            borderColor: 'gray',
-            marginLeft: hp('1%'),
-            height: 30,
+            borderWidth: 1,
+            borderColor: '#6C757D',
           }}>
-          <Text style={styles.label}>From</Text>
-
           <View
             style={{
               flexDirection: 'row',
-              alignItems: 'center',
-              borderRadius: 5,
-              borderColor: 'gray',
+              justifyContent: 'space-between',
+              margin: 20,
             }}>
-            <Text style={{marginLeft: 10}}>
-              {`${startDate.toLocaleDateString()}`}
-            </Text>
-            <TouchableOpacity onPress={() => setShowStartDatePicker(true)}>
-              <Image
-                style={{
-                  height: 20,
-                  width: 20,
-                  resizeMode: 'stretch',
-                  alignItems: 'center',
-                  marginLeft: 35,
-                }}
-                source={require('../../assets/calendar.png')}
-              />
-              {showStartDatePicker && (
-                <DateTimePicker
-                  testID="startDatePicker"
-                  value={startDate}
-                  mode="date"
-                  is24Hour={true}
-                  display="default"
-                  onChange={onStartDateChange}
-                />
-              )}
+            <Text style={{color: '#6C757D', fontSize: 18}}>Diary Detail</Text>
+
+            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
+              <Text style={{color: '#6C757D'}}>✖</Text>
             </TouchableOpacity>
           </View>
-        </View>
-
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            borderTopWidth: 1,
-            borderBottomWidth: 1,
-            width: 140,
-            borderRightWidth: 1,
-            borderLeftWidth: 1,
-            borderRadius: 5,
-            borderColor: 'gray',
-            marginLeft: hp('1%'),
-            marginRight: hp('1%'),
-          }}>
-          <Text style={styles.label}>To</Text>
-
           <View
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              borderRadius: 5,
-              borderColor: 'gray',
-            }}>
-            <Text
-              style={{
-                marginLeft: 10,
-              }}>
-              {`${endDate.toLocaleDateString()}`}
-            </Text>
-            <TouchableOpacity onPress={() => setShowEndDatePicker(true)}>
-              <Image
-                style={{
-                  height: 20,
-                  width: 20,
-                  resizeMode: 'stretch',
-                  alignItems: 'center',
-                  marginLeft: 35,
-                }}
-                source={require('../../assets/calendar.png')}
-              />
-              {showEndDatePicker && (
-                <DateTimePicker
-                  testID="endDatePicker"
-                  value={endDate}
-                  mode="date"
-                  is24Hour={true}
-                  display="default"
-                  onChange={onEndDateChange}
-                />
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-
-      <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-        <View style={{width: 80, marginTop: 9}}>
-          <DropDownPicker
-            items={items}
-            open={isOpen}
-            setOpen={setIsOpen}
-            value={entriesPerPage}
-            setValue={callback => {
-              setEntriesPerPage(prev =>
-                typeof callback === 'function' ? callback(prev) : callback,
-              );
+              height: 1,
+              backgroundColor: 'gray',
+              width: wp('90%'),
             }}
-            maxHeight={200}
-            placeholder=""
-            style={styles.dropdown}
           />
-        </View>
-
-        <View style={styles.container}>
-          <TextInput
-            style={styles.input}
-            placeholder="Search..."
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </View>
-      </View>
-
-      {/* Table */}
-      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        <View>
-          <FlatList
-            style={styles.flatList}
-            data={currentEntries}
-            keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
-            }
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                {['Sr#', 'Class', 'Subject', 'Date', 'Action'].map(header => (
-                  <Text key={header} style={[styles.column, styles.headTable]}>
-                    {header}
-                  </Text>
-                ))}
-              </View>
-            )}
-            renderItem={({item, index}) => (
-              <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.class}</Text>
-                <Text style={styles.column}>{item.subject}</Text>
-                <Text style={styles.column}>{item.date}</Text>
-                <TouchableOpacity
-                  style={styles.iconContainer}
-                  onPress={toggleModl}>
-                  <Image
-                    style={styles.actionIcon}
-                    source={require('../../assets/visible.png')}
-                  />
-                </TouchableOpacity>
-                <Modal isVisible={isModalVisi}>
-                  <View
-                    style={{
-                      flex: 1,
-                      backgroundColor: 'white',
-                      width: 'auto',
-                      maxHeight: 300,
-                      borderRadius: 5,
-                      borderWidth: 1,
-                      borderColor: '#6C757D',
-                    }}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        margin: 20,
-                      }}>
-                      <Text style={{color: '#6C757D', fontSize: 18}}>
-                        Diary Detail
-                      </Text>
-
-                      <TouchableOpacity
-                        onPress={() => setModalVisi(!isModalVisi)}>
-                        <Text style={{color: '#6C757D'}}>✖</Text>
-                      </TouchableOpacity>
-                    </View>
-                    <View
-                      style={{
-                        height: 1,
-                        backgroundColor: 'gray',
-                        width: wp('90%'),
-                      }}
-                    />
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        margin: 10,
-                      }}>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                        }}>
-                        <Text style={styles.lblText}>Date</Text>
-                        <Text style={styles.valueText}>07-03-2025</Text>
-                      </View>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          marginRight: 50,
-                        }}>
-                        <Text style={styles.lblText}>Class</Text>
-                        <Text style={styles.valueText}>Three</Text>
-                      </View>
-                    </View>
-
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        marginLeft: 10,
-                      }}>
-                      <Text style={styles.lblText}>Subject</Text>
-                      <Text style={styles.valueText}>English</Text>
-                    </View>
-                    <View
-                      style={{
-                        marginLeft: 10,
-                        marginTop: 10,
-                      }}>
-                      <Text style={styles.lblText}>Description:</Text>
-                      <Text style={styles.valueText}>
-                        ghfghdft nfghjfgghfghdft
-                      </Text>
-                    </View>
-                  </View>
-                </Modal>
-              </View>
-            )}
-          />
-        </View>
-      </ScrollView>
-
-      <View style={styles.pagination}>
-        <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
-          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
-          {tableData.length} entries
-        </Text>
-        <View style={styles.paginationButtons}>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
-            <Text style={styles.paginationText}>Previous</Text>
-          </TouchableOpacity>
-          <View style={styles.pageNumber}>
-            <Text style={styles.pageText}>{currentPage}</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              margin: 10,
+            }}>
+            <View
+              style={{
+                flexDirection: 'row',
+              }}>
+              <Text style={styles.lblText}>Date</Text>
+              <Text style={styles.valueText}>
+                {formatDate(dailydiaryData?.diary.date ?? '')}
+              </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                marginRight: 50,
+              }}>
+              <Text style={styles.lblText}>Class</Text>
+              <Text style={styles.valueText}>
+                {dailydiaryData?.class.cls_name}
+              </Text>
+            </View>
           </View>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
-            <Text style={styles.paginationText}>Next</Text>
-          </TouchableOpacity>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              marginLeft: 10,
+            }}>
+            <Text style={styles.lblText}>Subject</Text>
+            <Text style={styles.valueText}>
+              {dailydiaryData?.subject.sub_name}
+            </Text>
+          </View>
+          <View
+            style={{
+              marginLeft: 10,
+              marginTop: 10,
+            }}>
+            <Text style={styles.lblText}>Description:</Text>
+            <Text style={styles.valueText}>{dailydiaryData?.diary.diary}</Text>
+          </View>
         </View>
-      </View>
+      </Modal>
     </View>
   );
 }
@@ -703,8 +760,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,

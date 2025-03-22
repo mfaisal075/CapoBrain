@@ -8,8 +8,10 @@ import {
   TextInput,
   FlatList,
   Alert,
+  Animated,
+  ImageBackground,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Image} from 'react-native';
 import DateTimePicker, {
   DateTimePickerEvent,
@@ -49,7 +51,6 @@ const ApplyLeave = ({navigation}: any) => {
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalVisi, setModalVisi] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [startDate, setStartDate] = useState(new Date());
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [leaveDetails, setLeaveDetails] = useState<LeaveDetails | null>(null);
@@ -95,40 +96,6 @@ const ApplyLeave = ({navigation}: any) => {
 
     return isValid;
   };
-
-  const items = [
-    {label: '10', value: 10},
-    {label: '25', value: 25},
-    {label: '50', value: 50},
-    {label: '100', value: 100},
-  ];
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setTableData(originalData);
-    } else {
-      const filtered = originalData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered);
-    }
-  };
-
-  const totalPages = Math.ceil(tableData.length / entriesPerPage);
-
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const currentEntries = tableData.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage,
-  );
 
   const fetchData = async () => {
     if (token) {
@@ -192,9 +159,26 @@ const ApplyLeave = ({navigation}: any) => {
     }
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     //Fetch Data
     fetchData();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+
     const backAction = () => {
       navigation.navigate('Home');
       return true;
@@ -207,15 +191,38 @@ const ApplyLeave = ({navigation}: any) => {
 
     return () => backHandler.remove();
   }, []);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''; // Handle empty or invalid dates
+
+    const date = new Date(dateString); // Parse the date string
+    const day = String(date.getDate()).padStart(2, '0'); // Ensure 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Return formatted date
+  };
+
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../assets/bgimg.jpg')}
+        />
+      </Animated.View>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.navigate('Home' as never)}>
           <Icon
             name="arrow-left"
             size={38}
             color={'#fff'}
-            style={{paddingHorizontal: 10}}
+            style={{paddingHorizontal: 10, paddingVertical: 10}}
           />
         </TouchableOpacity>
         <Text style={styles.headerText}>Apply Leave</Text>
@@ -228,13 +235,14 @@ const ApplyLeave = ({navigation}: any) => {
             marginTop: 10,
             justifyContent: 'flex-end',
             alignItems: 'center',
+            marginBottom: 10,
           }}>
           <TouchableOpacity onPress={toggleModal}>
             <View
               style={{
                 width: 90,
                 height: 30,
-                backgroundColor: '#218838',
+                backgroundColor: '#3b82f6',
                 borderRadius: 5,
                 marginRight: 10,
                 alignSelf: 'flex-end',
@@ -252,140 +260,74 @@ const ApplyLeave = ({navigation}: any) => {
             </View>
           </TouchableOpacity>
         </View>
-
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginTop: 10,
-          }}>
-          <View style={{width: 80, marginTop: 9}}>
-            <DropDownPicker
-              items={items}
-              open={isOpen}
-              setOpen={setIsOpen}
-              value={entriesPerPage}
-              setValue={callback => {
-                setEntriesPerPage(prev =>
-                  typeof callback === 'function' ? callback(prev) : callback,
-                );
-              }}
-              maxHeight={200}
-              placeholder=""
-              style={styles.dropdown}
-            />
-          </View>
-
-          <View style={styles.searchcontainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Search..."
-              placeholderTextColor={'gray'}
-              value={searchQuery}
-              onChangeText={handleSearch}
-            />
-          </View>
-        </View>
-
-        {/* Table */}
-        <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-          <View>
-            <FlatList
-              style={styles.flatList}
-              data={currentEntries}
-              nestedScrollEnabled
-              keyExtractor={(item, index) =>
-                item.id ? item.id.toString() : index.toString()
-              }
-              ListHeaderComponent={() => (
-                <View style={styles.row}>
-                  {['Sr#', 'Subject', 'Date', 'Status', 'Action'].map(
-                    header => (
-                      <Text
-                        key={header}
-                        style={[styles.column, styles.headTable]}>
-                        {header}
-                      </Text>
-                    ),
-                  )}
+        <FlatList
+          data={originalData}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => (
+            <View style={styles.card}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={styles.title}>{item.subject}</Text>
+                <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                  {formatDate(item.leave_date)}
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <View style={styles.iconContainer}>
+                  <Image
+                    style={styles.statusIcon}
+                    source={
+                      item.status === 'Pending'
+                        ? require('../assets/pending.png')
+                        : item.status === 'Approved'
+                        ? require('../assets/approved.png')
+                        : require('../assets/rejected.png')
+                    }
+                  />
                 </View>
-              )}
-              renderItem={({item, index}) => (
-                <View
-                  style={[
-                    styles.row,
-                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                  ]}>
-                  <Text style={styles.column}>{index + 1}</Text>
-                  <Text style={styles.column}>{item.subject}</Text>
-                  <Text style={styles.column}>{item.leave_date}</Text>
-                  <View style={styles.iconContainer}>
-                    <Image
-                      style={styles.statusIcon}
-                      source={
-                        item.status === 'Pending'
-                          ? require('../assets/pending.png')
-                          : item.status === 'Approved'
-                          ? require('../assets/approved.png')
-                          : require('../assets/rejected.png')
-                      }
-                    />
-                  </View>
-                  <TouchableOpacity
-                    style={styles.iconContainer}
-                    onPress={() => {
-                      const handleShowLeave = async (id: number) => {
-                        try {
-                          const response = await axios.get(
-                            `https://demo.capobrain.com/showleave?id=${item.id}&_token=${token}`,
-                            {
-                              headers: {
-                                Authorization: `Bearer ${token}`,
-                              },
+
+                <TouchableOpacity
+                  style={styles.iconContainer}
+                  onPress={() => {
+                    const handleShowLeave = async (id: number) => {
+                      try {
+                        const response = await axios.get(
+                          `https://demo.capobrain.com/showleave?id=${item.id}&_token=${token}`,
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
                             },
-                          );
-                          setLeaveDetails(response.data);
-                          setModalVisi(true);
-                        } catch (error) {
-                          console.log(error);
-                          throw error;
-                        }
-                      };
+                          },
+                        );
+                        setLeaveDetails(response.data);
+                        setModalVisi(true);
+                      } catch (error) {
+                        console.log(error);
+                        throw error;
+                      }
+                    };
 
-                      handleShowLeave(item.id);
-                    }}>
-                    <Image
-                      style={styles.actionIcon}
-                      source={require('../assets/visible.png')}
-                    />
-                  </TouchableOpacity>
-                </View>
-              )}
-            />
-          </View>
-        </ScrollView>
-
-        <View style={styles.pagination}>
-          <Text>
-            Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
-            {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
-            {tableData.length} entries
-          </Text>
-          <View style={styles.paginationButtons}>
-            <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
-              <Text style={styles.paginationText}>Previous</Text>
-            </TouchableOpacity>
-            <View style={styles.pageNumber}>
-              <Text style={styles.pageText}>{currentPage}</Text>
+                    handleShowLeave(item.id);
+                  }}>
+                  <Image
+                    style={styles.actionIcon}
+                    source={require('../assets/visible.png')}
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
-            <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
-              <Text style={styles.paginationText}>Next</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+          )}
+        />
       </>
 
-      {/* Modal */}
+      {/* Add Leave Modal */}
       <Modal isVisible={isModalVisible}>
         <View
           style={{
@@ -396,24 +338,38 @@ const ApplyLeave = ({navigation}: any) => {
             borderRadius: 5,
             borderWidth: 1,
             borderColor: '#6C757D',
+            overflow: 'hidden',
           }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../assets/bgimg.jpg')}
+            />
+          </Animated.View>
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
-              margin: 20,
+              margin: 10,
             }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>Add Leave</Text>
+            <Text style={{color: '#3b82f6', fontSize: 18, fontWeight: 'bold'}}>
+              Add Leave
+            </Text>
 
             <TouchableOpacity onPress={() => setModalVisible(!isModalVisible)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
+              <Text style={{color: 'red'}}>✖</Text>
             </TouchableOpacity>
           </View>
 
           <View
             style={{
               height: 1,
-              backgroundColor: 'gray',
+              backgroundColor: '#3b82f6',
               width: wp('90%'),
             }}
           />
@@ -434,7 +390,7 @@ const ApplyLeave = ({navigation}: any) => {
                 borderRightWidth: 1,
                 borderLeftWidth: 1,
                 borderRadius: 5,
-                borderColor: 'gray',
+                borderColor: '#3b82f6',
                 marginLeft: 20,
                 marginRight: 5,
               }}>
@@ -455,17 +411,17 @@ const ApplyLeave = ({navigation}: any) => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   borderRadius: 5,
-                  borderColor: 'gray',
+                  borderColor: '#3b82f6',
                 }}>
                 <TextInput
                   style={{
-                    color: 'black',
+                    color: '#3b82f6',
                     width: 95,
                   }}
                   value={subject}
                   onChangeText={setSubject}
                   placeholder="Enter"
-                  placeholderTextColor={'gray'}
+                  placeholderTextColor={'#3b82f6'}
                 />
               </View>
             </View>
@@ -493,7 +449,7 @@ const ApplyLeave = ({navigation}: any) => {
                 borderRightWidth: 1,
                 borderLeftWidth: 1,
                 borderRadius: 5,
-                borderColor: 'gray',
+                borderColor: '#3b82f6',
                 marginRight: 20,
               }}>
               <Text style={styles.label}>Date</Text>
@@ -513,7 +469,7 @@ const ApplyLeave = ({navigation}: any) => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   borderRadius: 5,
-                  borderColor: 'gray',
+                  borderColor: '#3b82f6',
                 }}>
                 <Text
                   style={{
@@ -529,7 +485,8 @@ const ApplyLeave = ({navigation}: any) => {
                       width: 20,
                       resizeMode: 'stretch',
                       alignItems: 'center',
-                      marginLeft: 20,
+                      marginLeft: 30,
+                      tintColor: '#3b82f6',
                     }}
                     source={require('../assets/calendar.png')}
                   />
@@ -541,6 +498,7 @@ const ApplyLeave = ({navigation}: any) => {
                       is24Hour={true}
                       display="default"
                       onChange={onStartDateChange}
+                      textColor="#3b82f6"
                     />
                   )}
                 </TouchableOpacity>
@@ -570,7 +528,7 @@ const ApplyLeave = ({navigation}: any) => {
               borderRightWidth: 1,
               borderLeftWidth: 1,
               borderRadius: 5,
-              borderColor: 'gray',
+              borderColor: '#3b82f6',
               marginLeft: 20,
               marginTop: hp('5%'),
               height: 300,
@@ -591,16 +549,16 @@ const ApplyLeave = ({navigation}: any) => {
             <View
               style={{
                 borderRadius: 5,
-                borderColor: 'gray',
+                borderColor: '#3b82f6',
               }}>
               <TextInput
                 style={{
-                  color: 'black',
+                  color: '#3b82f6',
                 }}
                 value={desc}
                 onChangeText={setDesc}
                 placeholder="Leave"
-                placeholderTextColor={'gray'}
+                placeholderTextColor={'#3b82f6'}
               />
             </View>
           </View>
@@ -620,14 +578,14 @@ const ApplyLeave = ({navigation}: any) => {
           <TouchableOpacity
             onPress={() => {
               if (validateFields()) {
-                handleAddLeave();
+                console.log('Form is valid');
               } else {
                 console.log('Form is invalid');
               }
             }}>
             <View
               style={{
-                backgroundColor: '#218838',
+                backgroundColor: '#3b82f6',
                 borderRadius: 5,
                 width: 50,
                 height: 30,
@@ -648,67 +606,72 @@ const ApplyLeave = ({navigation}: any) => {
         </View>
       </Modal>
 
-      {/* View Modal */}
       <Modal isVisible={isModalVisi}>
         <View
           style={{
             flex: 1,
             backgroundColor: 'white',
             width: 'auto',
-            maxHeight: 300,
+            maxHeight: 250,
             borderRadius: 5,
             borderWidth: 1,
+            overflow: 'hidden',
             borderColor: '#6C757D',
           }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 20,
-            }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>Leave Detail</Text>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../assets/bgimg.jpg')}
+            />
+          </Animated.View>
 
-            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
-            </TouchableOpacity>
-          </View>
+          <Text
+            style={{
+              color: '#3b82f6',
+              fontSize: 18,
+              fontWeight: 'bold',
+              textAlign: 'center',
+              margin: 10,
+            }}>
+            Leave Detail
+          </Text>
+
           <View
             style={{
               height: 1,
-              backgroundColor: 'gray',
+              backgroundColor: '#3b82f6',
               width: wp('90%'),
             }}
           />
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 10,
-            }}>
-            <View
-              style={{
-                flexDirection: 'row',
-              }}>
-              <Text style={styles.lblText}>Subject</Text>
-              <Text style={styles.valueText}>{leaveDetails?.subject}</Text>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                marginRight: 50,
-              }}>
-              <Text style={styles.lblText}>Date</Text>
-              <Text style={styles.valueText}>{leaveDetails?.leave_date}</Text>
-            </View>
-          </View>
 
           <View
             style={{
-              marginLeft: 10,
-              marginTop: 10,
+              marginTop: 15,
             }}>
             <Text style={styles.lblText}>Leave Description:</Text>
-            <Text style={styles.valueText}>{leaveDetails?.leave_desc}</Text>
+            <Text style={styles.valueText}>Sick</Text>
+          </View>
+          <View style={{flex: 1, justifyContent: 'flex-end', marginBottom: 20}}>
+            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
+              <View
+                style={{
+                  backgroundColor: '#3b82f6',
+                  borderRadius: 5,
+                  width: 50,
+                  height: 23,
+                  alignSelf: 'center',
+                }}>
+                <Text
+                  style={{color: 'white', fontSize: 16, textAlign: 'center'}}>
+                  Close
+                </Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -731,7 +694,7 @@ const styles = StyleSheet.create({
     top: -10,
     left: 14,
     fontSize: 14,
-    color: 'black',
+    color: '#3b82f6',
     backgroundColor: 'white',
     paddingHorizontal: 4,
   },
@@ -755,96 +718,58 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flex: 1,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 4,
-    borderRadius: 4,
-    textAlign: 'center',
-    color: 'gray',
-  },
-  dropdown: {
-    borderWidth: 1,
-    borderColor: '#d5d5d9',
-    borderRadius: 5,
-    minHeight: 30,
-    marginLeft: 10,
-  },
-  searchcontainer: {
-    backgroundColor: '#fff',
-    marginTop: 10,
-    width: 90,
-    height: 30,
-    marginRight: 10,
-  },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  column: {
-    width: 140,
-    padding: 1,
-    textAlign: 'center',
-  },
-  headTable: {
-    fontWeight: 'bold',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-  },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    margin: 10,
-  },
-  paginationButtons: {
-    flexDirection: 'row',
-  },
-  paginationText: {
-    fontWeight: 'bold',
-  },
-  pageNumber: {
-    width: 22,
-    height: 22,
-    backgroundColor: '#3b82f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
-    marginRight: 10,
-  },
-  pageText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  flatList: {
-    margin: 10,
-    flex: 1,
-  },
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 50,
-    height: 20,
-    marginRight: 50,
   },
   statusIcon: {
     width: 17,
     height: 17,
-    top: 3,
-    marginLeft: 90,
   },
   actionIcon: {
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    top: 3,
-    marginLeft: 170,
   },
   lblText: {
     fontWeight: 'bold',
-    marginRight: 10,
+    color: '#3b82f6',
+    fontSize: 16,
+    marginLeft: '10%',
   },
   valueText: {
-    marginRight: 10,
+    marginRight: '10%',
+    color: '#3b82f6',
+    marginLeft: '10%',
+  },
+  card: {
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 20,
+    marginLeft: '2%',
+    marginRight: '2%',
+    marginTop: '1%',
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#3b82f6',
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });

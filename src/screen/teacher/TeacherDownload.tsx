@@ -1,4 +1,5 @@
 import {
+  Alert,
   BackHandler,
   FlatList,
   ScrollView,
@@ -15,20 +16,16 @@ import axios from 'axios';
 import DropDownPicker from 'react-native-dropdown-picker';
 import {heightPercentageToDP as hp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import RNFS from 'react-native-fs';
 
-const srNumber: number = 5;
-const row = {
-  sr: srNumber.toString(),
-};
-
-type TableRow = {
-  sr: string | number;
-  class: string;
-  section: string;
-  title: string;
-  date: string;
-  action: string;
-};
+interface Download {
+  id: number;
+  file_date: string;
+  cls_name: string;
+  sec_name: string;
+  file_title: string;
+  file_notes: string;
+}
 
 const TeacherDownload = ({navigation}: any) => {
   const {token} = useUser();
@@ -36,265 +33,7 @@ const TeacherDownload = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
-
-  const [downloadData, setDownloadData] = useState<TableRow[]>([
-    {
-      sr: 1,
-      class: 'Ten',
-      section: 'A',
-      title: 'Algebra',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 2,
-      class: 'Ten',
-      section: 'A',
-      title: 'ABC',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 3,
-      class: 'Ten',
-      section: 'A',
-      title: 'Economics',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 4,
-      class: 'Ten',
-      section: 'A',
-      title: 'MMMMMM',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 5,
-      class: 'Ten',
-      section: 'A',
-      title: 'Text title 1',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 6,
-      class: 'Ten',
-      section: 'A',
-      title: 'o0o0o',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 7,
-      class: 'Ten',
-      section: 'A',
-      title: 'Management',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 8,
-      class: 'Ten',
-      section: 'A',
-      title: 'Management',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 9,
-      class: 'Ten',
-      section: 'A',
-      title: 'Economics',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 10,
-      class: 'Ten',
-      section: 'A',
-      title: 'Management',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 11,
-      class: 'Ten',
-      section: 'A',
-      title: 'Pakistan',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 12,
-      class: 'Ten',
-      section: 'A',
-      title: 'India',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 13,
-      class: 'Ten',
-      section: 'A',
-      title: 'Algebra',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 14,
-      class: 'Ten',
-      section: 'A',
-      title: 'ABC',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 15,
-      class: 'Ten',
-      section: 'A',
-      title: 'Economics',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 16,
-      class: 'Ten',
-      section: 'A',
-      title: 'MMMMMM',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 17,
-      class: 'Ten',
-      section: 'A',
-      title: 'Text title 1',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 18,
-      class: 'Ten',
-      section: 'A',
-      title: 'o0o0o',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 19,
-      class: 'Ten',
-      section: 'A',
-      title: 'Management',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 20,
-      class: 'Ten',
-      section: 'A',
-      title: 'Management',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 21,
-      class: 'Ten',
-      section: 'A',
-      title: 'Economics',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 22,
-      class: 'Ten',
-      section: 'A',
-      title: 'Management',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 23,
-      class: 'Ten',
-      section: 'A',
-      title: 'Pakistan',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 24,
-      class: 'Ten',
-      section: 'A',
-      title: 'India',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 25,
-      class: 'Ten',
-      section: 'A',
-      title: 'Algebra',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 26,
-      class: 'Ten',
-      section: 'A',
-      title: 'ABC',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 27,
-      class: 'Ten',
-      section: 'A',
-      title: 'Economics',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 28,
-      class: 'Ten',
-      section: 'A',
-      title: 'MMMMMM',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 29,
-      class: 'Ten',
-      section: 'A',
-      title: 'Text title 1',
-      date: '29-11-2024',
-      action: 'Download',
-    },
-    {
-      sr: 30,
-      class: 'Ten',
-      section: 'A',
-      title: 'o0o0o',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 31,
-      class: 'Ten',
-      section: 'A',
-      title: 'Management',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-    {
-      sr: 32,
-      class: 'Ten',
-      section: 'A',
-      title: 'Management',
-      date: '07-12-2024',
-      action: 'Download',
-    },
-  ]);
+  const [downloadData, setDownloadData] = useState<Download[]>([]);
   const [filteredDownloadData, setFilteredDownloadData] =
     useState(downloadData);
 
@@ -333,6 +72,31 @@ const TeacherDownload = ({navigation}: any) => {
     currentPage * entriesPerPage,
   );
 
+  const downloadFile = async (url: any) => {
+    try {
+      const fileName = url.split('/').pop();
+      const downloadDest = `${RNFS.DownloadDirectoryPath}/${fileName}`;
+
+      const options = {
+        fromUrl: url,
+        toFile: downloadDest,
+      };
+
+      const download = RNFS.downloadFile(options);
+
+      download.promise.then(response => {
+        if (response.statusCode === 200) {
+          Alert.alert('Success', `File downloaded to ${downloadDest}`);
+        } else {
+          Alert.alert('Error', 'Failed to download file');
+        }
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      Alert.alert('Error', 'An error occurred while downloading the file');
+    }
+  };
+
   const fetchData = async () => {
     if (token) {
       try {
@@ -344,7 +108,8 @@ const TeacherDownload = ({navigation}: any) => {
             },
           },
         );
-        return response.data.output;
+        setFilteredDownloadData(response.data.files);
+        setDownloadData(response.data.files);
       } catch (error) {
         console.log(error);
         throw error;
@@ -368,6 +133,17 @@ const TeacherDownload = ({navigation}: any) => {
 
     return () => backHandler.remove();
   }, []);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''; // Handle empty or invalid dates
+
+    const date = new Date(dateString); // Parse the date string
+    const day = String(date.getDate()).padStart(2, '0'); // Ensure 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Return formatted date
+  };
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
       <View style={styles.header}>
@@ -416,7 +192,7 @@ const TeacherDownload = ({navigation}: any) => {
             data={filteredDownloadData}
             keyExtractor={(item, index) => index.toString()}
             renderItem={({item}) => (
-              <Text style={styles.item}>{item.title}</Text>
+              <Text style={styles.item}>{item.file_title}</Text>
             )}
           />
         </View>
@@ -456,14 +232,26 @@ const TeacherDownload = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={[styles.column, {width: 100}]}>{item.sr}</Text>
-                <Text style={[styles.column, {width: 150}]}>{item.class}</Text>
+                <Text style={[styles.column, {width: 100}]}>{index + 1}</Text>
                 <Text style={[styles.column, {width: 150}]}>
-                  {item.section}
+                  {item.cls_name}
                 </Text>
-                <Text style={[styles.column, {width: 200}]}>{item.title}</Text>
-                <Text style={[styles.column, {width: 150}]}>{item.date}</Text>
-                <TouchableOpacity style={styles.iconContainer}>
+                <Text style={[styles.column, {width: 150}]}>
+                  {item.sec_name}
+                </Text>
+                <Text style={[styles.column, {width: 200}]}>
+                  {item.file_title}
+                </Text>
+                <Text style={[styles.column, {width: 150}]}>
+                  {formatDate(item.file_date)}
+                </Text>
+                <TouchableOpacity
+                  style={styles.iconContainer}
+                  onPress={() => {
+                    downloadFile(
+                      `https://demo.capobrain.com/files_download/${item.file_notes}`,
+                    );
+                  }}>
                   <Image
                     style={styles.actionIcon}
                     source={require('../../assets/dpd.png')}
@@ -528,8 +316,8 @@ const styles = StyleSheet.create({
     padding: 4,
     marginBottom: 5,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   item: {
     borderBottomColor: '#ccc',

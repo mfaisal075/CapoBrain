@@ -168,6 +168,17 @@ const TeacherApplyLeave = ({navigation}: any) => {
 
     return () => backHandler.remove();
   }, []);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''; // Handle empty or invalid dates
+
+    const date = new Date(dateString); // Parse the date string
+    const day = String(date.getDate()).padStart(2, '0'); // Ensure 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Return formatted date
+  };
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
       <View style={styles.header}>
@@ -218,7 +229,6 @@ const TeacherApplyLeave = ({navigation}: any) => {
           style={{
             flexDirection: 'row',
             justifyContent: 'space-between',
-          
           }}>
           <View style={{width: 80, marginTop: 9}}>
             <DropDownPicker
@@ -279,7 +289,9 @@ const TeacherApplyLeave = ({navigation}: any) => {
                   ]}>
                   <Text style={styles.column}>{index + 1}</Text>
                   <Text style={styles.column}>{item.subject}</Text>
-                  <Text style={styles.column}>{item.leave_date}</Text>
+                  <Text style={styles.column}>
+                    {formatDate(item.leave_date)}
+                  </Text>
                   <View style={styles.iconContainer}>
                     <Image
                       style={styles.statusIcon}
@@ -641,8 +653,10 @@ const TeacherApplyLeave = ({navigation}: any) => {
               }}>
               <Text style={styles.lblText}>Date</Text>
               <Text style={styles.valueText}>
-                {leaveData.find(leave => leave.id === selectedId)?.leave_date ??
-                  '--'}
+                {formatDate(
+                  leaveData.find(leave => leave.id === selectedId)
+                    ?.leave_date ?? '--',
+                )}
               </Text>
             </View>
           </View>
@@ -708,8 +722,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
 
   dropdown: {

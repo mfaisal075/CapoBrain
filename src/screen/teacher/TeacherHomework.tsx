@@ -19,12 +19,24 @@ import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import {DateTimePickerEvent} from '@react-native-community/datetimepicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-type TableRow = {
-  sr: string;
-  date: string;
-  subject: string;
-  action: string;
-};
+interface Homework {
+  home_user_id: number;
+  home_date: string;
+  home_desc: string;
+  cls_name: string;
+  sec_name: string;
+  sub_name: string;
+}
+
+interface HomeworkData {
+  homework: {
+    home_desc: string;
+    home_date: string;
+  };
+  subject: {
+    sub_name: string;
+  };
+}
 
 const TeacherHomework = ({navigation}: any) => {
   const {token} = useUser();
@@ -47,7 +59,7 @@ const TeacherHomework = ({navigation}: any) => {
   const [startDate, setStartDate] = useState(new Date());
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [branchError, setBranchError] = useState('');
-
+  const [homeworkData, setHomeworkData] = useState<HomeworkData | null>(null);
   const [currentValue, setCurrentValue] = useState(null);
   const itemc = [{label: 'Ten', value: 1}];
   const [branchErrr, setBranchErrr] = useState('');
@@ -58,11 +70,8 @@ const TeacherHomework = ({navigation}: any) => {
   const [currentVale, setCurrentVale] = useState(null);
   const itemo = [{label: 'Select Section First', value: 1}];
 
-  const originalData: TableRow[] = [
-    {sr: '1', date: '05-03-2025', subject: 'English', action: ''},
-    {sr: '2', date: '05-03-2025', subject: 'Urdu', action: ''},
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [originalData, setOriginalData] = useState<Homework[]>([]);
+  const [tableData, setTableData] = useState<Homework[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -100,7 +109,20 @@ const TeacherHomework = ({navigation}: any) => {
 
   const [isModalVisi, setModalVisi] = useState(false);
 
-  const toggleModl = () => {
+  const toggleModl = async (home_desc: string) => {
+    try {
+      const res = await axios.get(
+        `https://demo.capobrain.com/showhomework?id=${home_desc}&_token=${token}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      setHomeworkData(res.data);
+    } catch (error) {
+      console.log(error);
+    }
     setModalVisi(!isModalVisi);
   };
 
@@ -172,14 +194,17 @@ const TeacherHomework = ({navigation}: any) => {
     if (token) {
       try {
         const response = await axios.get(
-          `https://demo.capobrain.com/teacherhomeworks_fetchhomework`,
+          `https://demo.capobrain.com/teacherhomeworks_fetchhomework?from=${
+            startDate.toISOString().split('T')[0]
+          }&to=${endDate.toISOString().split('T')[0]}&_token=${token}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           },
         );
-        return response.data.output;
+        setOriginalData(response.data.homework);
+        setTableData(response.data.homework);
       } catch (error) {
         console.log(error);
         throw error;
@@ -203,7 +228,18 @@ const TeacherHomework = ({navigation}: any) => {
     );
 
     return () => backHandler.remove();
-  }, []);
+  }, [startDate, endDate]);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''; // Handle empty or invalid dates
+
+    const date = new Date(dateString); // Parse the date string
+    const day = String(date.getDate()).padStart(2, '0'); // Ensure 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Return formatted date
+  };
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
       <View style={styles.header}>
@@ -407,6 +443,7 @@ const TeacherHomework = ({navigation}: any) => {
           <TextInput
             style={styles.input}
             placeholder="Search..."
+            placeholderTextColor={'gray'}
             value={searchQuery}
             onChangeText={handleSearch}
           />
@@ -415,44 +452,59 @@ const TeacherHomework = ({navigation}: any) => {
 
       {/* Table */}
       <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        <View>
-          <FlatList
-            style={styles.flatList}
-            data={currentEntries}
-            nestedScrollEnabled
-            keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
-            }
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                {['Sr#', 'Subject', 'Date', 'Action'].map(header => (
-                  <Text key={header} style={[styles.column, styles.headTable]}>
-                    {header}
+        {currentEntries.length > 0 ? (
+          <View>
+            <FlatList
+              style={styles.flatList}
+              data={currentEntries}
+              nestedScrollEnabled
+              keyExtractor={(item, index) => `${item.home_user_id}-${index}`}
+              ListHeaderComponent={() => (
+                <View style={styles.row}>
+                  {['Sr#', 'Class', 'Section', 'Subject', 'Date', 'Action'].map(
+                    header => (
+                      <Text
+                        key={header}
+                        style={[styles.column, styles.headTable]}>
+                        {header}
+                      </Text>
+                    ),
+                  )}
+                </View>
+              )}
+              renderItem={({item, index}) => (
+                <View
+                  style={[
+                    styles.row,
+                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                  ]}>
+                  <Text style={styles.column}>{index + 1}</Text>
+                  <Text style={styles.column}>{item.cls_name}</Text>
+                  <Text style={styles.column}>{item.sec_name}</Text>
+                  <Text style={styles.column}>{item.sub_name}</Text>
+                  <Text style={styles.column}>
+                    {formatDate(item.home_date)}
                   </Text>
-                ))}
-              </View>
-            )}
-            renderItem={({item, index}) => (
-              <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.subject}</Text>
-                <Text style={styles.column}>{item.date}</Text>
-                <TouchableOpacity
-                  style={styles.iconContainer}
-                  onPress={toggleModl}>
-                  <Image
-                    style={styles.actionIcon}
-                    source={require('../../assets/visible.png')}
-                  />
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-        </View>
+                  <TouchableOpacity
+                    style={styles.iconContainer}
+                    onPress={() => toggleModl(item.home_desc)}>
+                    <Image
+                      style={styles.actionIcon}
+                      source={require('../../assets/visible.png')}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+          </View>
+        ) : (
+          <View style={{marginTop: 20, width: '100%'}}>
+            <Text
+              style={{textAlign: 'center', fontSize: 18, fontWeight: 'bold'}}>
+              No data found in the database
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
       <View style={styles.pagination}>
@@ -512,7 +564,9 @@ const TeacherHomework = ({navigation}: any) => {
               margin: 10,
             }}>
             <Text style={styles.lblText}>Date</Text>
-            <Text style={styles.valueText}>05-03-2025</Text>
+            <Text style={styles.valueText}>
+              {formatDate(homeworkData?.homework.home_date ?? '')}
+            </Text>
           </View>
           <View
             style={{
@@ -528,7 +582,9 @@ const TeacherHomework = ({navigation}: any) => {
               margin: 10,
             }}>
             <Text style={styles.lblText}>Subject</Text>
-            <Text style={styles.valueText}>English</Text>
+            <Text style={styles.valueText}>
+              {homeworkData?.subject.sub_name}
+            </Text>
           </View>
           <View
             style={{
@@ -543,7 +599,9 @@ const TeacherHomework = ({navigation}: any) => {
               flexDirection: 'row',
             }}>
             <Text style={styles.lblText}>Description:</Text>
-            <Text style={styles.valueText}>abc</Text>
+            <Text style={styles.valueText}>
+              {homeworkData?.homework.home_desc}
+            </Text>
           </View>
           <View
             style={{
@@ -994,8 +1052,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,
@@ -1072,7 +1130,7 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    marginLeft: 40,
+    marginLeft: 90,
   },
   label: {
     position: 'absolute',

@@ -37,6 +37,18 @@ interface UserData {
   };
 }
 
+interface Account {
+  id: number;
+  acc_date: string;
+  acc_payable_amount: string;
+  stationary_paid_amount: string;
+  arrears_amount: string;
+  acc_paid_amount: string;
+  acc_balance: string;
+  payment_method: string;
+  payment_mode: string;
+}
+
 const TeacherAccount = ({navigation}: any) => {
   const {token} = useUser();
   const [isOpen, setIsOpen] = useState(false);
@@ -45,108 +57,8 @@ const TeacherAccount = ({navigation}: any) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [accountData, setAccountData] = useState<UserData | null>(null);
 
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      date: '14-11-2024',
-      payable: '3100',
-      inventory: '0',
-      arrears: '0',
-      paidAmount: '0',
-      balance: '31000',
-      paymentMethod: 'Monthly Salary',
-      transactionType: 'Cash',
-    },
-    {
-      sr: '2',
-      date: '14-11-2024',
-      payable: '3100',
-      inventory: '0',
-      arrears: '0',
-      paidAmount: '31000',
-      balance: '0',
-      paymentMethod: 'Salary Withdraw',
-      transactionType: 'Cash',
-    },
-    {
-      sr: '3',
-      date: '20-11-2024',
-      payable: '20000',
-      inventory: '240',
-      arrears: '0',
-      paidAmount: '0',
-      balance: '20000',
-      paymentMethod: 'Advance Salary',
-      transactionType: 'Cash',
-    },
-    {
-      sr: '4',
-      date: '20-11-2024',
-      payable: '20000',
-      inventory: '0',
-      arrears: '0',
-      paidAmount: '2000',
-      balance: '0',
-      paymentMethod: 'Salary Withdraw',
-      transactionType: 'Cash',
-    },
-    {
-      sr: '5',
-      date: '20-11-2024',
-      payable: '-15',
-      inventory: '15',
-      arrears: '0',
-      paidAmount: '0',
-      balance: '-15',
-      paymentMethod: 'Inventory Issued	',
-      transactionType: 'Cash',
-    },
-    {
-      sr: '6',
-      date: '07-12-2024',
-      payable: '27985',
-      inventory: '0',
-      arrears: '-15',
-      paidAmount: '0',
-      balance: '27985',
-      paymentMethod: 'Monthly Salary',
-      transactionType: 'Cash',
-    },
-    {
-      sr: '7',
-      date: '30-01-2025',
-      payable: '57985',
-      inventory: '240',
-      arrears: '27985',
-      paidAmount: '0',
-      balance: '57985',
-      paymentMethod: 'Advance Salary',
-      transactionType: 'Cash',
-    },
-    {
-      sr: '8',
-      date: '03-02-2025',
-      payable: '79985',
-      inventory: '0',
-      arrears: '57985',
-      paidAmount: '0',
-      balance: '79985',
-      paymentMethod: 'Monthly Salary',
-      transactionType: 'Cash',
-    },
-    {
-      sr: '9',
-      date: '04-02-2025',
-      payable: '97985',
-      inventory: '0',
-      arrears: '79985',
-      paidAmount: '0',
-      balance: '97985',
-      paymentMethod: 'Salary Update',
-      transactionType: 'Cash',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [originalData, setOriginalData] = useState<Account[]>([]);
+  const [tableData, setTableData] = useState<Account[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -209,7 +121,8 @@ const TeacherAccount = ({navigation}: any) => {
           },
         );
 
-        return response.data.output;
+        setOriginalData(response.data.accounts);
+        setTableData(response.data.accounts);
       } catch (error) {
         console.log(error);
         throw error;
@@ -258,6 +171,17 @@ const TeacherAccount = ({navigation}: any) => {
 
     return () => backHandler.remove();
   }, []);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''; // Handle empty or invalid dates
+
+    const date = new Date(dateString); // Parse the date string
+    const day = String(date.getDate()).padStart(2, '0'); // Ensure 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Return formatted date
+  };
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
       <View style={styles.header}>
@@ -287,7 +211,6 @@ const TeacherAccount = ({navigation}: any) => {
         style={{
           flexDirection: 'row',
           justifyContent: 'space-between',
-         
         }}>
         <View style={{width: 80, marginTop: 9}}>
           <DropDownPicker
@@ -319,51 +242,64 @@ const TeacherAccount = ({navigation}: any) => {
 
       {/* Table */}
       <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        <View>
-          <FlatList
-            style={styles.flatList}
-            data={currentEntries}
-            keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
-            }
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                {[
-                  'Sr#',
-                  'Date',
-                  'Payable',
-                  'Inventory',
-                  'Arrears',
-                  'Paid Amount',
-                  'Balance',
-                  'Payment Method',
-                  'Transaction Type',
-                ].map(header => (
-                  <Text key={header} style={[styles.column, styles.headTable]}>
-                    {header}
+        {currentEntries.length > 0 ? (
+          <View>
+            <FlatList
+              style={styles.flatList}
+              data={currentEntries}
+              keyExtractor={(item, index) =>
+                item.id ? `${item.id}-${index}` : index.toString()
+              }
+              ListHeaderComponent={() => (
+                <View style={styles.row}>
+                  {[
+                    'Sr#',
+                    'Date',
+                    'Payable',
+                    'Inventory',
+                    'Arrears',
+                    'Paid Amount',
+                    'Balance',
+                    'Payment Method',
+                    'Transaction Type',
+                  ].map(header => (
+                    <Text
+                      key={header}
+                      style={[styles.column, styles.headTable]}>
+                      {header}
+                    </Text>
+                  ))}
+                </View>
+              )}
+              renderItem={({item, index}) => (
+                <View
+                  style={[
+                    styles.row,
+                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                  ]}>
+                  <Text style={styles.column}>{index + 1}</Text>
+                  <Text style={styles.column}>{formatDate(item.acc_date)}</Text>
+                  <Text style={styles.column}>{item.acc_payable_amount}</Text>
+                  <Text style={styles.column}>
+                    {item.stationary_paid_amount}
                   </Text>
-                ))}
-              </View>
-            )}
-            renderItem={({item, index}) => (
-              <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.date}</Text>
-                <Text style={styles.column}>{item.payable}</Text>
-                <Text style={styles.column}>{item.inventory}</Text>
-                <Text style={styles.column}>{item.arrears}</Text>
-                <Text style={styles.column}>{item.paidAmount}</Text>
-                <Text style={styles.column}>{item.balance}</Text>
-                <Text style={styles.column}>{item.paymentMethod}</Text>
-                <Text style={styles.column}>{item.transactionType}</Text>
-              </View>
-            )}
-          />
-        </View>
+                  <Text style={styles.column}>{item.arrears_amount}</Text>
+                  <Text style={styles.column}>{item.acc_paid_amount}</Text>
+                  <Text style={styles.column}>{item.acc_balance}</Text>
+                  <Text style={styles.column}>{item.payment_method}</Text>
+                  <Text style={styles.column}>{item.payment_mode}</Text>
+                </View>
+              )}
+            />
+          </View>
+        ) : (
+          <View style={{marginTop: 20, width: '100%'}}>
+            <Text
+              style={{textAlign: 'center', fontSize: 18, fontWeight: 'bold'}}>
+              No data found in the database
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
       <View style={styles.pagination}>
@@ -403,8 +339,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,

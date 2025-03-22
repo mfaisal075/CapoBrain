@@ -20,23 +20,47 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 
-type TableRow = {
-  sr: string;
-  branch: string;
-  class: string;
-  action: string;
-};
+interface DateSheet {
+  id: number;
+  cls_name: string;
+  sec_name: string;
+  bra_name: string;
+  class_id: number;
+}
 
-type TableModal = {
-  sr: string | number;
-  subject: string;
+interface DateSheetData {
+  sub_name: string;
+  id: 9;
+  time_from: string;
+  time_to: string;
   date: string;
-  startTime: string;
-  endTime: string;
-};
+}
+
+interface OtherData {
+  school: {
+    scl_institute_name: string;
+  };
+  branch: {
+    bra_name: string;
+  };
+  class: {
+    cls_name: string;
+  };
+  section: {
+    sec_name: string;
+  };
+}
 
 const TeacherDateSheet = ({navigation}: any) => {
   const {token} = useUser();
+  const [isOpen, setIsOpen] = useState(false);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [originalData, setOriginalData] = useState<DateSheet[]>([]);
+  const [tableData, setTableData] = useState<DateSheet[]>(originalData);
+  const [originalDta, setOriginalDta] = useState<DateSheetData[]>([]);
+  const [ModalData, setModalData] = useState<DateSheetData[]>(originalDta);
+  const [otherData, setOtherData] = useState<OtherData | null>(null);
 
   const fetchData = async () => {
     if (token) {
@@ -49,13 +73,28 @@ const TeacherDateSheet = ({navigation}: any) => {
             },
           },
         );
-        return response.data.output;
+        setOriginalData(response.data.datesheets);
+        setTableData(response.data.datesheets);
       } catch (error) {
         console.log(error);
         throw error;
       }
     } else {
       throw new Error('User is not Authenticated');
+    }
+  };
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    if (text.trim() === '') {
+      setTableData(originalData);
+    } else {
+      const filtered = originalData.filter(item =>
+        Object.values(item).some(value =>
+          String(value).toLowerCase().includes(text.toLowerCase()),
+        ),
+      );
+      setTableData(filtered);
     }
   };
 
@@ -74,36 +113,12 @@ const TeacherDateSheet = ({navigation}: any) => {
     return () => backHandler.remove();
   }, []);
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const originalData: TableRow[] = [
-    {sr: '1', branch: 'Main Branch', class: 'Three (A)', action: ''},
-  ];
-
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
-
   const items = [
     {label: '10', value: 10},
     {label: '25', value: 25},
     {label: '50', value: 50},
     {label: '100', value: 100},
   ];
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setTableData(originalData);
-    } else {
-      const filtered = originalData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered);
-    }
-  };
 
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(tableData.length / entriesPerPage);
@@ -123,61 +138,40 @@ const TeacherDateSheet = ({navigation}: any) => {
   }
   const [isModalVisi, setModalVisi] = useState(false);
 
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
+  const toggleModl = async (id: number) => {
+    try {
+      const res = await axios.get(
+        `https://demo.capobrain.com/showdatesheet?id=${id}&_token=${token}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      setOriginalDta(res.data.datesheet_detail);
+      setModalData(res.data.datesheet_detail);
+      setOtherData(res.data);
+      setModalVisi(!isModalVisi);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const Info = [
-    {key: 'Class', value: 'Three'},
-    {key: 'Section', value: 'A'},
+    {key: 'Class', value: otherData?.class.cls_name},
+    {key: 'Section', value: otherData?.section.sec_name},
   ];
 
-  const originalDta: TableModal[] = [
-    {
-      sr: '1',
-      subject: 'English',
-      date: '14-03-2025',
-      startTime: '12:44',
-      endTime: '13:44',
-    },
-    {
-      sr: '2',
-      subject: 'Urdu',
-      date: '15-03-2025',
-      startTime: '12:44',
-      endTime: '14:44',
-    },
-    {
-      sr: '3',
-      subject: 'Math',
-      date: '16-03-2025',
-      startTime: '12:44',
-      endTime: '15:44',
-    },
-    {
-      sr: '4',
-      subject: 'Pakistan Studies',
-      date: '17-03-2025',
-      startTime: '12:44',
-      endTime: '16:44',
-    },
-    {
-      sr: '5',
-      subject: 'Science',
-      date: '18-03-2025',
-      startTime: '12:44',
-      endTime: '17:44',
-    },
-    {
-      sr: '6',
-      subject: 'Islamiyat',
-      date: '19-03-2025',
-      startTime: '12:44',
-      endTime: '13:44',
-    },
-  ];
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''; // Handle empty or invalid dates
 
-  const [ModalData, setModalData] = useState<TableModal[]>(originalDta);
+    const date = new Date(dateString); // Parse the date string
+    const day = String(date.getDate()).padStart(2, '0'); // Ensure 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Return formatted date
+  };
 
   return (
     <View
@@ -224,6 +218,7 @@ const TeacherDateSheet = ({navigation}: any) => {
           <TextInput
             style={styles.input}
             placeholder="Search..."
+            placeholderTextColor={'gray'}
             value={searchQuery}
             onChangeText={handleSearch}
           />
@@ -232,43 +227,61 @@ const TeacherDateSheet = ({navigation}: any) => {
 
       {/* Table */}
       <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        <View>
-          <FlatList
-            style={styles.flatList}
-            data={currentEntries}
-            keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
-            }
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                {['Sr#', 'Branch', 'Class', 'Action'].map(header => (
-                  <Text key={header} style={[styles.column, styles.headTable]}>
-                    {header}
-                  </Text>
-                ))}
-              </View>
-            )}
-            renderItem={({item, index}) => (
-              <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.branch}</Text>
-                <Text style={styles.column}>{item.class}</Text>
-                <TouchableOpacity
-                  style={styles.iconContainer}
-                  onPress={toggleModl}>
-                  <Image
-                    style={styles.actionIcon}
-                    source={require('../../assets/visible.png')}
-                  />
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-        </View>
+        {currentEntries.length > 0 ? (
+          <View>
+            <FlatList
+              style={styles.flatList}
+              data={currentEntries}
+              keyExtractor={(item, index) =>
+                item.id ? item.id.toString() : index.toString()
+              }
+              ListHeaderComponent={() => (
+                <View style={styles.row}>
+                  {['Sr#', 'Branch', 'Class', 'Action'].map(header => (
+                    <Text
+                      key={header}
+                      style={[styles.column, styles.headTable]}>
+                      {header}
+                    </Text>
+                  ))}
+                </View>
+              )}
+              renderItem={({item, index}) => (
+                <View
+                  style={[
+                    styles.row,
+                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                  ]}>
+                  <Text style={styles.column}>{index + 1}</Text>
+                  <Text style={styles.column}>{item.bra_name}</Text>
+                  <Text
+                    style={
+                      styles.column
+                    }>{`${item.cls_name} (${item.sec_name})`}</Text>
+                  <TouchableOpacity
+                    style={styles.iconContainer}
+                    onPress={() => toggleModl(item.class_id)}>
+                    <Image
+                      style={styles.actionIcon}
+                      source={require('../../assets/visible.png')}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+          </View>
+        ) : (
+          <View style={{width: '100%', marginTop: 20}}>
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: 'bold',
+                textAlign: 'center',
+              }}>
+              No record found in the database!
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
       <View style={styles.pagination}>
@@ -352,48 +365,59 @@ const TeacherDateSheet = ({navigation}: any) => {
             horizontal
             style={{marginBottom: hp('5%')}}
             contentContainerStyle={{flexGrow: 0.8}}>
-            <View>
-              <FlatList
-                style={styles.flatList}
-                data={ModalData}
-                nestedScrollEnabled
-                keyExtractor={(item, index) =>
-                  item.sr ? item.sr.toString() : index.toString()
-                }
-                ListHeaderComponent={() => (
-                  <View style={styles.row}>
-                    {['Sr#', 'Subject', 'Date', 'Time Start', 'Time end'].map(
-                      header => (
-                        <Text
-                          key={header}
-                          style={[styles.column, styles.headTable]}>
-                          {header}
-                        </Text>
-                      ),
-                    )}
-                  </View>
-                )}
-                renderItem={({item}) => (
-                  <View style={styles.row}>
-                    <Text style={[styles.column, styles.withBorder]}>
-                      {item.sr}
-                    </Text>
-                    <Text style={[styles.column, styles.withBorder]}>
-                      {item.subject}
-                    </Text>
-                    <Text style={[styles.column, styles.withBorder]}>
-                      {item.date}
-                    </Text>
-                    <Text style={[styles.column, styles.withBorder]}>
-                      {item.startTime}
-                    </Text>
-                    <Text style={styles.column}>
-                      {item.endTime}
-                    </Text>
-                  </View>
-                )}
-              />
-            </View>
+            {ModalData.length > 0 ? (
+              <View>
+                <FlatList
+                  style={styles.flatList}
+                  data={ModalData}
+                  nestedScrollEnabled
+                  keyExtractor={(item, index) =>
+                    item.id ? item.id.toString() : index.toString()
+                  }
+                  ListHeaderComponent={() => (
+                    <View style={styles.row}>
+                      {['Sr#', 'Subject', 'Date', 'Time Start', 'Time end'].map(
+                        header => (
+                          <Text
+                            key={header}
+                            style={[styles.column, styles.headTable]}>
+                            {header}
+                          </Text>
+                        ),
+                      )}
+                    </View>
+                  )}
+                  renderItem={({item, index}) => (
+                    <View style={styles.row}>
+                      <Text style={[styles.column, styles.withBorder]}>
+                        {index + 1}
+                      </Text>
+                      <Text style={[styles.column, styles.withBorder]}>
+                        {item.sub_name}
+                      </Text>
+                      <Text style={[styles.column, styles.withBorder]}>
+                        {formatDate(item.date)}
+                      </Text>
+                      <Text style={[styles.column, styles.withBorder]}>
+                        {item.time_from}
+                      </Text>
+                      <Text style={styles.column}>{item.time_to}</Text>
+                    </View>
+                  )}
+                />
+              </View>
+            ) : (
+              <View style={{width: '100%', marginTop: 20}}>
+                <Text
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                  }}>
+                  No record found in the database!
+                </Text>
+              </View>
+            )}
           </ScrollView>
         </View>
       </Modal>

@@ -1,8 +1,10 @@
 import {
   Alert,
+  Animated,
   BackHandler,
   FlatList,
   Image,
+  ImageBackground,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Modal from 'react-native-modal';
 import {Picker} from '@react-native-picker/picker';
 import {
@@ -21,43 +23,23 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useUser} from '../Ctx/UserContext';
 import axios from 'axios';
 
+interface Complains {
+  id: number;
+  name: string;
+  email: string;
+  contact: string;
+  status: string;
+}
+
+interface ComplainData {
+  description: string;
+}
+
 const StdComplain = ({navigation}: any) => {
   const {token} = useUser();
-  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
-  const [search, setSearch] = useState<string>('');
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [complainData, setComplainData] = useState<ComplainData | null>(null);
 
-  const complaintsData = [
-    {
-      sr: '1',
-      name: 'Ayesha Zumar',
-      email: 'Nill',
-      contact: '0321456789',
-      status: 'approved',
-      action: '',
-    },
-    {
-      sr: '2',
-      name: 'Zainab',
-      email: 'Nill',
-      contact: '0321456789',
-      status: 'rejected',
-      action: '',
-    },
-  ];
-
-  const filteredComplaints = complaintsData.filter(complaint =>
-    Object.values(complaint).some(value =>
-      value.toString().toLowerCase().includes(search.toLowerCase()),
-    ),
-  );
-
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentComplaints = filteredComplaints.slice(
-    indexOfFirstItem,
-    indexOfLastItem,
-  );
+  const [complaintsData, setComplaintsData] = useState<Complains[]>([]);
 
   //Complain Modal
   const [isModalVisible, setModalVisible] = useState(false);
@@ -86,40 +68,59 @@ const StdComplain = ({navigation}: any) => {
   }
   const [isModalVisi, setModalVisi] = useState(false);
 
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
+  const toggleModl = async (id: number) => {
+    try {
+      const res = await axios.get(
+        `https://demo.capobrain.com/complainview?id=${id}&_token=${token}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      setComplainData(res.data);
+      setModalVisi(!isModalVisi);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const handleAddComplain = async () => {
+  const fetchData = async () => {
     if (token) {
       try {
-        const res = await axios.post(
-          'https://demo.capobrain.com/portal_complain_store',
-          {
-            description: desc,
-          },
+        const response = await axios.get(
+          'https://demo.capobrain.com/fetchusercomplain',
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-            withCredentials: true,
           },
         );
-
-        if (res.status === 200) {
-          Alert.alert('Success', 'Added');
-          console.log(res.data);
-          console.log(res.request);
-          console.log(res.headers);
-        }
+        setComplaintsData(response.data.complains);
       } catch (error) {
         console.log(error);
-        throw error;
       }
     }
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
+    fetchData();
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -134,12 +135,24 @@ const StdComplain = ({navigation}: any) => {
   }, []);
   return (
     <View style={styles.container}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon
             name="arrow-left"
             size={38}
-            color={'#FFFFFF'}
+            color={'#fff'}
             style={{paddingHorizontal: 10}}
           />
         </TouchableOpacity>
@@ -151,17 +164,18 @@ const StdComplain = ({navigation}: any) => {
           style={{
             width: 120,
             height: 30,
-            backgroundColor: '#218838',
+            backgroundColor: '#3b82f6',
             borderRadius: 5,
             marginRight: 10,
             alignSelf: 'flex-end',
             marginTop: 10,
+            marginBottom: 10,
           }}>
           <Text
             style={{
               color: 'white',
               fontWeight: 'bold',
-              fontSize: 15,
+              fontSize: 16,
               textAlign: 'center',
               marginTop: 3,
             }}>
@@ -169,139 +183,47 @@ const StdComplain = ({navigation}: any) => {
           </Text>
         </View>
       </TouchableOpacity>
-      <View style={styles.filterContainer}>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={itemsPerPage}
-            onValueChange={(value: number) => {
-              setItemsPerPage(value);
-              setCurrentPage(1);
-            }}
-            style={styles.picker}>
-            <Picker.Item label="10" value={10} />
-            <Picker.Item label="25" value={25} />
-            <Picker.Item label="50" value={50} />
-            <Picker.Item label="100" value={100} />
-          </Picker>
-        </View>
-
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Search..."
-          placeholderTextColor={'gray'}
-          value={search}
-          onChangeText={text => setSearch(text)}
-        />
-      </View>
-
-      <ScrollView horizontal>
-        <View>
-          <FlatList
-            style={styles.flatList}
-            data={currentComplaints}
-            keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
-            }
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                {['Sr#', 'Name', 'Email', 'Contact', 'Status', 'Action'].map(
-                  header => (
-                    <Text
-                      key={header}
-                      style={[styles.column, styles.headTable]}>
-                      {header}
-                    </Text>
-                  ),
-                )}
-              </View>
-            )}
-            renderItem={({item, index}) => (
-              <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.name}</Text>
-                <Text style={styles.column}>{item.email}</Text>
-                <Text style={styles.column}>{item.contact}</Text>
-
-                <View style={styles.iconContainer}>
-                  <Image
-                    style={styles.statusIcon}
-                    source={
-                      item.status === 'approved'
-                        ? require('../assets/approved.png')
-                        : require('../assets/rejected.png')
-                    }
-                  />
-                </View>
-
-                <TouchableOpacity
-                  style={styles.iconContainer}
-                  onPress={toggleModl}>
-                  <Image
-                    style={styles.actionIcon}
-                    source={require('../assets/visible.png')}
-                  />
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-        </View>
-      </ScrollView>
-
-      <View style={styles.pagination}>
-        <Text style={styles.pageInfo}>
-          Showing {indexOfFirstItem + 1} to{' '}
-          {Math.min(indexOfLastItem, filteredComplaints.length)} of{' '}
-          {filteredComplaints.length} entries
-        </Text>
-        <TouchableOpacity
-          onPress={() => setCurrentPage(prev => Math.max(prev - 1, 1))}>
-          <Text style={styles.pageText}>Previous</Text>
-        </TouchableOpacity>
-        <View style={styles.pageNumberContainer}>
-          <Text style={styles.pageNumber}>{currentPage}</Text>
-        </View>
-        <TouchableOpacity
-          onPress={() =>
-            setCurrentPage(prev =>
-              indexOfLastItem < filteredComplaints.length ? prev + 1 : prev,
-            )
-          }>
-          <Text style={styles.pageText}>Next</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Modal */}
       <Modal isVisible={isModalVisible}>
         <View
           style={{
             flex: 1,
             backgroundColor: 'white',
             width: 'auto',
-            maxHeight: 550,
+            maxHeight: 450,
             borderRadius: 5,
             borderWidth: 1,
-            borderColor: '#6C757D',
+            borderColor: '#3b82f6',
+            overflow: 'hidden',
           }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../assets/bgimg.jpg')}
+            />
+          </Animated.View>
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
-              margin: 20,
+              margin: 10,
             }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>Add Complain</Text>
+            <Text style={{color: '#3b82f6', fontSize: 18, fontWeight: 'bold'}}>
+              Add Complain
+            </Text>
 
             <TouchableOpacity onPress={() => setModalVisible(!isModalVisible)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
+              <Text style={{color: 'red'}}>✖</Text>
             </TouchableOpacity>
           </View>
           <View
             style={{
               height: 1,
-              backgroundColor: 'gray',
+              backgroundColor: '#3b82f6',
               width: wp('90%'),
             }}
           />
@@ -315,7 +237,7 @@ const StdComplain = ({navigation}: any) => {
               borderRightWidth: 1,
               borderLeftWidth: 1,
               borderRadius: 5,
-              borderColor: 'gray',
+              borderColor: '#3b82f6',
               marginLeft: 20,
               marginTop: 20,
               height: 300,
@@ -336,15 +258,16 @@ const StdComplain = ({navigation}: any) => {
             <View
               style={{
                 borderRadius: 5,
-                borderColor: 'gray',
+                borderColor: '#3b82f6',
               }}>
               <TextInput
                 style={{
-                  color: 'black',
+                  color: '#3b82f6',
                 }}
                 value={desc}
                 onChangeText={setDesc}
                 placeholder="Type Your Complain Here..."
+                placeholderTextColor={'#3b82f6'}
               />
             </View>
           </View>
@@ -364,14 +287,14 @@ const StdComplain = ({navigation}: any) => {
           <TouchableOpacity
             onPress={() => {
               if (validateFields()) {
-                handleAddComplain();
+                console.log('Form is valid');
               } else {
                 console.log('Form is invalid');
               }
             }}>
             <View
               style={{
-                backgroundColor: '#218838',
+                backgroundColor: '#3b82f6',
                 borderRadius: 5,
                 width: 50,
                 height: 30,
@@ -392,76 +315,120 @@ const StdComplain = ({navigation}: any) => {
         </View>
       </Modal>
 
+      <FlatList
+        data={complaintsData}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({item}) => (
+          <View style={styles.card}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={styles.title}>{item.name}</Text>
+              <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                {item.contact ?? 'NILL'}
+              </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={{color: '#3b82f6'}}>{item.email ?? 'NILL'}</Text>
+
+              <View style={styles.iconContainer}>
+                <Image
+                  style={styles.statusIcon}
+                  source={
+                    item.status === 'Approved'
+                      ? require('../assets/approved.png')
+                      : require('../assets/rejected.png')
+                  }
+                />
+                <TouchableOpacity
+                  style={styles.iconContainer}
+                  onPress={() => toggleModl(item.id)}>
+                  <Image
+                    style={styles.actionIcon}
+                    source={require('../assets/visible.png')}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+      />
+
       <Modal isVisible={isModalVisi}>
         <View
           style={{
             flex: 1,
             backgroundColor: 'white',
             width: 'auto',
-            maxHeight: 300,
+            maxHeight: 340,
             borderRadius: 5,
             borderWidth: 1,
-            borderColor: '#6C757D',
+            borderColor: '#3b82f6',
+            overflow: 'hidden',
           }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 20,
-            }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>
-              Complain Detail
-            </Text>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../assets/bgimg.jpg')}
+            />
+          </Animated.View>
 
-            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
-            </TouchableOpacity>
-          </View>
+          <Text
+            style={{
+              color: '#3b82f6',
+              fontSize: 18,
+              textAlign: 'center',
+              margin: 10,
+              fontWeight: 'bold',
+            }}>
+            Complain Detail
+          </Text>
+
           <View
             style={{
               height: 1,
-              backgroundColor: 'gray',
+              backgroundColor: '#3b82f6',
               width: wp('90%'),
             }}
           />
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 10,
-            }}>
-            <View
-              style={{
-                flexDirection: 'row',
-              }}>
-              <Text style={styles.lblText}>Name</Text>
-              <Text style={styles.valueText}>Ayesha Zumar</Text>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                marginRight: 50,
-              }}>
-              <Text style={styles.lblText}>Email</Text>
-              <Text style={styles.valueText}>---</Text>
-            </View>
-          </View>
 
           <View
             style={{
-              flexDirection: 'row',
-              marginLeft: 10,
-            }}>
-            <Text style={styles.lblText}>Contact</Text>
-            <Text style={styles.valueText}>03214567890</Text>
-          </View>
-          <View
-            style={{
-              marginLeft: 10,
-              marginTop: 10,
+              marginTop: 15,
             }}>
             <Text style={styles.lblText}>Description:</Text>
-            <Text style={styles.valueText}>abc</Text>
+            <Text style={[styles.valueText, {marginLeft: 48, marginTop: 5}]}>
+              {complainData?.description}
+            </Text>
+          </View>
+
+          <View style={{flex: 1, justifyContent: 'flex-end', marginBottom: 20}}>
+            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
+              <View
+                style={{
+                  backgroundColor: '#3b82f6',
+                  borderRadius: 5,
+                  width: 50,
+                  height: 23,
+                  alignSelf: 'center',
+                }}>
+                <Text
+                  style={{color: 'white', fontSize: 16, textAlign: 'center'}}>
+                  Close
+                </Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -498,137 +465,71 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flex: 1,
   },
-  filterContainer: {
-    flexDirection: 'row',
-    marginVertical: 10,
-    justifyContent: 'space-between',
-    marginLeft: 10,
-    marginRight: 10,
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    marginRight: 10,
-    height: 30,
-  },
-  picker: {
-    width: 90,
-    height: 50,
-    color: '#000',
-    top: -15,
-  },
-  searchBar: {
-    width: 120,
-    height: 30,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    padding: 6,
-    textAlign: 'center',
-    color: 'gray',
-  },
-  table: {
-    minWidth: 700,
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#007bff',
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  tableHeaderText: {
-    flex: 1,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: 'white',
-  },
-  tableRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-    alignItems: 'center',
-  },
-  tableCell: {
-    flex: 1,
-    justifyContent: 'center',
-    textAlign: 'center',
-  },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  pageInfo: {
-    fontSize: 14,
-    marginRight: 10,
-  },
-  pageText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginHorizontal: 10,
-  },
-  pageNumberContainer: {
-    backgroundColor: '#007bff',
-    padding: 5,
-    borderRadius: 5,
-    paddingHorizontal: 15,
-  },
-  pageNumber: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  column: {
-    width: 140,
-    padding: 1,
-  },
+
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 50,
-    height: 20,
-    marginRight: 90,
+    flexDirection: 'row',
   },
   statusIcon: {
     width: 17,
     height: 17,
+    elevation: 10,
   },
   actionIcon: {
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
+    marginLeft: 5,
+    elevation: 10,
   },
   label: {
     position: 'absolute',
     top: -10,
     left: 14,
     fontSize: 14,
-    color: 'black',
     backgroundColor: 'white',
     paddingHorizontal: 4,
+    color: '#3b82f6',
   },
   lblText: {
     fontWeight: 'bold',
-    marginRight: 10,
+    color: '#3b82f6',
+    marginLeft: '15%',
+    fontSize: 16,
   },
   valueText: {
-    marginRight: 10,
+    marginRight: '15%',
+    color: '#3b82f6',
   },
-  flatList: {
-    margin: 10,
-    flex: 1,
+  card: {
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 20,
+    marginLeft: '2%',
+    marginRight: '2%',
+    marginTop: '1%',
+    borderColor: '#3b82f6',
+    borderWidth: 1,
   },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  headTable: {
+  title: {
+    fontSize: 16,
     fontWeight: 'bold',
-    backgroundColor: '#3b82f6',
-    color: 'white',
+    color: '#3b82f6',
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });

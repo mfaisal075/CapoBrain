@@ -23,6 +23,15 @@ type TableRow = {
   returnDate: string;
 };
 
+interface LibraryBook {
+  id: number;
+  bk_name: string;
+  issue_bk_quantity_no: string;
+  issue_bk_status: string;
+  issue_bk_date: string;
+  issue_bk_return_date: string;
+}
+
 const LibraryBook = ({navigation}: any) => {
   const {token} = useUser();
   const [isOpen, setIsOpen] = useState(false);
@@ -30,17 +39,8 @@ const LibraryBook = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      book: 'Physics key book',
-      quantity: '0',
-      status: 'Return',
-      issueDate: '14-11-2024',
-      returnDate: '16-11-2024',
-    },
-  ];
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [originalData, setOriginalData] = useState<LibraryBook[]>([]);
+  const [tableData, setTableData] = useState<LibraryBook[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -87,7 +87,8 @@ const LibraryBook = ({navigation}: any) => {
             },
           },
         );
-        return response.data.output;
+        setTableData(response.data.studentlibrarybooks);
+        setOriginalData(response.data.studentlibrarybooks);
       } catch (error) {
         console.log(error);
         throw error;
@@ -111,6 +112,17 @@ const LibraryBook = ({navigation}: any) => {
 
     return () => backHandler.remove();
   }, []);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''; // Handle empty or invalid dates
+
+    const date = new Date(dateString); // Parse the date string
+    const day = String(date.getDate()).padStart(2, '0'); // Ensure 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Return formatted date
+  };
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
       <View style={styles.header}>
@@ -166,7 +178,7 @@ const LibraryBook = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -187,12 +199,16 @@ const LibraryBook = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.book}</Text>
-                <Text style={styles.column}>{item.quantity}</Text>
-                <Text style={styles.column}>{item.status}</Text>
-                <Text style={styles.column}>{item.issueDate}</Text>
-                <Text style={styles.column}>{item.returnDate}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
+                <Text style={styles.column}>{item.bk_name}</Text>
+                <Text style={styles.column}>{item.issue_bk_quantity_no}</Text>
+                <Text style={styles.column}>{item.issue_bk_status}</Text>
+                <Text style={styles.column}>
+                  {formatDate(item.issue_bk_date)}
+                </Text>
+                <Text style={styles.column}>
+                  {formatDate(item.issue_bk_return_date)}
+                </Text>
               </View>
             )}
           />
@@ -236,8 +252,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,

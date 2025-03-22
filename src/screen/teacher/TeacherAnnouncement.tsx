@@ -5,17 +5,58 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ScrollView,
 } from 'react-native';
-import React, {useEffect} from 'react';
-import {ScrollView} from 'react-native';
+import React, {useEffect, useState} from 'react';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import axios from 'axios';
+import {useUser} from '../../Ctx/UserContext';
+
+interface News {
+  id: number;
+  new_name: string;
+  new_desc: string;
+  new_date: string;
+  new_postedby: string;
+}
+
+interface Notice {
+  id: number;
+  notice_title: string;
+  notice_desc: string;
+  notice_date: string;
+}
 
 const TeacherAnnouncement = ({navigation}: any) => {
+  const {token} = useUser();
+  const [news, setNews] = useState<News[]>([]);
+  const [notices, setNotices] = useState<Notice[]>([]);
+
+  // Fetch news and notices from the API
+  const fetchAnnouncements = async () => {
+    try {
+      const response = await axios.get(
+        'https://demo.capobrain.com/fetchprofile',
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      setNews(response.data.news);
+      setNotices(response.data.notice);
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+    }
+  };
+
   useEffect(() => {
+    fetchAnnouncements();
+
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -28,6 +69,7 @@ const TeacherAnnouncement = ({navigation}: any) => {
 
     return () => backHandler.remove();
   }, []);
+
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -50,45 +92,42 @@ const TeacherAnnouncement = ({navigation}: any) => {
       <ScrollView
         style={styles.bottom}
         contentContainerStyle={styles.scrollContent}>
-        <View style={styles.updates}>
-          <View style={styles.updateHeader}>
-            <Image
-              style={styles.updateIcon}
-              source={require('../../assets/iconupdate.png')}
-            />
-            <Text style={styles.heading}>Science & Technology Fair</Text>
+        {/* News Section */}
+        <Text style={styles.sectionTitle}>News</Text>
+        {news.map(item => (
+          <View key={item.id} style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Image
+                style={styles.updateIcon}
+                source={require('../../assets/iconupdate.png')}
+              />
+              <Text style={styles.cardTitle}>{item.new_name}</Text>
+            </View>
+            <Text style={styles.cardDate}>
+              {new Date(item.new_date).toLocaleDateString()} | Posted by:{' '}
+              {item.new_postedby}
+            </Text>
+            <Text style={styles.cardDescription}>{item.new_desc}</Text>
           </View>
-          <Text style={styles.Text}>
-            Join us for {'School Name'}'s Annual Science & Technology Fair on{' '}
-            {'Date'} to witness exciting student innovations!
-          </Text>
-        </View>
+        ))}
 
-        <View style={styles.updates}>
-          <View style={styles.updateHeader}>
-            <Image
-              style={styles.updateIcon}
-              source={require('../../assets/iconupdate.png')}
-            />
-            <Text style={styles.heading}>Iqbal Day</Text>
+        {/* Notices Section */}
+        <Text style={styles.sectionTitle}>Notices</Text>
+        {notices.map(item => (
+          <View key={item.id} style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Image
+                style={styles.updateIcon}
+                source={require('../../assets/iconupdate.png')}
+              />
+              <Text style={styles.cardTitle}>{item.notice_title}</Text>
+            </View>
+            <Text style={styles.cardDate}>
+              {new Date(item.notice_date).toLocaleDateString()}
+            </Text>
+            <Text style={styles.cardDescription}>{item.notice_desc}</Text>
           </View>
-
-          <Text style={styles.Text}>Description</Text>
-          <Text style={styles.Text}>09-Nov-2025</Text>
-        </View>
-
-        <View style={styles.updates}>
-          <View style={styles.updateHeader}>
-            <Image
-              style={styles.updateIcon}
-              source={require('../../assets/iconupdate.png')}
-            />
-            <Text style={styles.heading}>Quaid Day</Text>
-          </View>
-
-          <Text style={styles.Text}>Description</Text>
-          <Text style={styles.Text}>25-Dec-2025</Text>
-        </View>
+        ))}
       </ScrollView>
     </View>
   );
@@ -132,30 +171,49 @@ const styles = StyleSheet.create({
     paddingBottom: hp('10%'),
     paddingTop: hp('2%'),
   },
-  updates: {
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#3b82f6',
+    marginLeft: wp('5%'),
+    marginBottom: hp('1%'),
+  },
+  card: {
     width: wp('90%'),
     alignSelf: 'center',
-    padding: 5,
-    marginTop: hp('1%'),
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'black',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: hp('2%'),
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  updateHeader: {
+  cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: hp('1%'),
   },
   updateIcon: {
     width: 20,
     height: 20,
     tintColor: '#3b82f6',
-    marginRight: 5,
+    marginRight: 10,
   },
-  heading: {
+  cardTitle: {
     fontWeight: 'bold',
     fontSize: 18,
     color: '#3b82f6',
   },
-  Text: {
+  cardDate: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: hp('1%'),
+  },
+  cardDescription: {
     fontSize: 16,
+    color: '#333',
   },
 });

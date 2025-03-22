@@ -16,14 +16,27 @@ import axios from 'axios';
 import Modal from 'react-native-modal';
 import DropDownPicker from 'react-native-dropdown-picker';
 
-type TableRow = {
-  sr: string;
-  title: string;
-  startDate: string;
-  endDate: string;
-  deadline: string;
-  action: string;
-};
+interface Todo {
+  id: number;
+  title: 'New Task';
+  start_date: string;
+  end_date: string;
+  deadline_date: string;
+  notifiaction_status: string;
+}
+
+interface TodoDetail {
+  todo: {
+    title: string;
+    description: string;
+    start_date: string;
+    end_date: string;
+    deadline_date: string;
+  };
+  teacher: {
+    app_name: string;
+  };
+}
 
 const TeacherTodos = ({navigation}: any) => {
   const {token} = useUser();
@@ -32,27 +45,9 @@ const TeacherTodos = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisible, setModalVisible] = useState(false);
-
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      title: 'Check Notebooks',
-      startDate: '14-11-2024',
-      endDate: '18-11-2024',
-      deadline: '18-11-2024',
-      action: 'Comment',
-    },
-    {
-      sr: '2',
-      title: 'OOO',
-      startDate: '06-12-2024',
-      endDate: '13-12-2024',
-      deadline: '14-12-2024',
-      action: 'Comment',
-    },
-  ];
-
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
+  const [todoDetail, setTodoDetail] = useState<TodoDetail | null>(null);
+  const [originalData, setOriginalData] = useState<Todo[]>([]);
+  const [tableData, setTableData] = useState<Todo[]>(originalData);
 
   const items = [
     {label: '10', value: 10},
@@ -88,8 +83,21 @@ const TeacherTodos = ({navigation}: any) => {
     currentPage * entriesPerPage,
   );
 
-  const toggleModal = () => {
-    setModalVisible(!isModalVisible);
+  const toggleModal = async (id: number) => {
+    try {
+      const res = await axios.get(
+        `https://demo.capobrain.com/stafftodoshow?id=${id}&_token=${token}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      setTodoDetail(res.data);
+      setModalVisible(!isModalVisible);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const fetchData = async () => {
@@ -103,7 +111,8 @@ const TeacherTodos = ({navigation}: any) => {
             },
           },
         );
-        return response.data.output;
+        setOriginalData(response.data.todo);
+        setTableData(response.data.todo);
       } catch (error) {
         console.log(error);
         throw error;
@@ -127,6 +136,18 @@ const TeacherTodos = ({navigation}: any) => {
 
     return () => backHandler.remove();
   }, []);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''; // Handle empty or invalid dates
+
+    const date = new Date(dateString); // Parse the date string
+    const day = String(date.getDate()).padStart(2, '0'); // Ensure 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Return formatted date
+  };
+
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
       <View style={styles.header}>
@@ -182,7 +203,7 @@ const TeacherTodos = ({navigation}: any) => {
             style={styles.flatList}
             data={currentEntries}
             keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
+              item.id ? item.id.toString() : index.toString()
             }
             ListHeaderComponent={() => (
               <View style={styles.row}>
@@ -206,14 +227,16 @@ const TeacherTodos = ({navigation}: any) => {
                   styles.row,
                   {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
                 ]}>
-                <Text style={styles.column}>{item.sr}</Text>
+                <Text style={styles.column}>{index + 1}</Text>
                 <Text style={styles.column}>{item.title}</Text>
-                <Text style={styles.column}>{item.startDate}</Text>
-                <Text style={styles.column}>{item.endDate}</Text>
-                <Text style={styles.column}>{item.deadline}</Text>
+                <Text style={styles.column}>{formatDate(item.start_date)}</Text>
+                <Text style={styles.column}>{formatDate(item.end_date)}</Text>
+                <Text style={styles.column}>
+                  {formatDate(item.deadline_date)}
+                </Text>
                 <TouchableOpacity
-                  onPress={toggleModal}
-                  disabled={item.action === 'Not Available'}>
+                  onPress={() => toggleModal(item.id)}
+                  disabled={item.notifiaction_status === 'Close'}>
                   <View style={[styles.view, styles.actionView]}>
                     <Image
                       style={[
@@ -340,7 +363,7 @@ const TeacherTodos = ({navigation}: any) => {
                 style={{
                   margin: 8,
                 }}>
-                Ahmad Mirza
+                {todoDetail?.teacher.app_name}
               </Text>
             </View>
             <View
@@ -360,7 +383,7 @@ const TeacherTodos = ({navigation}: any) => {
                 style={{
                   margin: 8,
                 }}>
-                Check Notebooks
+                {todoDetail?.todo.title}
               </Text>
             </View>
           </View>
@@ -395,7 +418,7 @@ const TeacherTodos = ({navigation}: any) => {
                   marginTop: 8,
                   marginRight: 10,
                 }}>
-                14-11-2024
+                {formatDate(todoDetail?.todo.start_date ?? '--')}
               </Text>
             </View>
             <View
@@ -415,7 +438,7 @@ const TeacherTodos = ({navigation}: any) => {
                 style={{
                   margin: 8,
                 }}>
-                18-11-2024
+                {formatDate(todoDetail?.todo.end_date ?? '--')}
               </Text>
             </View>
           </View>
@@ -442,7 +465,7 @@ const TeacherTodos = ({navigation}: any) => {
               style={{
                 margin: 10,
               }}>
-              18-11-2024
+              {formatDate(todoDetail?.todo.deadline_date ?? '--')}
             </Text>
           </View>
           <View
@@ -462,7 +485,7 @@ const TeacherTodos = ({navigation}: any) => {
                 fontWeight: 'bold',
                 marginLeft: 10,
               }}>
-              ____
+              {todoDetail?.todo.description}
             </Text>
           </View>
         </View>
@@ -486,8 +509,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
+    textAlign: 'center',
+    color: 'gray',
   },
   dropdown: {
     borderWidth: 1,

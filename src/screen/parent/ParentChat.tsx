@@ -14,12 +14,40 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
+import {useUser} from '../../Ctx/UserContext';
+import axios from 'axios';
+
+interface Chat {
+  id: number;
+  message: string;
+  send_name: string;
+  notification_status: string;
+}
 
 const ParentChat = ({navigation}: any) => {
+  const {token, userId} = useUser();
   const [messages, setMessages] = useState<
     {id: number; text: string; sender: 'me' | 'other'}[]
   >([]);
   const [inputText, setInputText] = useState('');
+
+  const hendleGetMessages = async () => {
+    if (token) {
+      try {
+        const res = await axios.get(
+          `https://demo.capobrain.com/get-messages?parent_id=${userId}&school_id=2&_token=${token}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        console.log(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  };
 
   const sendMessage = () => {
     if (!inputText.trim()) return;
@@ -35,6 +63,7 @@ const ParentChat = ({navigation}: any) => {
   };
 
   useEffect(() => {
+    hendleGetMessages();
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -66,7 +95,7 @@ const ParentChat = ({navigation}: any) => {
             />
           </TouchableOpacity>
           <Image
-            style={{width: 40, height: 40, marginRight: 10,}}
+            style={{width: 40, height: 40, marginRight: 10}}
             source={require('../../assets/avatar.png')}
           />
 

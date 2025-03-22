@@ -1,7 +1,9 @@
 import {
+  Animated,
   BackHandler,
   FlatList,
   Image,
+  ImageBackground,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useUser} from '../Ctx/UserContext';
 import axios from 'axios';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -45,41 +47,6 @@ const HomeWork = ({navigation}: any) => {
 
   const [tableData, setTableData] = useState<HomeWork[]>(originalData);
 
-  const items = [
-    {label: '10', value: 10},
-    {label: '25', value: 25},
-    {label: '50', value: 50},
-    {label: '100', value: 100},
-  ];
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setTableData(originalData);
-    } else {
-      const filtered = originalData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered);
-    }
-  };
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(tableData.length / entriesPerPage);
-
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const currentEntries = tableData.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage,
-  );
-
   // view modal
   const [isModalVisi, setModalVisi] = useState(false);
 
@@ -104,8 +71,26 @@ const HomeWork = ({navigation}: any) => {
       throw new Error('User is not authenticated');
     }
   };
+
+  const moveAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     fetchData();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+
     const backAction = () => {
       navigation.navigate('Home');
       return true;
@@ -119,133 +104,87 @@ const HomeWork = ({navigation}: any) => {
     return () => backHandler.remove();
   }, []);
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''; // Handle empty or invalid dates
+
+    const date = new Date(dateString); // Parse the date string
+    const day = String(date.getDate()).padStart(2, '0'); // Ensure 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Return formatted date
+  };
+
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../assets/bgimg.jpg')}
+        />
+      </Animated.View>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.navigate('Home' as never)}>
           <Icon
             name="arrow-left"
             size={38}
             color={'#fff'}
-            style={{paddingHorizontal: 10}}
+            style={{paddingHorizontal: 10, paddingVertical: 10}}
           />
         </TouchableOpacity>
         <Text style={styles.headerText}>Home Work</Text>
       </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: 10,
-        }}>
-        <View style={{width: 80, marginTop: 9}}>
-          <DropDownPicker
-            items={items}
-            open={isOpen}
-            setOpen={setIsOpen}
-            value={entriesPerPage}
-            setValue={callback => {
-              setEntriesPerPage(prev =>
-                typeof callback === 'function' ? callback(prev) : callback,
-              );
-            }}
-            maxHeight={200}
-            placeholder=""
-            style={styles.dropdown}
-          />
-        </View>
-
-        <View style={styles.container}>
-          <TextInput
-            style={styles.input}
-            placeholder="Search..."
-            placeholderTextColor={'gray'}
-            value={searchQuery}
-            onChangeText={text => handleSearch(text)}
-          />
-        </View>
-      </View>
-
-      {/* Table */}
-      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        <View>
-          <FlatList
-            style={styles.flatList}
-            data={currentEntries}
-            nestedScrollEnabled
-            keyExtractor={(item, index) =>
-              item.id ? item.id.toString() : index.toString()
-            }
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                {['Sr#', 'Subject', 'Date', 'Action'].map(header => (
-                  <Text key={header} style={[styles.column, styles.headTable]}>
-                    {header}
-                  </Text>
-                ))}
-              </View>
-            )}
-            renderItem={({item, index}) => (
-              <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={styles.column}>{index + 1}</Text>
-                <Text style={styles.column}>{item.sub_name}</Text>
-                <Text style={styles.column}>{item.home_date}</Text>
-                <TouchableOpacity
-                  style={styles.iconContainer}
-                  onPress={() => {
-                    const handleView = async (id: number) => {
-                      try {
-                        const response = await axios.get(
-                          `https://demo.capobrain.com/showstudenthomework?id=${item.id}&_token=${token}`,
-                          {
-                            headers: {
-                              Authorization: `Bearer ${token}`,
-                            },
+      <FlatList
+        data={originalData}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({item}) => (
+          <View style={styles.card}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <TouchableOpacity
+                style={styles.iconContainer}
+                onPress={() => {
+                  const handleView = async (id: number) => {
+                    try {
+                      const response = await axios.get(
+                        `https://demo.capobrain.com/showstudenthomework?id=${item.id}&_token=${token}`,
+                        {
+                          headers: {
+                            Authorization: `Bearer ${token}`,
                           },
-                        );
-                        setHomeworkDetails(response.data);
-                        setModalVisi(true);
-                      } catch (error) {
-                        console.log(error);
-                        throw error;
-                      }
-                    };
+                        },
+                      );
+                      setHomeworkDetails(response.data);
+                      setModalVisi(true);
+                    } catch (error) {
+                      console.log(error);
+                      throw error;
+                    }
+                  };
 
-                    handleView(item.id);
-                  }}>
-                  <Image
-                    style={styles.actionIcon}
-                    source={require('../assets/visible.png')}
-                  />
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-        </View>
-      </ScrollView>
-
-      <View style={styles.pagination}>
-        <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
-          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
-          {tableData.length} entries
-        </Text>
-        <View style={styles.paginationButtons}>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
-            <Text style={styles.paginationText}>Previous</Text>
-          </TouchableOpacity>
-          <View style={styles.pageNumber}>
-            <Text style={styles.pageText}>{currentPage}</Text>
+                  handleView(item.id);
+                }}>
+                <Image
+                  style={styles.actionIcon}
+                  source={require('../assets/visible.png')}
+                />
+              </TouchableOpacity>
+              <Text style={styles.title}>{item.sub_name}</Text>
+              <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                {formatDate(item.home_date)}
+              </Text>
+            </View>
           </View>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
-            <Text style={styles.paginationText}>Next</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        )}
+      />
 
       {/* View Modal */}
       <Modal isVisible={isModalVisi}>
@@ -254,83 +193,69 @@ const HomeWork = ({navigation}: any) => {
             flex: 1,
             backgroundColor: 'white',
             width: 'auto',
-            maxHeight: 300,
+            maxHeight: 250,
             borderRadius: 5,
             borderWidth: 1,
-            borderColor: '#6C757D',
+            borderColor: '#3b82f6',
+            overflow: 'hidden',
           }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../assets/bgimg.jpg')}
+            />
+          </Animated.View>
+
+          <Text
+            style={{
+              color: '#3b82f6',
+              fontSize: 18,
+              fontWeight: 'bold',
+              textAlign: 'center',
+              margin: 10,
+            }}>
+            Home Work
+          </Text>
+
           <View
             style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 20,
-            }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>Home Work</Text>
+              height: 1,
+              backgroundColor: '#3b82f6',
+              width: wp('90%'),
+            }}
+          />
 
+          <Text style={styles.lblText}>Description:</Text>
+          <Text style={styles.valueText}>
+            {homeworkDetails?.homework.home_desc}
+          </Text>
+
+          <View style={{flex: 1, justifyContent: 'flex-end', marginBottom: 10}}>
             <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
+              <View
+                style={{
+                  backgroundColor: '#3b82f6',
+                  borderRadius: 5,
+                  width: 50,
+                  height: 23,
+                  alignSelf: 'center',
+                }}>
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: 16,
+                    textAlign: 'center',
+                  }}>
+                  Close
+                </Text>
+              </View>
             </TouchableOpacity>
           </View>
-          <View
-            style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
-
-          <View
-            style={{
-              flexDirection: 'row',
-              margin: 10,
-            }}>
-            <Text style={styles.lblText}>Date</Text>
-            <Text style={styles.valueText}>
-              {homeworkDetails?.homework.home_date}
-            </Text>
-          </View>
-          <View
-            style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
-
-          <View
-            style={{
-              flexDirection: 'row',
-              margin: 10,
-            }}>
-            <Text style={styles.lblText}>Subject</Text>
-            <Text style={styles.valueText}>
-              {homeworkDetails?.subject.sub_name}
-            </Text>
-          </View>
-          <View
-            style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
-          <View
-            style={{
-              margin: 10,
-              flexDirection: 'row',
-            }}>
-            <Text style={styles.lblText}>Description:</Text>
-            <Text style={styles.valueText}>
-              {homeworkDetails?.homework.home_desc}
-            </Text>
-          </View>
-          <View
-            style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
         </View>
       </Modal>
     </View>
@@ -360,89 +285,56 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flex: 1,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 4,
-    borderRadius: 4,
-    textAlign: 'center',
-    color: 'gray',
-  },
-  dropdown: {
-    borderWidth: 1,
-    borderColor: '#d5d5d9',
-    borderRadius: 5,
-    minHeight: 30,
-    marginLeft: 10,
-  },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  column: {
-    width: 140,
-    padding: 1,
-    textAlign: 'center',
-  },
-  headTable: {
-    fontWeight: 'bold',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-  },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    margin: 10,
-  },
-  paginationButtons: {
-    flexDirection: 'row',
-  },
-  paginationText: {
-    fontWeight: 'bold',
-  },
-  pageNumber: {
-    width: 22,
-    height: 22,
-    backgroundColor: '#3b82f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
-    marginRight: 10,
-  },
-  pageText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  flatList: {
-    margin: 10,
-    flex: 1,
-  },
-  container: {
-    backgroundColor: '#fff',
-    marginTop: 12,
-    width: 90,
-    height: 30,
-    marginRight: 10,
-  },
+
   lblText: {
     fontWeight: 'bold',
-    marginRight: 10,
+    color: '#3b82f6',
+    marginTop: 15,
+    marginLeft: '10%',
+    fontSize: 16,
   },
   valueText: {
-    marginRight: 10,
-    width: '80%',
+    marginRight: '10%',
+    color: '#3b82f6',
+    marginLeft: '10%',
   },
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 70,
-    height: 20,
   },
   actionIcon: {
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    marginLeft: 70,
+  },
+  card: {
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 20,
+    marginLeft: '2%',
+    marginRight: '2%',
+    marginTop: '1%',
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#3b82f6',
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });
