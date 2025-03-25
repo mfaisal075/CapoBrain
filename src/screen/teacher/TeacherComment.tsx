@@ -1,6 +1,9 @@
 import {
   Alert,
+  Animated,
+  BackHandler,
   Image,
+  ImageBackground,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -35,8 +38,51 @@ const TeacherComment = ({navigation}: any) => {
     setComments([...comments, newComment]);
     setComment('');
   };
+
+  const moveAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+    const backAction = () => {
+      navigation.navigate('TeacherTodos');
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, []);
+
   return (
     <View style={styles.container}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.navigate('TeacherTodos' as never)}>
@@ -62,7 +108,7 @@ const TeacherComment = ({navigation}: any) => {
               key={index}
               style={[
                 styles.commentBox,
-                {backgroundColor: item.name === 'You' ? '#A5B68D' : '#4F959D'},
+                {backgroundColor: item.name === 'You' ? 'white' : 'white'},
               ]}>
               <Text style={styles.commentName}>{item.name}</Text>
               <Text style={styles.commentText}>{item.text}</Text>
@@ -73,19 +119,27 @@ const TeacherComment = ({navigation}: any) => {
       </ScrollView>
 
       <Text style={styles.addCommentText}>Add a Comment</Text>
-      <View style={styles.inputContainer}>
-        <TextInput
-          placeholder="Write your comment here..."
-          value={comment}
-          onChangeText={text => setComment(text)}
-        />
-      </View>
 
-      <TouchableOpacity onPress={handleCommentSubmit}>
-        <View style={styles.submitButton}>
-          <Text style={styles.submitText}>Submit</Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          marginBottom: '2%',
+        }}>
+        <View style={styles.inputContainer}>
+          <TextInput
+            placeholder="Write your comment here..."
+            value={comment}
+            onChangeText={text => setComment(text)}
+            placeholderTextColor={'#3b82f6'}
+          />
         </View>
-      </TouchableOpacity>
+
+        <TouchableOpacity onPress={handleCommentSubmit}>
+          <View style={styles.submitButton}>
+            <Text style={styles.submitText}>Submit</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -124,59 +178,81 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   todoLabel: {
-    fontSize: 18,
+    fontSize: 16,
+    color: '#3b82f6',
+    fontWeight: 'bold',
   },
   todoValue: {
-    fontSize: 18,
+    fontSize: 16,
     marginLeft: 10,
+    color: '#3b82f6',
   },
   commentBox: {
     borderWidth: 1,
-    borderColor: 'gray',
-    borderRadius: 10,
-    width: wp('90%'),
+    borderColor: '#3b82f6',
+    width: wp('95%'),
     alignSelf: 'center',
-    marginVertical: 10,
-    padding: 10,
+    marginVertical: 5,
+    padding: 5,
+    borderRadius: 12,
+    elevation: 5,
   },
   commentName: {
     fontWeight: 'bold',
+    color: '#3b82f6',
+    marginTop: 3,
   },
   commentText: {
-    marginTop: 5,
+    marginTop: 3,
+    color: '#3b82f6',
   },
   commentDate: {
-    color: 'white',
+    color: '#3b82f6',
     textAlign: 'right',
     marginTop: 5,
+    marginRight: 5,
   },
   addCommentText: {
     marginLeft: 10,
-    fontSize: 20,
+    fontSize: 16,
     marginTop: 10,
+    color: '#3b82f6',
+    fontWeight: 'bold',
   },
   inputContainer: {
     borderWidth: 1,
-    borderColor: 'black',
+    borderColor: '#3b82f6',
     alignSelf: 'center',
-    width: wp('90%'),
+    width: wp('76%'),
     height: 45,
-    marginTop: 7,
+    marginTop: 5,
     borderRadius: 5,
+    marginLeft: '2%',
+    color: '#3b82f6',
   },
   submitButton: {
-    backgroundColor: '#4CAF50',
-    marginTop: 10,
-    marginLeft: 20,
+    backgroundColor: '#3b82f6',
+    marginTop: 13,
+    marginLeft: 4,
     width: 70,
     height: 30,
     borderRadius: 5,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginRight: '2%',
   },
   submitText: {
     color: 'white',
     fontSize: 16,
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });

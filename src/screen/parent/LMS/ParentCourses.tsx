@@ -1,7 +1,9 @@
 import {
+  Animated,
   BackHandler,
   FlatList,
   Image,
+  ImageBackground,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useUser} from '../../../Ctx/UserContext';
 import axios from 'axios';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -47,15 +49,10 @@ interface CoursesData {
 
 const ParentCourses = ({navigation}: any) => {
   const {token} = useUser();
-  const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisi, setModalVisi] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [courseData, setCourseData] = useState<CoursesData | null>(null);
   const [originalData, setOriginalData] = useState<Courses[]>([]);
-  const [tableData, setTableData] = useState<Courses[]>(originalData);
 
   const extractVideoId = (url: any) => {
     if (!url) {
@@ -74,40 +71,6 @@ const ParentCourses = ({navigation}: any) => {
     }
   };
   const videoId = extractVideoId(courseData?.course.url);
-
-  const items = [
-    {label: '10', value: 10},
-    {label: '25', value: 25},
-    {label: '50', value: 50},
-    {label: '100', value: 100},
-  ];
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setTableData(originalData);
-    } else {
-      const filtered = originalData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered);
-    }
-  };
-
-  const totalPages = Math.ceil(tableData.length / entriesPerPage);
-
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const currentEntries = tableData.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage,
-  );
 
   const onStateChange = useCallback((state: string) => {
     if (state === 'ended') {
@@ -135,7 +98,6 @@ const ParentCourses = ({navigation}: any) => {
             },
           },
         );
-        setTableData(response.data.course);
         setOriginalData(response.data.course);
       } catch (error) {
         console.log(error);
@@ -146,7 +108,23 @@ const ParentCourses = ({navigation}: any) => {
     }
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+
     fetchData();
     const backAction = () => {
       navigation.goBack();
@@ -160,11 +138,23 @@ const ParentCourses = ({navigation}: any) => {
 
     return () => backHandler.remove();
   }, []);
+
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('ParentLMS' as never)}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon
             name="arrow-left"
             size={38}
@@ -172,138 +162,55 @@ const ParentCourses = ({navigation}: any) => {
             style={{paddingHorizontal: 10}}
           />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Courses List</Text>
+        <Text style={styles.headerText}>Course</Text>
       </View>
 
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: 10,
-        }}>
-        <View style={{width: 80, marginTop: 9}}>
-          <DropDownPicker
-            items={items}
-            open={isOpen}
-            setOpen={setIsOpen}
-            value={entriesPerPage}
-            setValue={callback => {
-              setEntriesPerPage(prev =>
-                typeof callback === 'function' ? callback(prev) : callback,
-              );
-            }}
-            maxHeight={200}
-            placeholder=""
-            style={styles.dropdown}
-          />
-        </View>
+      <FlatList
+        data={originalData}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({item}) => (
+          <View style={styles.card}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <TouchableOpacity
+                style={styles.iconContainer}
+                onPress={() => {
+                  const handleView = async (id: number) => {
+                    try {
+                      const response = await axios.get(
+                        `https://demo.capobrain.com/showcourse?id=${item.id}&_token=${token}`,
+                        {
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                          },
+                        },
+                      );
+                      setCourseData(response.data);
+                      setModalVisi(true);
+                    } catch (error) {
+                      console.log(error);
+                      throw error;
+                    }
+                  };
 
-        <View style={styles.container}>
-          <TextInput
-            style={styles.input}
-            placeholder="Search..."
-            placeholderTextColor={'gray'}
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </View>
-      </View>
-
-      {/* Table */}
-      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        {currentEntries.length > 0 ? (
-          <View>
-            <FlatList
-              style={styles.flatList}
-              data={currentEntries}
-              keyExtractor={(item, index) =>
-                item.id ? `${item.id}-${index}` : index.toString()
-              }
-              ListHeaderComponent={() => (
-                <View style={styles.row}>
-                  {['Sr#', 'Title', 'Class', 'Section', 'Price', 'Action'].map(
-                    header => (
-                      <Text
-                        key={header}
-                        style={[styles.column, styles.headTable]}>
-                        {header}
-                      </Text>
-                    ),
-                  )}
-                </View>
-              )}
-              renderItem={({item, index}) => (
-                <View
-                  style={[
-                    styles.row,
-                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                  ]}>
-                  <Text style={styles.column}>{index + 1}</Text>
-                  <Text style={styles.column}>{item.title}</Text>
-                  <Text style={styles.column}>{item.cls_name}</Text>
-                  <Text style={styles.column}>{item.sec_name}</Text>
-                  <Text style={styles.column}>
-                    {item.price === '0' ? 'Free' : item.price}
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.iconContainer}
-                    onPress={() => {
-                      const handleView = async (id: number) => {
-                        try {
-                          const response = await axios.get(
-                            `https://demo.capobrain.com/showcourse?id=${item.id}&_token=${token}`,
-                            {
-                              headers: {
-                                Authorization: `Bearer ${token}`,
-                              },
-                            },
-                          );
-                          setCourseData(response.data);
-                          setModalVisi(true);
-                        } catch (error) {
-                          console.log(error);
-                          throw error;
-                        }
-                      };
-
-                      handleView(item.id);
-                    }}>
-                    <Image
-                      style={styles.actionIcon}
-                      source={require('../../../assets/visible.png')}
-                    />
-                  </TouchableOpacity>
-                </View>
-              )}
-            />
-          </View>
-        ) : (
-          <View style={{marginTop: 20, width: '100%'}}>
-            <Text style={{fontSize: 18, textAlign: 'center'}}>
-              No record present in the database!
-            </Text>
+                  handleView(item.id);
+                }}>
+                <Image
+                  style={styles.actionIcon}
+                  source={require('../../../assets/visible.png')}
+                />
+              </TouchableOpacity>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                {item.price === '0' ? 'Free' : item.price}
+              </Text>
+            </View>
           </View>
         )}
-      </ScrollView>
-
-      <View style={styles.pagination}>
-        <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
-          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
-          {tableData.length} entries
-        </Text>
-        <View style={styles.paginationButtons}>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
-            <Text style={styles.paginationText}>Previous</Text>
-          </TouchableOpacity>
-          <View style={styles.pageNumber}>
-            <Text style={styles.pageText}>{currentPage}</Text>
-          </View>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
-            <Text style={styles.paginationText}>Next</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      />
 
       <Modal isVisible={isModalVisi}>
         <View
@@ -314,29 +221,31 @@ const ParentCourses = ({navigation}: any) => {
             maxHeight: 600,
             borderRadius: 5,
             borderWidth: 1,
-            borderColor: '#6C757D',
+            borderColor: '#3b82f6',
+            overflow: 'hidden',
           }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 20,
-            }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>
-              Show Lecture Detail
-            </Text>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
 
-            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
-            </TouchableOpacity>
-          </View>
-          <View
+          <Text
             style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
+              color: '#3b82f6',
+              fontSize: 18,
+              fontWeight: 'bold',
+              textAlign: 'center',
+              margin: 10,
+            }}>
+            Course Detail
+          </Text>
 
           <YoutubePlayer
             height={200}
@@ -345,15 +254,6 @@ const ParentCourses = ({navigation}: any) => {
             onChangeState={onStateChange}
           />
           <View style={styles.border}>
-            <Image
-              style={{
-                width: 60,
-                height: 60,
-                alignSelf: 'center',
-                margin: 10,
-              }}
-              source={require('../../../assets/avatar.png')}
-            />
             <View style={styles.details}>
               <FlatList
                 data={studentInfo}
@@ -368,13 +268,31 @@ const ParentCourses = ({navigation}: any) => {
             </View>
           </View>
 
-          <View style={styles.border}>
-            <Text>{courseData?.course.title}</Text>
-            <Text>{courseData?.course.outcomes}</Text>
+          <View
+            style={[styles.border, {marginLeft: '20%', marginRight: '20%'}]}>
+            <Text
+              style={{
+                color: '#3b82f6',
+              }}>
+              {courseData?.course.description}
+            </Text>
           </View>
-          <View style={styles.border}>
-            <Text>{courseData?.course.description}</Text>
-          </View>
+
+          <TouchableOpacity
+            onPress={() => setModalVisi(!isModalVisi)}
+            style={{
+              backgroundColor: '#3b82f6',
+              borderRadius: 5,
+              width: 50,
+              height: 23,
+              alignSelf: 'center',
+              marginTop: 'auto',
+              marginBottom: 20,
+            }}>
+            <Text style={{color: 'white', fontSize: 16, textAlign: 'center'}}>
+              Close
+            </Text>
+          </TouchableOpacity>
         </View>
       </Modal>
     </View>
@@ -384,43 +302,6 @@ const ParentCourses = ({navigation}: any) => {
 export default ParentCourses;
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    marginTop: 12,
-    width: 90,
-    height: 30,
-    marginRight: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 4,
-    borderRadius: 4,
-    textAlign: 'center',
-    color: 'gray',
-  },
-  dropdown: {
-    borderWidth: 1,
-    borderColor: '#d5d5d9',
-    borderRadius: 5,
-    minHeight: 30,
-    marginLeft: 10,
-  },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  column: {
-    width: 140,
-    padding: 1,
-    textAlign: 'center',
-  },
-  headTable: {
-    fontWeight: 'bold',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -442,33 +323,44 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    margin: 10,
+  card: {
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 20,
+    marginLeft: '2%',
+    marginRight: '2%',
+    marginTop: '1%',
+    borderWidth: 1,
+    borderColor: '#3b82f6',
   },
-  paginationButtons: {
-    flexDirection: 'row',
-  },
-  paginationText: {
+  title: {
+    fontSize: 16,
     fontWeight: 'bold',
+    color: '#3b82f6',
   },
-  pageNumber: {
-    width: 22,
-    height: 22,
-    backgroundColor: '#3b82f6',
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+  },
+  iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 10,
-    marginRight: 10,
   },
-  pageText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  flatList: {
-    margin: 10,
-    flex: 1,
+  actionIcon: {
+    width: 20,
+    height: 20,
+    tintColor: '#3b82f6',
   },
   branch: {
     textAlign: 'center',
@@ -479,33 +371,22 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   border: {
-    borderWidth: 1,
-    margin: 5,
+    margin: 3,
     padding: 5,
-    borderColor: 'gray',
-    borderRadius: 5,
   },
   text: {
-    marginLeft: 15,
+    marginLeft: '20%',
+    color: '#3b82f6',
+    fontWeight: 'bold',
   },
   value: {
-    marginLeft: 10,
+    color: '#3b82f6',
+    marginRight: '20%',
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 5,
-  },
-  iconContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 50,
-    height: 20,
-  },
-  actionIcon: {
-    width: 15,
-    height: 15,
-    tintColor: '#3b82f6',
-    marginLeft: 80,
+    justifyContent: 'space-between',
   },
 });

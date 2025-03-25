@@ -1,25 +1,20 @@
 import {
+  Animated,
   BackHandler,
   FlatList,
+  ImageBackground,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
-import {ScrollView} from 'react-native';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Image} from 'react-native';
 import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
-import DropDownPicker from 'react-native-dropdown-picker';
 import Modal from 'react-native-modal';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from 'react-native-responsive-screen';
 
 interface LectureData {
   lecture: {
@@ -51,13 +46,9 @@ interface Lecture {
 const ParentLMS = ({navigation}: any) => {
   const {token} = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisi, setModalVisi] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [originalData, setOriginalData] = useState<Lecture[]>([]);
-  const [tableData, setTableData] = useState<Lecture[]>(originalData);
   const [lectureData, setLectureData] = useState<LectureData | null>(null);
 
   const extractVideoId = (url: any) => {
@@ -78,52 +69,11 @@ const ParentLMS = ({navigation}: any) => {
   };
   const videoId = extractVideoId(lectureData?.lecture.url);
 
-  const items = [
-    {label: '10', value: 10},
-    {label: '25', value: 25},
-    {label: '50', value: 50},
-    {label: '100', value: 100},
-  ];
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setTableData(originalData);
-    } else {
-      const filtered = originalData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered);
-    }
-  };
-
-  const totalPages = Math.ceil(tableData.length / entriesPerPage);
-
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const currentEntries = tableData.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage,
-  );
-
   const onStateChange = useCallback((state: string) => {
     if (state === 'ended') {
       setPlaying(false);
     }
   }, []);
-
-  const studentInfo = [
-    {key: 'Class', value: lectureData?.class.cls_name},
-    {key: 'Section', value: lectureData?.section.sec_name},
-    {key: 'Subject', value: lectureData?.subject.sub_name},
-    {key: 'Date', value: lectureData?.lecture.date},
-  ];
 
   const fetchData = async () => {
     if (token) {
@@ -137,7 +87,6 @@ const ParentLMS = ({navigation}: any) => {
           },
         );
         setOriginalData(response.data.lectures);
-        setTableData(response.data.lectures);
       } catch (error) {
         console.log(error);
         throw error;
@@ -147,7 +96,24 @@ const ParentLMS = ({navigation}: any) => {
     }
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+
     fetchData();
     const backAction = () => {
       navigation.navigate('ParentHome');
@@ -161,8 +127,21 @@ const ParentLMS = ({navigation}: any) => {
 
     return () => backHandler.remove();
   }, []);
+
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.navigate('ParentHome')}>
           <Icon
@@ -174,372 +153,111 @@ const ParentLMS = ({navigation}: any) => {
         </TouchableOpacity>
         <Text style={styles.headerText}>Lecture</Text>
       </View>
-
-      {/**buttons row */}
-      <View
-        style={{
-          flexDirection: 'column',
-          marginBottom: 20,
-          alignItems: 'flex-end',
-          marginLeft: hp('1.5%'),
-          marginRight: hp('1.5%'),
+      <TouchableOpacity
+        onPress={() => {
+          setIsOpen(true);
         }}>
-        <View style={{flexDirection: 'row'}}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('ParentCourses' as never)}>
-            <View
-              style={{
-                width: 60,
-                height: 30,
-                backgroundColor: '#0069D9',
-                marginTop: 10,
-                borderRadius: 5,
-                marginRight: 5,
-              }}>
-              <Text
-                style={{
-                  color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: 15,
-                  textAlign: 'center',
-                  marginTop: 3,
-                }}>
-                Courses
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => navigation.navigate('ParentDailyDiary' as never)}>
-            <View
-              style={{
-                width: 80,
-                height: 30,
-                backgroundColor: '#0069D9',
-                marginTop: 10,
-                borderRadius: 5,
-                marginRight: 5,
-              }}>
-              <Text
-                style={{
-                  color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: 15,
-                  textAlign: 'center',
-                  marginTop: 3,
-                }}>
-                Daily Diary
-              </Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate('ParentSummerHwResult' as never)
-            }>
-            <View
-              style={{
-                width: 190,
-                height: 30,
-                backgroundColor: '#0069D9',
-                marginTop: 10,
-                borderRadius: 5,
-              }}>
-              <Text
-                style={{
-                  color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: 14,
-                  textAlign: 'center',
-                  marginTop: 3,
-                }}>
-                Summer HomeWork Result
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
         <View
           style={{
-            flexDirection: 'row',
+            width: 25,
+            height: 25,
+            borderColor: '#3b82f6',
+            borderRadius: 50,
+            borderWidth: 1,
+            justifyContent: 'center',
+            alignSelf: 'flex-end',
+            margin: 5,
           }}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('ParentLibraryBooks' as never)}>
+          <Text
+            style={{
+              fontSize: 22,
+              textAlign: 'center',
+              top: -5,
+              color: '#3b82f6',
+            }}>
+            +
+          </Text>
+        </View>
+      </TouchableOpacity>
+
+      <FlatList
+        data={originalData}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({item}) => (
+          <View style={styles.card}>
             <View
               style={{
-                width: 100,
-                height: 30,
-                backgroundColor: '#0069D9',
-                marginTop: 10,
-                borderRadius: 5,
-                marginRight: 5,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
               }}>
-              <Text
-                style={{
-                  color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: 15,
-                  textAlign: 'center',
-                  marginTop: 3,
+              <Text style={styles.titl}>{item.sub_name}</Text>
+              <TouchableOpacity
+                style={styles.iconContainer}
+                onPress={() => {
+                  const handleView = async (id: number) => {
+                    try {
+                      const response = await axios.get(
+                        `https://demo.capobrain.com/leactureshow?id=${item.id}&_token=${token}`,
+                        {
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                          },
+                        },
+                      );
+                      setLectureData(response.data);
+                      setModalVisi(true);
+                    } catch (error) {
+                      console.log(error);
+                      throw error;
+                    }
+                  };
+
+                  handleView(item.id);
                 }}>
-                Library Books
-              </Text>
+                <Image
+                  style={styles.actionIcon}
+                  source={require('../../assets/visible.png')}
+                />
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('ParentDateSheet' as never)}>
-            <View
-              style={{
-                width: 80,
-                height: 30,
-                backgroundColor: '#0069D9',
-                marginTop: 10,
-                borderRadius: 5,
-                marginRight: 5,
-              }}>
-              <Text
-                style={{
-                  color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: 15,
-                  textAlign: 'center',
-                  marginTop: 3,
-                }}>
-                Date Sheet
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => navigation.navigate('ParentSummerHw' as never)}>
-            <View
-              style={{
-                width: 150,
-                height: 30,
-                backgroundColor: '#0069D9',
-                marginTop: 10,
-                borderRadius: 5,
-              }}>
-              <Text
-                style={{
-                  color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: 15,
-                  textAlign: 'center',
-                  marginTop: 3,
-                }}>
-                Summer HomeWork
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-        }}>
-        <View style={{width: 80, marginTop: 9}}>
-          <DropDownPicker
-            items={items}
-            open={isOpen}
-            setOpen={setIsOpen}
-            value={entriesPerPage}
-            setValue={callback => {
-              setEntriesPerPage(prev =>
-                typeof callback === 'function' ? callback(prev) : callback,
-              );
-            }}
-            maxHeight={200}
-            placeholder=""
-            style={styles.dropdown}
-          />
-        </View>
-
-        <View style={styles.container}>
-          <TextInput
-            style={styles.input}
-            placeholder="Search..."
-            placeholderTextColor={'gray'}
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </View>
-      </View>
-
-      {/**table */}
-
-      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        {currentEntries.length > 0 ? (
-          <View>
-            <FlatList
-              style={{
-                margin: 10,
-                flex: 1,
-              }}
-              scrollEnabled={true}
-              data={currentEntries}
-              keyExtractor={(item, index) => index.toString()}
-              ListHeaderComponent={() => (
-                <View style={styles.row}>
-                  <Text
-                    style={[
-                      styles.column,
-                      styles.headTable,
-                      {width: 100},
-                      {padding: 1},
-                    ]}>
-                    Sr#
-                  </Text>
-                  <Text
-                    style={[
-                      styles.column,
-                      styles.headTable,
-                      {width: 100},
-                      {padding: 1},
-                    ]}>
-                    Branch
-                  </Text>
-                  <Text
-                    style={[
-                      styles.column,
-                      styles.headTable,
-                      {width: 100},
-                      {padding: 1},
-                    ]}>
-                    Class
-                  </Text>
-                  <Text
-                    style={[
-                      styles.column,
-                      styles.headTable,
-                      {width: 100},
-                      {padding: 1},
-                    ]}>
-                    Subject
-                  </Text>
-                  <Text
-                    style={[
-                      styles.column,
-                      styles.headTable,
-                      {width: 100},
-                      {padding: 1},
-                    ]}>
-                    Action
-                  </Text>
-                </View>
-              )}
-              renderItem={({item, index}) => (
-                <View
-                  style={[
-                    styles.row,
-                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                  ]}>
-                  <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                    {index + 1}
-                  </Text>
-                  <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                    {item.bra_name}
-                  </Text>
-                  <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                    {item.cls_name}
-                  </Text>
-                  <Text style={[styles.column, {width: 100}, {padding: 5}]}>
-                    {item.sub_name}
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.iconContainer}
-                    onPress={() => {
-                      const handleView = async (id: number) => {
-                        try {
-                          const response = await axios.get(
-                            `https://demo.capobrain.com/leactureshow?id=${item.id}&_token=${token}`,
-                            {
-                              headers: {
-                                Authorization: `Bearer ${token}`,
-                              },
-                            },
-                          );
-                          setLectureData(response.data);
-                          setModalVisi(true);
-                        } catch (error) {
-                          console.log(error);
-                          throw error;
-                        }
-                      };
-
-                      handleView(item.id);
-                    }}>
-                    <Image
-                      style={styles.actionIcon}
-                      source={require('../../assets/visible.png')}
-                    />
-                  </TouchableOpacity>
-                </View>
-              )}
-            />
-          </View>
-        ) : (
-          <View style={{marginTop: 20, width: '100%'}}>
-            <Text style={{textAlign: 'center', fontSize: 18}}>
-              No Record present in the database
-            </Text>
           </View>
         )}
-      </ScrollView>
+      />
 
-      <View style={styles.pagination}>
-        <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
-          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
-          {tableData.length} entries
-        </Text>
-        <View style={styles.paginationButtons}>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
-            <Text style={styles.paginationText}>Previous</Text>
-          </TouchableOpacity>
-          <View style={styles.pageNumber}>
-            <Text style={styles.pageText}>{currentPage}</Text>
-          </View>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
-            <Text style={styles.paginationText}>Next</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Modal */}
       <Modal isVisible={isModalVisi}>
         <View
           style={{
             flex: 1,
             backgroundColor: 'white',
             width: 'auto',
-            maxHeight: 600,
+            maxHeight: 500,
             borderRadius: 5,
             borderWidth: 1,
-            borderColor: '#6C757D',
+            borderColor: '#3b82f6',
+            overflow: 'hidden',
           }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 20,
-            }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>
-              Show Lecture Detail
-            </Text>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
 
-            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
-            </TouchableOpacity>
-          </View>
-          <View
+          <Text
             style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
+              color: '#3b82f6',
+              fontSize: 18,
+              fontWeight: 'bold',
+              textAlign: 'center',
+              margin: 10,
+            }}>
+            Show Lecture Detail
+          </Text>
 
           <YoutubePlayer
             height={200}
@@ -547,25 +265,231 @@ const ParentLMS = ({navigation}: any) => {
             videoId={videoId}
             onChangeState={onStateChange}
           />
-          <View style={styles.border}>
-            <Text style={styles.branch}>Main Branch</Text>
-            <View style={styles.details}>
-              <FlatList
-                data={studentInfo}
-                keyExtractor={item => item.key}
-                renderItem={({item}) => (
-                  <View style={styles.infoRow}>
-                    <Text style={styles.text}>{item.key}:</Text>
-                    <Text style={styles.value}>{item.value}</Text>
-                  </View>
-                )}
-              />
-            </View>
+
+          <View
+            style={[styles.border, {marginLeft: '10%', marginRight: '10%'}]}>
+            <Text
+              style={{
+                color: '#3b82f6',
+              }}>
+              {lectureData?.lecture.description}
+            </Text>
+          </View>
+          <View style={{flex: 1, justifyContent: 'flex-end', marginBottom: 20}}>
+            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
+              <View
+                style={{
+                  backgroundColor: '#3b82f6',
+                  borderRadius: 5,
+                  width: 50,
+                  height: 23,
+                  alignSelf: 'center',
+                }}>
+                <Text
+                  style={{color: 'white', fontSize: 16, textAlign: 'center'}}>
+                  Close
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal isVisible={isOpen}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'white',
+            width: 'auto',
+            maxHeight: 280,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: '#3b82f6',
+            padding: 5,
+            overflow: 'hidden',
+          }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              margin: 10,
+            }}>
+            <Text style={{color: '#3b82f6', fontSize: 18, fontWeight: 'bold'}}>
+              Select an Option
+            </Text>
+
+            <TouchableOpacity onPress={() => setIsOpen(false)}>
+              <Text style={{color: 'red'}}>✖</Text>
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.border}>
-            <Text>{lectureData?.lecture.description}</Text>
-          </View>
+          {/**buttons row */}
+
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate('ParentCourses' as never);
+              setIsOpen(false);
+            }}>
+            <View
+              style={{
+                width: 190,
+                height: 30,
+                padding: 5,
+                borderRadius: 10,
+                backgroundColor: '#3b82f6',
+                marginTop: 10,
+                alignSelf: 'center',
+              }}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: 'white',
+                  textAlign: 'center',
+                }}>
+                Course
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              setIsOpen(false);
+              navigation.navigate('ParentDailyDiary' as never);
+            }}>
+            <View
+              style={{
+                width: 190,
+                height: 30,
+                padding: 5,
+                borderRadius: 10,
+                backgroundColor: '#3b82f6',
+                marginTop: 5,
+                alignSelf: 'center',
+              }}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: 'white',
+                  textAlign: 'center',
+                }}>
+                Daily Diary
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              setIsOpen(false);
+              navigation.navigate('ParentDateSheet' as never);
+            }}>
+            <View
+              style={{
+                width: 190,
+                height: 30,
+                padding: 5,
+                borderRadius: 10,
+                backgroundColor: '#3b82f6',
+                marginTop: 5,
+                alignSelf: 'center',
+              }}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: 'white',
+                  textAlign: 'center',
+                }}>
+                Date Sheet
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              setIsOpen(false);
+              navigation.navigate('ParentLibraryBooks' as never);
+            }}>
+            <View
+              style={{
+                width: 190,
+                height: 30,
+                padding: 5,
+                borderRadius: 10,
+                backgroundColor: '#3b82f6',
+                marginTop: 5,
+                alignSelf: 'center',
+              }}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: 'white',
+                  textAlign: 'center',
+                }}>
+                Library Books
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              setIsOpen(false);
+              navigation.navigate('ParentSummerHw' as never);
+            }}>
+            <View
+              style={{
+                width: 190,
+                height: 30,
+                padding: 5,
+                borderRadius: 10,
+                backgroundColor: '#3b82f6',
+                marginTop: 5,
+                alignSelf: 'center',
+              }}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: 'white',
+                  textAlign: 'center',
+                }}>
+                Summer HomeWork
+              </Text>{' '}
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              setIsOpen(false);
+              navigation.navigate('ParentSummerHwResult' as never);
+            }}>
+            <View
+              style={{
+                width: 190,
+                height: 30,
+                padding: 5,
+                borderRadius: 10,
+                backgroundColor: '#3b82f6',
+                marginTop: 5,
+                alignSelf: 'center',
+              }}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: 'white',
+                  textAlign: 'center',
+                }}>
+                Summer HomeWork Result
+              </Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </Modal>
     </View>
@@ -575,45 +499,18 @@ const ParentLMS = ({navigation}: any) => {
 export default ParentLMS;
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    marginTop: 12,
-    width: 90,
-    height: 30,
-    marginRight: 15,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 4,
-    marginBottom: 5,
-    borderRadius: 4,
-    textAlign: 'center',
-    color: 'gray',
-  },
-  item: {
-    borderBottomColor: '#ccc',
-  },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  column: {
-    width: '33.33%',
-    textAlign: 'center',
-  },
-  headTable: {
-    fontWeight: 'bold',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-  },
-
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
     backgroundColor: '#3b82f6',
+  },
+  backButton: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+    tintColor: 'white',
+    marginLeft: 10,
   },
   headerText: {
     fontSize: 20,
@@ -625,22 +522,18 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 60,
-    height: 20,
-    marginTop: 5,
   },
   actionIcon: {
-    width: 15,
-    height: 15,
+    width: 20,
+    height: 20,
     tintColor: '#3b82f6',
-    marginLeft: 40,
   },
   lblText: {
     fontWeight: 'bold',
     marginRight: 10,
   },
   valueText: {
-    marginRight: 10,
+    marginRight: '5%',
   },
   title: {
     fontSize: 16,
@@ -657,11 +550,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   border: {
-    borderWidth: 1,
-    margin: 5,
+    margin: 3,
     padding: 5,
-    borderColor: 'gray',
-    borderRadius: 5,
   },
   text: {
     marginLeft: 15,
@@ -674,35 +564,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 5,
   },
-  dropdown: {
+
+  card: {
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 20,
+    marginLeft: '2%',
+    marginRight: '2%',
+    marginTop: '1%',
     borderWidth: 1,
-    borderColor: '#d5d5d9',
-    borderRadius: 5,
-    minHeight: 30,
-    marginLeft: 10,
+    borderColor: '#3b82f6',
   },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    margin: 10,
-  },
-  paginationButtons: {
-    flexDirection: 'row',
-  },
-  paginationText: {
+  titl: {
+    fontSize: 16,
     fontWeight: 'bold',
+    color: '#3b82f6',
   },
-  pageNumber: {
-    width: 22,
-    height: 22,
-    backgroundColor: '#3b82f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
-    marginRight: 10,
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
   },
-  pageText: {
-    color: 'white',
-    fontWeight: 'bold',
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });

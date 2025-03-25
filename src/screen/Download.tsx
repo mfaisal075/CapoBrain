@@ -4,7 +4,6 @@ import {
   BackHandler,
   Image,
   ImageBackground,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -14,9 +13,6 @@ import React, {useEffect, useRef, useState} from 'react';
 import axios from 'axios';
 import {useUser} from '../Ctx/UserContext';
 import {FlatList} from 'react-native';
-import {TextInput} from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
-import {heightPercentageToDP as hp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import RNFS from 'react-native-fs';
 

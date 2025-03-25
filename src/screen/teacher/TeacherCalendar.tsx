@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,6 +7,8 @@ import {
   ScrollView,
   Image,
   BackHandler,
+  Animated,
+  ImageBackground,
 } from 'react-native';
 import {Calendar, DateData} from 'react-native-calendars';
 import {
@@ -83,7 +85,23 @@ const TeacherCalendar = ({navigation}: any) => {
     </ScrollView>
   );
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
     const backAction = () => {
       navigation.goBack();
       return true;
@@ -99,6 +117,17 @@ const TeacherCalendar = ({navigation}: any) => {
 
   return (
     <ScrollView style={{backgroundColor: 'white', flex: 1}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
       <View style={styles.header}>
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -106,7 +135,7 @@ const TeacherCalendar = ({navigation}: any) => {
               name="arrow-left"
               size={38}
               color={'#fff'}
-              style={{paddingHorizontal: 10, paddingVertical: 15}}
+              style={{paddingHorizontal: 10, paddingTop: 20}}
             />
           </TouchableOpacity>
           <Text style={styles.headerText}>Calendar Events</Text>
@@ -191,8 +220,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 18,
     color: 'white',
-    alignSelf: 'center',
-    marginTop: hp('0.8%'),
+    marginTop: hp('1.5%'),
+    textAlign: 'center',
+    flex: 1,
   },
   navButtons: {
     flexDirection: 'row',
@@ -221,7 +251,7 @@ const styles = StyleSheet.create({
     height: 380,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: 'gray',
+    borderColor: '#3b82f6',
   },
   dayContainer: {
     flex: 1,
@@ -231,6 +261,7 @@ const styles = StyleSheet.create({
   dayText: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: '#3b82f6',
   },
   yearContainer: {
     flexDirection: 'column',
@@ -247,7 +278,7 @@ const styles = StyleSheet.create({
     height: 'auto',
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#3b82f6',
     padding: 5,
   },
   monthContainer: {
@@ -262,5 +293,15 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });

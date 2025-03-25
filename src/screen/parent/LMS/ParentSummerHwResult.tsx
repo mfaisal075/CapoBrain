@@ -1,13 +1,14 @@
 import {
   Alert,
+  Animated,
   BackHandler,
-  ScrollView,
+  ImageBackground,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Image} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useUser} from '../../../Ctx/UserContext';
@@ -15,36 +16,7 @@ import axios from 'axios';
 import {FlatList} from 'react-native';
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import RNPrint from 'react-native-print';
-import {heightPercentageToDP as hp} from 'react-native-responsive-screen';
 import Modal from 'react-native-modal';
-
-interface Printer {
-  name: string;
-  url: string;
-}
-
-interface UserData {
-  parent: {
-    par_fathername: string;
-    parent_id: string;
-  };
-  student: {
-    cand_name: string;
-    student_id: string;
-  };
-  class: {
-    cls_name: string;
-  };
-  section: {
-    sec_name: string;
-  };
-  school: {
-    scl_institute_name: string;
-  };
-  branch: {
-    bra_name: string;
-  };
-}
 
 interface HomeWork {
   id: number;
@@ -60,49 +32,11 @@ interface HomeWorkResult {
   obtain_marks: string;
   sub_name: string;
 }
-interface OtherData {
-  student: {
-    cand_name: string;
-    student_id: string;
-  };
-  parent: {
-    par_fathername: string;
-    parent_id: string;
-  };
-  class: {
-    cls_name: string;
-  };
-  section: {
-    sec_name: string;
-  };
-  school: {
-    scl_institute_name: string;
-  };
-  branch: {
-    bra_name: string;
-  };
-}
 
 const ParentSummerHwResult = ({navigation}: any) => {
   const {token} = useUser();
-  const [selectedPrinter, setSelectedPrinter] = useState<Printer | null>(null);
   const [isModalVisible, setModalVisible] = useState(false);
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [otherData, setOtherData] = useState<OtherData | null>(null);
   const [originalData, setOriginalData] = useState<HomeWork[]>([]);
-  const [tableData, setTableData] = useState<HomeWork[]>(originalData);
-
-  const silentPrint = async () => {
-    if (!selectedPrinter) {
-      Alert.alert('Error', 'Must select printer first');
-      return;
-    }
-
-    await RNPrint.print({
-      printerURL: selectedPrinter.url,
-      html: '<h1>Silent Print</h1>',
-    });
-  };
 
   const printPDF = async () => {
     try {
@@ -122,25 +56,7 @@ const ParentSummerHwResult = ({navigation}: any) => {
       Alert.alert('Error', 'Something went wrong while generating the PDF.');
     }
   };
-
-  const studentInfo = [
-    {key: 'Parent ID', value: userData?.parent.parent_id},
-    {key: 'Father Name', value: userData?.parent.par_fathername},
-  ];
-
-  const stdInfo = [
-    {key: 'Student ID', value: otherData?.student.student_id},
-    {key: 'Student Name', value: otherData?.student.cand_name},
-    {key: 'Father Name', value: otherData?.parent.par_fathername},
-    {
-      key: 'Class',
-      value:
-        `${otherData?.class.cls_name}` + ` (${otherData?.section.sec_name})`,
-    },
-  ];
-
-  const originalDta: HomeWorkResult[] = [];
-  const [ModalData, setModalData] = useState<HomeWorkResult[]>(originalDta);
+  const [ModalData, setModalData] = useState<HomeWorkResult[]>([]);
 
   const fetchData = async () => {
     if (token) {
@@ -154,9 +70,7 @@ const ParentSummerHwResult = ({navigation}: any) => {
             },
           },
         );
-        setUserData(response.data);
         setOriginalData(response.data.parent_students);
-        setTableData(response.data.parent_students);
       } catch (error) {
         console.log(error);
         throw error;
@@ -166,7 +80,24 @@ const ParentSummerHwResult = ({navigation}: any) => {
     }
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+
     fetchData();
     const backAction = () => {
       navigation.navigate('ParentLMS');
@@ -180,10 +111,24 @@ const ParentSummerHwResult = ({navigation}: any) => {
 
     return () => backHandler.remove();
   }, []);
+
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('ParentLMS' as never)}>
           <Icon
             name="arrow-left"
             size={38}
@@ -193,63 +138,21 @@ const ParentSummerHwResult = ({navigation}: any) => {
         </TouchableOpacity>
         <Text style={styles.headerText}>Summer HomeWork Result</Text>
       </View>
-      <View style={styles.schoolInfo}>
-        <Text style={{fontSize: 18, textAlign: 'center'}}>
-          {userData?.school.scl_institute_name}
-        </Text>
-        <Text style={{fontSize: 16, textAlign: 'center'}}>
-          {userData?.branch.bra_name}
-        </Text>
+
+      {originalData.length > 0 ? (
         <FlatList
-          data={studentInfo}
-          keyExtractor={item => item.key}
+          style={{paddingVertical: 10}}
+          data={originalData}
+          keyExtractor={item => item.id.toString()}
           renderItem={({item}) => (
-            <View style={styles.infoRow}>
-              <Text style={styles.txt}>{item.key}:</Text>
-              <Text style={styles.valu}>{item.value}</Text>
-            </View>
-          )}
-        />
-      </View>
-      <ScrollView
-        horizontal
-        style={{marginBottom: hp('5%')}}
-        contentContainerStyle={{flexGrow: 0.8}}>
-        <View>
-          <FlatList
-            style={styles.flatList}
-            data={tableData}
-            nestedScrollEnabled
-            keyExtractor={(item, index) =>
-              item.id ? item.id.toString() : index.toString()
-            }
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                {[
-                  'Sr#',
-                  'ID',
-                  'Name',
-                  'Class Name',
-                  'Branch Name',
-                  'Action',
-                ].map(header => (
-                  <Text key={header} style={[styles.column, styles.headTable]}>
-                    {header}
-                  </Text>
-                ))}
-              </View>
-            )}
-            renderItem={({item, index}) => (
+            <View style={styles.card}>
               <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={styles.column}>{index + 1}</Text>
-                <Text style={styles.column}>{item.student_id}</Text>
-                <Text style={styles.column}>{item.cand_name}</Text>
-                <Text style={styles.column}>{item.cls_name}</Text>
-                <Text style={styles.column}>{item.bra_name}</Text>
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={styles.titl}>{item.cand_name}</Text>
+
                 <TouchableOpacity
                   style={styles.iconContainer}
                   onPress={() => {
@@ -264,7 +167,6 @@ const ParentSummerHwResult = ({navigation}: any) => {
                           },
                         );
                         setModalData(response.data.marking);
-                        setOtherData(response.data);
                         setModalVisible(true);
                       } catch (error) {
                         console.log(error);
@@ -280,12 +182,17 @@ const ParentSummerHwResult = ({navigation}: any) => {
                   />
                 </TouchableOpacity>
               </View>
-            )}
-          />
+            </View>
+          )}
+        />
+      ) : (
+        <View style={{width: '100%', marginTop: 20}}>
+          <Text style={{fontSize: 18, fontWeight: 'bold', textAlign: 'center'}}>
+            No data found in the database!
+          </Text>
         </View>
-      </ScrollView>
+      )}
 
-      {/* Modal */}
       <Modal isVisible={isModalVisible}>
         <View
           style={{
@@ -296,112 +203,75 @@ const ParentSummerHwResult = ({navigation}: any) => {
             borderRadius: 5,
             borderWidth: 1,
             borderColor: '#6C757D',
+            overflow: 'hidden',
           }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
-              margin: 20,
+              margin: 10,
             }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>Home Work</Text>
+            <Text style={{color: '#3b82f6', fontSize: 18, fontWeight: 'bold'}}>
+              Home Work
+            </Text>
 
             <TouchableOpacity onPress={() => setModalVisible(!isModalVisible)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
+              <Text style={{color: 'red'}}>✖</Text>
             </TouchableOpacity>
           </View>
 
           <View
             style={{
               borderWidth: 1,
-              borderColor: 'gray',
+              borderColor: '#3b82f6',
               borderBottomWidth: 1,
             }}
           />
-          <View
-            style={{
-              flexDirection: 'column',
-              marginTop: 10,
-              alignSelf: 'center',
-            }}>
-            <Text style={{fontSize: 16}}>
-              {otherData?.school.scl_institute_name}
-            </Text>
-            <Text style={{fontSize: 16, marginLeft: 90}}>
-              {otherData?.branch.bra_name}
-            </Text>
-          </View>
 
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              marginTop: 10,
-            }}>
-            <View style={{flexDirection: 'column', marginTop: 10}}>
-              <View style={{width: 200, marginTop: 9}}></View>
-              {/**std info */}
-              <FlatList
-                data={stdInfo}
-                keyExtractor={item => item.key}
-                renderItem={({item}) => (
-                  <View style={styles.infoRow}>
-                    <Text style={styles.text}>{item.key}:</Text>
-                    <Text style={styles.value}>{item.value}</Text>
+          {ModalData.length > 0 ? (
+            <FlatList
+              style={{paddingVertical: 10}}
+              data={ModalData}
+              keyExtractor={item => item.id.toString()}
+              renderItem={({item}) => (
+                <View style={styles.card}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                    }}>
+                    <Text style={styles.titl}>{item.sub_name}</Text>
+                    <Text style={{color: '#3b82f6'}}>
+                      {item.obtain_marks}/{item.total_marks}
+                    </Text>
                   </View>
-                )}
-              />
+                </View>
+              )}
+            />
+          ) : (
+            <View style={{width: '100%', marginTop: 20}}>
+              <Text
+                style={{fontSize: 18, fontWeight: 'bold', textAlign: 'center'}}>
+                No data found in the database!
+              </Text>
             </View>
-          </View>
+          )}
 
-          <ScrollView
-            horizontal
-            style={{marginBottom: hp('5%')}}
-            contentContainerStyle={{flexGrow: 0.8}}>
-            <View>
-              <FlatList
-                style={styles.flatList}
-                data={ModalData}
-                nestedScrollEnabled
-                keyExtractor={(item, index) =>
-                  item.id ? `${item.id}-${index}` : index.toString()
-                }
-                ListHeaderComponent={() => (
-                  <View style={styles.row}>
-                    {['Sr#', 'Subject', 'Total Marks', 'Obtain Marks'].map(
-                      header => (
-                        <Text
-                          key={header}
-                          style={[styles.column, styles.headTable]}>
-                          {header}
-                        </Text>
-                      ),
-                    )}
-                  </View>
-                )}
-                renderItem={({item, index}) => (
-                  <View style={styles.row}>
-                    <Text style={[styles.column, styles.withBorder]}>
-                      {index + 1}
-                    </Text>
-                    <Text style={[styles.column, styles.withBorder]}>
-                      {item.sub_name}
-                    </Text>
-                    <Text style={[styles.column, styles.withBorder]}>
-                      {item.total_marks}
-                    </Text>
-                    <Text style={[styles.column, styles.withBorder]}>
-                      {item.obtain_marks}
-                    </Text>
-                  </View>
-                )}
-              />
-            </View>
-          </ScrollView>
-
-          <TouchableOpacity>
+          <TouchableOpacity onPress={printPDF} style={{marginTop: 'auto'}}>
             <View
               style={{
-                backgroundColor: '#218838',
+                backgroundColor: '#3b82f6',
                 borderRadius: 5,
                 width: 50,
                 height: 30,
@@ -455,14 +325,7 @@ const styles = StyleSheet.create({
     margin: 5,
     padding: 10,
   },
-  schoolInfo: {
-    marginVertical: 10,
-  },
-  studentInfo: {
-    flexDirection: 'row',
-    marginTop: 10,
-    alignItems: 'center',
-  },
+
   text: {
     fontWeight: 'bold',
     marginLeft: 15,
@@ -471,32 +334,23 @@ const styles = StyleSheet.create({
     padding: 2,
     marginLeft: 10,
   },
-  noRecordText: {
-    textAlign: 'center',
-    marginTop: 40,
-    color: '#6C757D',
-  },
+
   printButton: {
     flexDirection: 'row',
-    backgroundColor: '#218838',
-    borderRadius: 5,
-    borderWidth: 1,
-    width: 54,
-    height: 30,
-    alignSelf: 'center',
-    marginTop: 15,
-    marginBottom: 30,
+
+    alignSelf: 'flex-start',
+
     justifyContent: 'center',
     alignItems: 'center',
   },
   printIcon: {
     width: 10,
     height: 10,
-    tintColor: 'white',
     marginRight: 5,
+    tintColor: '#3b82f6',
   },
   printText: {
-    color: 'white',
+    color: '#3b82f6',
     textAlign: 'center',
   },
   header: {
@@ -504,6 +358,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     backgroundColor: '#3b82f6',
+  },
+  backButton: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+    tintColor: 'white',
+    marginLeft: 10,
   },
   headerText: {
     fontSize: 20,
@@ -526,41 +387,47 @@ const styles = StyleSheet.create({
     padding: 5,
     marginLeft: 10,
   },
-  flatList: {
-    margin: 10,
-    flex: 1,
+  card: {
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 20,
+    marginLeft: '2%',
+    marginRight: '2%',
+    marginTop: '1%',
+    borderWidth: 1,
+    borderColor: '#3b82f6',
   },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  column: {
-    width: 140,
-    padding: 1,
-    textAlign: 'center',
-  },
-  headTable: {
+  titl: {
+    fontSize: 16,
     fontWeight: 'bold',
-    backgroundColor: '#3b82f6',
-    color: 'white',
+    color: '#3b82f6',
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
   actionView: {
     borderRadius: 5,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginLeft: 50,
-    marginTop: 1,
-    marginBottom: 1,
   },
   notAvailable: {
     color: 'red',
     tintColor: 'red',
-    width: 80,
-    height: 27,
+
     borderRadius: 5,
-    top: -3,
   },
   available: {
     color: 'darkblue',
@@ -570,21 +437,13 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     top: -3,
   },
-  withBorder: {
-    borderRightWidth: 1,
-    borderColor: '#ccc',
-  },
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 60,
-    height: 20,
-    marginTop: 5,
   },
   actionIcon: {
-    width: 15,
-    height: 15,
+    width: 20,
+    height: 20,
     tintColor: '#3b82f6',
-    marginLeft: 70,
   },
 });

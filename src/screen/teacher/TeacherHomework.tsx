@@ -8,8 +8,10 @@ import {
   View,
   TextInput,
   FlatList,
+  Animated,
+  ImageBackground,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
@@ -41,17 +43,12 @@ interface HomeworkData {
 const TeacherHomework = ({navigation}: any) => {
   const {token} = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [subjectError, setSubjectError] = useState('');
   const [dateError, setDateError] = useState('');
   const [descError, setDescError] = useState('');
-  const [desError, setDesError] = useState('');
-  const [date, setDate] = useState('');
   const [isModalVisible, setModalVisible] = useState(false);
   const [value, setValue] = useState('');
-  const [dat, setDat] = useState('');
+  const [dat, setDat] = useState(new Date());
   const [desc, setDesc] = useState('');
   const [des, setDes] = useState('');
   const [endDate, setEndDate] = useState(new Date());
@@ -71,41 +68,6 @@ const TeacherHomework = ({navigation}: any) => {
   const itemo = [{label: 'Select Section First', value: 1}];
 
   const [originalData, setOriginalData] = useState<Homework[]>([]);
-  const [tableData, setTableData] = useState<Homework[]>(originalData);
-
-  const items = [
-    {label: '10', value: 10},
-    {label: '25', value: 25},
-    {label: '50', value: 50},
-    {label: '100', value: 100},
-  ];
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setTableData(originalData);
-    } else {
-      const filtered = originalData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered);
-    }
-  };
-
-  const totalPages = Math.ceil(tableData.length / entriesPerPage);
-
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const currentEntries = tableData.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage,
-  );
 
   const [isModalVisi, setModalVisi] = useState(false);
 
@@ -132,7 +94,7 @@ const TeacherHomework = ({navigation}: any) => {
   ) => {
     const currentDate = selectedDate || startDate;
     setShowStartDatePicker(false);
-    setStartDate(currentDate);
+    setDat(currentDate);
   };
 
   const onEndDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
@@ -180,12 +142,6 @@ const TeacherHomework = ({navigation}: any) => {
     } else {
       setDescError('');
     }
-    if (!des) {
-      setDesError('Total Marks is required');
-      isValid = false;
-    } else {
-      setDesError('');
-    }
 
     return isValid;
   };
@@ -204,7 +160,6 @@ const TeacherHomework = ({navigation}: any) => {
           },
         );
         setOriginalData(response.data.homework);
-        setTableData(response.data.homework);
       } catch (error) {
         console.log(error);
         throw error;
@@ -214,7 +169,23 @@ const TeacherHomework = ({navigation}: any) => {
     }
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
     fetchData();
 
     const backAction = () => {
@@ -240,8 +211,21 @@ const TeacherHomework = ({navigation}: any) => {
 
     return `${day}-${month}-${year}`; // Return formatted date
   };
+
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.navigate('TeacherHome')}>
           <Icon
@@ -266,12 +250,12 @@ const TeacherHomework = ({navigation}: any) => {
             alignItems: 'center',
             borderTopWidth: 1,
             borderBottomWidth: 1,
-            width: 140,
+            width: 170,
             borderRightWidth: 1,
             borderLeftWidth: 1,
             borderRadius: 5,
-            borderColor: 'gray',
-            marginLeft: 20,
+            borderColor: '#3b82f6',
+            marginLeft: '2%',
           }}>
           <Text style={styles.label}>From</Text>
 
@@ -280,7 +264,7 @@ const TeacherHomework = ({navigation}: any) => {
               flexDirection: 'row',
               alignItems: 'center',
               borderRadius: 5,
-              borderColor: 'gray',
+              borderColor: '#3b82f6',
             }}>
             <Text style={{marginLeft: 10}}>
               {`${startDate.toLocaleDateString()}`}
@@ -292,7 +276,8 @@ const TeacherHomework = ({navigation}: any) => {
                   width: 20,
                   resizeMode: 'stretch',
                   alignItems: 'center',
-                  marginLeft: 20,
+                  marginLeft: 50,
+                  tintColor: '#3b82f6',
                 }}
                 source={require('../../assets/calendar.png')}
               />
@@ -316,14 +301,14 @@ const TeacherHomework = ({navigation}: any) => {
             alignItems: 'center',
             borderTopWidth: 1,
             borderBottomWidth: 1,
-            width: 140,
+            width: 170,
             borderRightWidth: 1,
             borderLeftWidth: 1,
             borderRadius: 5,
-            borderColor: 'gray',
-            marginLeft: 10,
-            marginRight: 20,
-            height: 40,
+            borderColor: '#3b82f6',
+            marginLeft: '1%',
+            marginRight: '2%',
+            height: 30,
           }}>
           <Text style={styles.label}>To</Text>
 
@@ -332,7 +317,7 @@ const TeacherHomework = ({navigation}: any) => {
               flexDirection: 'row',
               alignItems: 'center',
               borderRadius: 5,
-              borderColor: 'gray',
+              borderColor: '#3b82f6',
             }}>
             <Text style={{marginLeft: 10}}>
               {`${endDate.toLocaleDateString()}`}
@@ -344,7 +329,8 @@ const TeacherHomework = ({navigation}: any) => {
                   width: 20,
                   resizeMode: 'stretch',
                   alignItems: 'center',
-                  marginLeft: 20,
+                  marginLeft: 50,
+                  tintColor: '#3b82f6',
                 }}
                 source={require('../../assets/calendar.png')}
               />
@@ -369,18 +355,18 @@ const TeacherHomework = ({navigation}: any) => {
           alignSelf: 'flex-end',
           marginTop: 10,
           marginBottom: 10,
-          marginLeft: 5,
-          marginRight: 10,
+          marginLeft: '2%',
+          marginRight: '2%',
         }}>
         <TouchableOpacity
           onPress={() => navigation.navigate('TSummerHomework' as never)}>
           <View
             style={{
-              width: 150,
+              width: 171,
               height: 30,
-              backgroundColor: '#218838',
+              backgroundColor: '#3b82f6',
               borderRadius: 5,
-              marginRight: 10,
+              marginRight: '1%',
             }}>
             <Text
               style={{
@@ -397,9 +383,9 @@ const TeacherHomework = ({navigation}: any) => {
         <TouchableOpacity onPress={toggleModal}>
           <View
             style={{
-              width: 130,
+              width: 172,
               height: 30,
-              backgroundColor: '#218838',
+              backgroundColor: '#3b82f6',
               borderRadius: 5,
             }}>
             <Text
@@ -416,224 +402,150 @@ const TeacherHomework = ({navigation}: any) => {
         </TouchableOpacity>
       </View>
 
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: 10,
-        }}>
-        <View style={{width: 80, marginTop: 9}}>
-          <DropDownPicker
-            items={items}
-            open={isOpen}
-            setOpen={setIsOpen}
-            value={entriesPerPage}
-            setValue={callback => {
-              setEntriesPerPage(prev =>
-                typeof callback === 'function' ? callback(prev) : callback,
-              );
-            }}
-            maxHeight={200}
-            placeholder=""
-            style={styles.dropdown}
-          />
-        </View>
-
-        <View style={styles.container}>
-          <TextInput
-            style={styles.input}
-            placeholder="Search..."
-            placeholderTextColor={'gray'}
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </View>
-      </View>
-
-      {/* Table */}
-      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        {currentEntries.length > 0 ? (
-          <View>
-            <FlatList
-              style={styles.flatList}
-              data={currentEntries}
-              nestedScrollEnabled
-              keyExtractor={(item, index) => `${item.home_user_id}-${index}`}
-              ListHeaderComponent={() => (
-                <View style={styles.row}>
-                  {['Sr#', 'Class', 'Section', 'Subject', 'Date', 'Action'].map(
-                    header => (
-                      <Text
-                        key={header}
-                        style={[styles.column, styles.headTable]}>
-                        {header}
-                      </Text>
-                    ),
-                  )}
-                </View>
-              )}
-              renderItem={({item, index}) => (
-                <View
-                  style={[
-                    styles.row,
-                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                  ]}>
-                  <Text style={styles.column}>{index + 1}</Text>
-                  <Text style={styles.column}>{item.cls_name}</Text>
-                  <Text style={styles.column}>{item.sec_name}</Text>
-                  <Text style={styles.column}>{item.sub_name}</Text>
-                  <Text style={styles.column}>
-                    {formatDate(item.home_date)}
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.iconContainer}
-                    onPress={() => toggleModl(item.home_desc)}>
-                    <Image
-                      style={styles.actionIcon}
-                      source={require('../../assets/visible.png')}
-                    />
-                  </TouchableOpacity>
-                </View>
-              )}
-            />
-          </View>
-        ) : (
-          <View style={{marginTop: 20, width: '100%'}}>
-            <Text
-              style={{textAlign: 'center', fontSize: 18, fontWeight: 'bold'}}>
-              No data found in the database
-            </Text>
+      <FlatList
+        data={originalData}
+        keyExtractor={(item, index) =>
+          item?.home_user_id?.toString() || `item-${index}`
+        }
+        renderItem={({item}) => (
+          <View style={styles.card}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <TouchableOpacity
+                style={styles.iconContainer}
+                onPress={() => toggleModl(item.home_desc)}>
+                <Image
+                  style={styles.actionIcon}
+                  source={require('../../assets/visible.png')}
+                />
+              </TouchableOpacity>
+              <Text
+                style={{
+                  fontWeight: 'bold',
+                  color: '#3b82f6',
+                  fontSize: 16,
+                }}>
+                {item.sub_name}
+              </Text>
+              <Text
+                style={{
+                  color: '#3b82f6',
+                }}>
+                {formatDate(item.home_date)}
+              </Text>
+            </View>
           </View>
         )}
-      </ScrollView>
+      />
 
-      <View style={styles.pagination}>
-        <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
-          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
-          {tableData.length} entries
-        </Text>
-        <View style={styles.paginationButtons}>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
-            <Text style={styles.paginationText}>Previous</Text>
-          </TouchableOpacity>
-          <View style={styles.pageNumber}>
-            <Text style={styles.pageText}>{currentPage}</Text>
-          </View>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
-            <Text style={styles.paginationText}>Next</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Modal */}
+      {/* Homework View Modal */}
       <Modal isVisible={isModalVisi}>
         <View
           style={{
             flex: 1,
             backgroundColor: 'white',
             width: 'auto',
-            maxHeight: 300,
+            maxHeight: 250,
             borderRadius: 5,
             borderWidth: 1,
-            borderColor: '#6C757D',
+            borderColor: '#3b82f6',
+            overflow: 'hidden',
           }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
+
+          <Text
+            style={{
+              color: '#3b82f6',
+              fontSize: 18,
+              fontWeight: 'bold',
+              textAlign: 'center',
+              margin: 10,
+            }}>
+            Home Work
+          </Text>
+
           <View
             style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 20,
-            }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>Home Work</Text>
+              height: 1,
+              backgroundColor: '#3b82f6',
+              width: wp('90%'),
+            }}
+          />
 
+          <Text style={styles.lblTxt}>Description:</Text>
+          <Text style={styles.valueTxt}>
+            {homeworkData?.homework.home_desc}
+          </Text>
+
+          <View style={{flex: 1, justifyContent: 'flex-end', marginBottom: 10}}>
             <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
+              <View
+                style={{
+                  backgroundColor: '#3b82f6',
+                  borderRadius: 5,
+                  width: 50,
+                  height: 23,
+                  alignSelf: 'center',
+                }}>
+                <Text
+                  style={{color: 'white', fontSize: 16, textAlign: 'center'}}>
+                  Close
+                </Text>
+              </View>
             </TouchableOpacity>
           </View>
-          <View
-            style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
-
-          <View
-            style={{
-              flexDirection: 'row',
-              margin: 10,
-            }}>
-            <Text style={styles.lblText}>Date</Text>
-            <Text style={styles.valueText}>
-              {formatDate(homeworkData?.homework.home_date ?? '')}
-            </Text>
-          </View>
-          <View
-            style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
-
-          <View
-            style={{
-              flexDirection: 'row',
-              margin: 10,
-            }}>
-            <Text style={styles.lblText}>Subject</Text>
-            <Text style={styles.valueText}>
-              {homeworkData?.subject.sub_name}
-            </Text>
-          </View>
-          <View
-            style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
-          <View
-            style={{
-              margin: 10,
-              flexDirection: 'row',
-            }}>
-            <Text style={styles.lblText}>Description:</Text>
-            <Text style={styles.valueText}>
-              {homeworkData?.homework.home_desc}
-            </Text>
-          </View>
-          <View
-            style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
         </View>
       </Modal>
 
+      {/* Add Homework Modal */}
       <Modal isVisible={isModalVisible}>
         <View
           style={{
             flex: 1,
             backgroundColor: 'white',
             width: 'auto',
-            maxHeight: 500,
+            maxHeight: 400,
             borderRadius: 5,
             borderWidth: 1,
-            borderColor: '#6C757D',
+            borderColor: '#3b82f6',
+            overflow: 'hidden',
           }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
-              margin: 20,
+              margin: 10,
             }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>Add Home Work</Text>
+            <Text style={{color: '#3b82f6', fontSize: 18, fontWeight: 'bold'}}>
+              Add Home Work
+            </Text>
 
             <TouchableOpacity onPress={() => setModalVisible(!isModalVisible)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
+              <Text style={{color: 'red'}}>✖</Text>
             </TouchableOpacity>
           </View>
           <View
@@ -641,7 +553,7 @@ const TeacherHomework = ({navigation}: any) => {
               flexDirection: 'row',
               width: 'auto',
               height: 1,
-              borderColor: 'gray',
+              borderColor: '#3b82f6',
               borderWidth: 1,
               borderBottomWidth: 1,
             }}
@@ -659,7 +571,7 @@ const TeacherHomework = ({navigation}: any) => {
                 borderRightWidth: 1,
                 borderLeftWidth: 1,
                 borderRadius: 5,
-                borderColor: 'gray',
+                borderColor: '#3b82f6',
                 marginLeft: 20,
                 height: 32,
                 borderBottomWidth: 1,
@@ -685,7 +597,7 @@ const TeacherHomework = ({navigation}: any) => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   borderRadius: 5,
-                  borderColor: 'gray',
+                  borderColor: '#3b82f6',
                 }}>
                 <DropDownPicker
                   items={itemc}
@@ -724,7 +636,7 @@ const TeacherHomework = ({navigation}: any) => {
                 borderRightWidth: 1,
                 borderLeftWidth: 1,
                 borderRadius: 5,
-                borderColor: 'gray',
+                borderColor: '#3b82f6',
                 marginLeft: 5,
                 height: 32,
                 borderBottomWidth: 1,
@@ -750,7 +662,7 @@ const TeacherHomework = ({navigation}: any) => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   borderRadius: 5,
-                  borderColor: 'gray',
+                  borderColor: '#3b82f6',
                 }}>
                 <DropDownPicker
                   items={itemz}
@@ -798,7 +710,7 @@ const TeacherHomework = ({navigation}: any) => {
                 borderRightWidth: 1,
                 borderLeftWidth: 1,
                 borderRadius: 5,
-                borderColor: 'gray',
+                borderColor: '#3b82f6',
                 marginLeft: 20,
                 height: 32,
                 borderBottomWidth: 1,
@@ -824,7 +736,7 @@ const TeacherHomework = ({navigation}: any) => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   borderRadius: 5,
-                  borderColor: 'gray',
+                  borderColor: '#3b82f6',
                 }}>
                 <DropDownPicker
                   items={itemo}
@@ -868,7 +780,7 @@ const TeacherHomework = ({navigation}: any) => {
                 borderRightWidth: 1,
                 borderLeftWidth: 1,
                 borderRadius: 5,
-                borderColor: 'gray',
+                borderColor: '#3b82f6',
                 marginRight: 20,
                 marginLeft: 2,
               }}>
@@ -889,7 +801,7 @@ const TeacherHomework = ({navigation}: any) => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   borderRadius: 5,
-                  borderColor: 'gray',
+                  borderColor: '#3b82f6',
                 }}>
                 <Text
                   style={{
@@ -905,14 +817,15 @@ const TeacherHomework = ({navigation}: any) => {
                       width: 20,
                       resizeMode: 'stretch',
                       alignItems: 'center',
-                      marginLeft: 30,
+                      marginLeft: 20,
+                      tintColor: '#3b82f6',
                     }}
                     source={require('../../assets/calendar.png')}
                   />
                   {showStartDatePicker && (
                     <DateTimePicker
                       testID="startDatePicker"
-                      value={startDate}
+                      value={dat}
                       mode="date"
                       is24Hour={true}
                       display="default"
@@ -945,7 +858,7 @@ const TeacherHomework = ({navigation}: any) => {
               borderRightWidth: 1,
               borderLeftWidth: 1,
               borderRadius: 5,
-              borderColor: 'gray',
+              borderColor: '#3b82f6',
               marginLeft: 20,
               marginTop: 30,
               height: 100,
@@ -966,11 +879,11 @@ const TeacherHomework = ({navigation}: any) => {
             <View
               style={{
                 borderRadius: 5,
-                borderColor: 'gray',
+                borderColor: '#3b82f6',
               }}>
               <TextInput
                 style={{
-                  color: 'black',
+                  color: '#3b82f6',
                 }}
                 value={desc}
                 onChangeText={setDesc}
@@ -1000,7 +913,7 @@ const TeacherHomework = ({navigation}: any) => {
             }}>
             <View
               style={{
-                backgroundColor: '#218838',
+                backgroundColor: '#3b82f6',
                 borderRadius: 5,
                 width: 50,
                 height: 30,
@@ -1047,65 +960,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flex: 1,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 4,
-    borderRadius: 4,
-    textAlign: 'center',
-    color: 'gray',
-  },
-  dropdown: {
-    borderWidth: 1,
-    borderColor: '#d5d5d9',
-    borderRadius: 5,
-    minHeight: 30,
-    marginLeft: 10,
-  },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  column: {
-    width: 140,
-    padding: 1,
-    textAlign: 'center',
-  },
-  headTable: {
-    fontWeight: 'bold',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-  },
 
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    margin: 10,
-  },
-  paginationButtons: {
-    flexDirection: 'row',
-  },
-  paginationText: {
-    fontWeight: 'bold',
-  },
-  pageNumber: {
-    width: 22,
-    height: 22,
-    backgroundColor: '#3b82f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
-    marginRight: 10,
-  },
-  pageText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  flatList: {
-    margin: 10,
-    flex: 1,
-  },
   container: {
     backgroundColor: '#fff',
     marginTop: 12,
@@ -1123,22 +978,62 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 50,
-    height: 20,
   },
   actionIcon: {
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    marginLeft: 90,
   },
   label: {
     position: 'absolute',
     top: -10,
     left: 14,
     fontSize: 14,
-    color: 'black',
+    color: '#3b82f6',
     backgroundColor: 'white',
     paddingHorizontal: 4,
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+  },
+  cards: {
+    borderRadius: 10,
+    marginBottom: 10,
+    margin: '2%',
+    height: 240,
+    backgroundColor: 'white',
+    justifyContent: 'space-between',
+  },
+  card: {
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 8,
+    marginLeft: '2%',
+    elevation: 5,
+    opacity: 1,
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+    marginRight: '2%',
+    marginTop: '1%',
+  },
+
+  lblTxt: {
+    fontWeight: 'bold',
+    color: '#3b82f6',
+    marginTop: 15,
+    marginLeft: '10%',
+    fontSize: 16,
+  },
+  valueTxt: {
+    marginRight: '10%',
+    color: '#3b82f6',
+    marginLeft: '10%',
   },
 });

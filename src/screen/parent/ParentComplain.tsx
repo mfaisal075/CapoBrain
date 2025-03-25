@@ -1,8 +1,10 @@
 import {
   Alert,
+  Animated,
   BackHandler,
   FlatList,
   Image,
+  ImageBackground,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
 import {Formik} from 'formik';
 import * as Yup from 'yup';
@@ -156,7 +158,22 @@ const ParentComplain = ({navigation}: any) => {
     }
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
     fetchData();
     const backAction = () => {
       navigation.goBack();
@@ -172,11 +189,19 @@ const ParentComplain = ({navigation}: any) => {
   }, []);
 
   return (
-    <View
-      style={{
-        backgroundColor: 'white',
-        flex: 1,
-      }}>
+    <View style={styles.container}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon
@@ -192,18 +217,20 @@ const ParentComplain = ({navigation}: any) => {
       <TouchableOpacity onPress={toggleModal}>
         <View
           style={{
-            width: 110,
+            width: 120,
             height: 30,
-            backgroundColor: '#218838',
+            backgroundColor: '#3b82f6',
             borderRadius: 5,
+            marginRight: 10,
             alignSelf: 'flex-end',
-            margin: 10,
+            marginTop: 10,
+            marginBottom: 10,
           }}>
           <Text
             style={{
               color: 'white',
               fontWeight: 'bold',
-              fontSize: 15,
+              fontSize: 16,
               textAlign: 'center',
               marginTop: 3,
             }}>
@@ -212,79 +239,37 @@ const ParentComplain = ({navigation}: any) => {
         </View>
       </TouchableOpacity>
 
-      <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-        <View style={{width: 80, marginTop: 9}}>
-          <DropDownPicker
-            items={items}
-            open={isOpen}
-            setOpen={setIsOpen}
-            value={entriesPerPage}
-            setValue={callback => {
-              setEntriesPerPage(prev =>
-                typeof callback === 'function' ? callback(prev) : callback,
-              );
-            }}
-            maxHeight={200}
-            placeholder=""
-            style={styles.dropdown}
-          />
-        </View>
+      <FlatList
+        data={originalData}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({item}) => (
+          <View style={styles.card}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={styles.title}>{item.name}</Text>
+              <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                {item.contact ?? 'NILL'}
+              </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={{color: '#3b82f6'}}>{item.email}</Text>
 
-        <View style={styles.searchcontainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Search..."
-            placeholderTextColor={'gray'}
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </View>
-      </View>
-      {/* Table */}
-      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        <View>
-          <FlatList
-            style={styles.flatList}
-            data={currentEntries}
-            nestedScrollEnabled
-            keyExtractor={(item, index) =>
-              item.id ? item.id.toString() : index.toString()
-            }
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                {['Sr#', 'Name', 'Email', 'Contact', 'Status', 'Action'].map(
-                  header => (
-                    <Text
-                      key={header}
-                      style={[styles.column, styles.headTable]}>
-                      {header}
-                    </Text>
-                  ),
-                )}
-              </View>
-            )}
-            renderItem={({item, index}) => (
-              <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={styles.column}>{index + 1}</Text>
-                <Text style={styles.column}>{item.name}</Text>
-                <Text style={styles.column}>{item.email ?? 'NILL'}</Text>
-                <Text style={styles.column}>{item.contact ?? 'NILL'}</Text>
-                <View style={styles.iconContainer}>
-                  <Image
-                    style={styles.statusIcon}
-                    source={
-                      item.status === 'Pending'
-                        ? require('../../assets/pending.png')
-                        : item.status === 'Approved'
-                        ? require('../../assets/approved.png')
-                        : require('../../assets/rejected.png')
-                    }
-                  />
-                </View>
+              <View style={styles.iconContainer}>
+                <Image
+                  style={styles.statusIcon}
+                  source={
+                    item.status === 'Approved'
+                      ? require('../../assets/approved.png')
+                      : require('../../assets/rejected.png')
+                  }
+                />
                 <TouchableOpacity
                   style={styles.iconContainer}
                   onPress={() => toggleModl(item.id)}>
@@ -294,219 +279,214 @@ const ParentComplain = ({navigation}: any) => {
                   />
                 </TouchableOpacity>
               </View>
-            )}
-          />
-        </View>
-      </ScrollView>
-
-      <View style={styles.pagination}>
-        <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
-          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
-          {tableData.length} entries
-        </Text>
-        <View style={styles.paginationButtons}>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
-            <Text style={styles.paginationText}>Previous</Text>
-          </TouchableOpacity>
-          <View style={styles.pageNumber}>
-            <Text style={styles.pageText}>{currentPage}</Text>
+            </View>
           </View>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
-            <Text style={styles.paginationText}>Next</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        )}
+      />
 
-      {/* Modal */}
+      {/* Add Complain Modal */}
       <Modal isVisible={isModalVisible}>
         <View
           style={{
             flex: 1,
             backgroundColor: 'white',
             width: 'auto',
-            maxHeight: 550,
+            maxHeight: 450,
             borderRadius: 5,
             borderWidth: 1,
-            borderColor: '#6C757D',
+            borderColor: '#3b82f6',
+            overflow: 'hidden',
           }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 20,
-            }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>Add Complain</Text>
-
-            <TouchableOpacity onPress={() => setModalVisible(!isModalVisible)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
-            </TouchableOpacity>
-          </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              width: 'auto',
-              height: 1.5,
-              backgroundColor: 'gray',
-            }}
-          />
-
-          {/* complain note*/}
-          <Formik
-            initialValues={{name: ''}}
-            validationSchema={validationSchema}
-            onSubmit={handleSave}>
-            {({
-              handleChange,
-              handleBlur,
-              handleSubmit,
-              values,
-              errors,
-              touched,
-            }) => (
-              <View>
-                <Text
-                  style={{
-                    position: 'absolute',
-                    top: -11,
-                    left: 28,
-                    fontSize: 14,
-                    color: 'black',
-                    backgroundColor: 'white',
-                    paddingHorizontal: 4,
-                    marginTop: 30,
-                    zIndex: 1,
-                  }}>
-                  Complain Note
-                </Text>
-                <TextInput
-                  value={values.name}
-                  onChangeText={handleChange('name')}
-                  onBlur={handleBlur('name')}
-                  style={{
-                    marginLeft: 20,
-                    marginRight: 20,
-                    borderRadius: 5,
-                    borderColor: 'gray',
-                    borderWidth: 1,
-                    height: 300,
-                    textAlignVertical: 'top',
-                    marginTop: 30,
-                  }}
-                  multiline={true}
-                />
-                {touched.name && errors.name && (
-                  <Text
-                    style={{
-                      color: 'red',
-                      marginLeft: 20,
-                    }}>
-                    {errors.name}
-                  </Text>
-                )}
-
-                <TouchableOpacity
-                  onPress={() => handleSubmit()}
-                  disabled={loading}>
-                  <View
-                    style={{
-                      borderRadius: 5,
-                      height: 30,
-                      marginTop: 20,
-                      backgroundColor: '#218838',
-                      width: 60,
-                      alignSelf: 'center',
-                    }}>
-                    <Text
-                      style={{
-                        textAlign: 'center',
-                        marginTop: 5,
-                        color: 'white',
-                      }}>
-                      {loading ? 'Saving...' : 'Save'}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
-            )}
-          </Formik>
-        </View>
-      </Modal>
-
-      <Modal isVisible={isModalVisi}>
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: 'white',
-            width: 'auto',
-            maxHeight: 300,
-            borderRadius: 5,
-            borderWidth: 1,
-            borderColor: '#6C757D',
-          }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 20,
-            }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>
-              Complain Detail
-            </Text>
-
-            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
-            </TouchableOpacity>
-          </View>
-          <View
-            style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
               margin: 10,
             }}>
-            <View
-              style={{
-                flexDirection: 'row',
-              }}>
-              <Text style={styles.lblText}>Name</Text>
-              <Text style={styles.valueText}>{complainData?.name}</Text>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                marginRight: 50,
-              }}>
-              <Text style={styles.lblText}>Email</Text>
-              <Text style={styles.valueText}>
-                {complainData?.email ?? '--'}
-              </Text>
-            </View>
+            <Text style={{color: '#3b82f6', fontSize: 18, fontWeight: 'bold'}}>
+              Add Complain
+            </Text>
+
+            <TouchableOpacity onPress={() => setModalVisible(!isModalVisible)}>
+              <Text style={{color: 'red'}}>✖</Text>
+            </TouchableOpacity>
           </View>
           <View
             style={{
-              flexDirection: 'row',
-              marginLeft: 10,
-            }}>
-            <Text style={styles.lblText}>Contact</Text>
-            <Text style={styles.valueText}>
-              {complainData?.contact ?? '--'}
-            </Text>
-          </View>
+              height: 1,
+              backgroundColor: '#3b82f6',
+              width: wp('90%'),
+            }}
+          />
 
           <View
             style={{
-              marginLeft: 10,
-              marginTop: 10,
+              flexDirection: 'row',
+              borderTopWidth: 1,
+              borderBottomWidth: 1,
+              width: 'auto',
+              borderRightWidth: 1,
+              borderLeftWidth: 1,
+              borderRadius: 5,
+              borderColor: '#3b82f6',
+              marginLeft: 20,
+              marginTop: 20,
+              height: 300,
+              marginRight: 20,
+            }}>
+            <Text style={styles.label}>Complain Note</Text>
+            <Text
+              style={{
+                color: 'red',
+                position: 'absolute',
+                top: -8,
+                left: 114,
+                fontSize: 14,
+                backgroundColor: 'white',
+              }}>
+              *
+            </Text>
+            <View
+              style={{
+                borderRadius: 5,
+                borderColor: '#3b82f6',
+              }}>
+              <TextInput
+                style={{
+                  color: '#3b82f6',
+                }}
+                value={desc}
+                onChangeText={setDesc}
+                placeholder="Type Your Complain Here..."
+                placeholderTextColor={'#3b82f6'}
+              />
+            </View>
+          </View>
+          {descError ? (
+            <Text
+              style={{
+                color: 'red',
+                fontSize: 12,
+                position: 'absolute',
+                top: 370,
+                left: 23,
+              }}>
+              {descError}
+            </Text>
+          ) : null}
+
+          <TouchableOpacity
+            onPress={() => {
+              if (validateFields()) {
+                console.log('Form is valid');
+              } else {
+                console.log('Form is invalid');
+              }
+            }}>
+            <View
+              style={{
+                backgroundColor: '#3b82f6',
+                borderRadius: 5,
+                width: 50,
+                height: 30,
+                alignSelf: 'center',
+                marginTop: 30,
+              }}>
+              <Text
+                style={{
+                  color: 'white',
+                  textAlign: 'center',
+                  marginTop: 5,
+                  fontWeight: 'bold',
+                }}>
+                Save
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* View Modal */}
+      <Modal isVisible={isModalVisi}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'white',
+            width: 'auto',
+            maxHeight: 340,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: '#3b82f6',
+            overflow: 'hidden',
+          }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
+
+          <Text
+            style={{
+              color: '#3b82f6',
+              fontSize: 18,
+              textAlign: 'center',
+              margin: 10,
+              fontWeight: 'bold',
+            }}>
+            Complain Detail
+          </Text>
+
+          <View
+            style={{
+              height: 1,
+              backgroundColor: '#3b82f6',
+              width: wp('90%'),
+            }}
+          />
+
+          <View
+            style={{
+              marginTop: 15,
             }}>
             <Text style={styles.lblText}>Description:</Text>
-            <Text style={styles.valueText}>{complainData?.description}</Text>
+            <Text style={[styles.valueText, {marginLeft: 48, marginTop: 5}]}>
+              {complainData?.description}
+            </Text>
+          </View>
+
+          <View style={{flex: 1, justifyContent: 'flex-end', marginBottom: 10}}>
+            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
+              <View
+                style={{
+                  backgroundColor: '#3b82f6',
+                  borderRadius: 5,
+                  width: 50,
+                  height: 23,
+                  alignSelf: 'center',
+                }}>
+                <Text
+                  style={{color: 'white', fontSize: 16, textAlign: 'center'}}>
+                  Close
+                </Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -517,27 +497,24 @@ const ParentComplain = ({navigation}: any) => {
 export default ParentComplain;
 
 const styles = StyleSheet.create({
-  label: {
-    position: 'absolute',
-    top: -10,
-    left: 14,
-    fontSize: 14,
-    color: 'black',
+  container: {
     backgroundColor: 'white',
-    paddingHorizontal: 4,
+    flex: 1,
+    paddingBottom: 5,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    width: '100%',
+    paddingVertical: 15,
+    paddingHorizontal: 15,
     backgroundColor: '#3b82f6',
   },
   backButton: {
     width: 24,
     height: 24,
-    marginRight: 10,
     tintColor: 'white',
-    marginLeft: 10,
+    marginRight: 15,
   },
   headerText: {
     fontSize: 20,
@@ -546,94 +523,71 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flex: 1,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 4,
-    borderRadius: 4,
-    textAlign: 'center',
-    color: 'gray',
-  },
-  dropdown: {
-    borderWidth: 1,
-    borderColor: '#d5d5d9',
-    borderRadius: 5,
-    minHeight: 30,
-    marginLeft: 10,
-  },
-  searchcontainer: {
-    backgroundColor: '#fff',
-    marginTop: 10,
-    width: 90,
-    height: 30,
-    marginRight: 10,
-  },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  column: {
-    width: 140,
-    padding: 1,
-    textAlign: 'center',
-  },
-  headTable: {
-    fontWeight: 'bold',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-  },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    margin: 10,
-  },
-  paginationButtons: {
-    flexDirection: 'row',
-  },
-  paginationText: {
-    fontWeight: 'bold',
-  },
-  pageNumber: {
-    width: 22,
-    height: 22,
-    backgroundColor: '#3b82f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
-    marginRight: 10,
-  },
-  pageText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  flatList: {
-    margin: 10,
-    flex: 1,
-  },
+
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 50,
-    height: 20,
-    marginRight: 70,
+    flexDirection: 'row',
   },
   statusIcon: {
-    width: 20,
-    height: 20,
-    marginLeft: 80,
+    width: 17,
+    height: 17,
+    elevation: 10,
   },
   actionIcon: {
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    marginLeft: 120,
+    marginLeft: 5,
+    elevation: 10,
+  },
+  label: {
+    position: 'absolute',
+    top: -10,
+    left: 14,
+    fontSize: 14,
+    backgroundColor: 'white',
+    paddingHorizontal: 4,
+    color: '#3b82f6',
   },
   lblText: {
     fontWeight: 'bold',
-    marginRight: 10,
+    color: '#3b82f6',
+    marginLeft: '15%',
+    fontSize: 16,
   },
   valueText: {
-    marginRight: 10,
+    marginRight: '15%',
+    color: '#3b82f6',
+  },
+  card: {
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 20,
+    marginLeft: '2%',
+    marginRight: '2%',
+    marginTop: '1%',
+    borderColor: '#3b82f6',
+    borderWidth: 1,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#3b82f6',
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });

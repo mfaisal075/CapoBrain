@@ -1,6 +1,8 @@
 import {
+  Animated,
   BackHandler,
   FlatList,
+  ImageBackground,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Image} from 'react-native';
 import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
@@ -45,6 +47,9 @@ const TeacherTodos = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisible, setModalVisible] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<number | null>(
+    null,
+  );
   const [todoDetail, setTodoDetail] = useState<TodoDetail | null>(null);
   const [originalData, setOriginalData] = useState<Todo[]>([]);
   const [tableData, setTableData] = useState<Todo[]>(originalData);
@@ -122,7 +127,23 @@ const TeacherTodos = ({navigation}: any) => {
     }
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
     fetchData();
     const backAction = () => {
       navigation.navigate('TeacherHome');
@@ -150,8 +171,21 @@ const TeacherTodos = ({navigation}: any) => {
 
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('TeacherHome')}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('TeacherHome')}>
           <Icon
             name="arrow-left"
             size={38}
@@ -159,159 +193,147 @@ const TeacherTodos = ({navigation}: any) => {
             style={{paddingHorizontal: 10}}
           />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Staff Todo's</Text>
+        <Text style={styles.headerText}>Staff's Todo</Text>
       </View>
 
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: 10,
-        }}>
-        <View style={{width: 80, marginTop: 9}}>
-          <DropDownPicker
-            items={items}
-            open={isOpen}
-            setOpen={setIsOpen}
-            value={entriesPerPage}
-            setValue={callback => {
-              setEntriesPerPage(prev =>
-                typeof callback === 'function' ? callback(prev) : callback,
-              );
-            }}
-            maxHeight={200}
-            placeholder=""
-            style={styles.dropdown}
-          />
-        </View>
-
-        <View style={styles.container}>
-          <TextInput
-            style={styles.input}
-            placeholder="Search..."
-            placeholderTextColor={'gray'}
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </View>
-      </View>
-
-      {/* Table */}
-      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        <View>
-          <FlatList
-            style={styles.flatList}
-            data={currentEntries}
-            keyExtractor={(item, index) =>
-              item.id ? item.id.toString() : index.toString()
-            }
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                {[
-                  'Sr#',
-                  'Title',
-                  'Start Date',
-                  'End Date',
-                  'Deadline',
-                  'Action',
-                ].map(header => (
-                  <Text key={header} style={[styles.column, styles.headTable]}>
-                    {header}
-                  </Text>
-                ))}
-              </View>
-            )}
-            renderItem={({item, index}) => (
+      <FlatList
+        style={{paddingVertical: 10}}
+        data={originalData}
+        keyExtractor={(item, index) => item?.id?.toString() || `item-${index}`}
+        renderItem={({item}) => (
+          <TouchableOpacity
+            onPress={() => {
+              setSelectedTransaction(item.id);
+              setIsOpen(true);
+            }}>
+            <View style={styles.card}>
               <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={styles.column}>{index + 1}</Text>
-                <Text style={styles.column}>{item.title}</Text>
-                <Text style={styles.column}>{formatDate(item.start_date)}</Text>
-                <Text style={styles.column}>{formatDate(item.end_date)}</Text>
-                <Text style={styles.column}>
-                  {formatDate(item.deadline_date)}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => toggleModal(item.id)}
-                  disabled={item.notifiaction_status === 'Close'}>
-                  <View style={[styles.view, styles.actionView]}>
-                    <Image
-                      style={[
-                        styles.view,
-                        {width: 13},
-                        {height: 13},
-                        {marginLeft: 40},
-                        {marginTop: 4},
-                      ]}
-                      source={require('../../assets/visible.png')}
-                    />
-                  </View>
-                </TouchableOpacity>
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={styles.title}>{item.title}</Text>
 
-                <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate('TeacherComment' as never)
-                  }>
-                  <View style={[styles.comment, styles.actionView]}>
-                    <Image
-                      style={[
-                        styles.comment,
-                        {width: 13},
-                        {height: 13},
-                        {marginLeft: 4},
-                        {marginTop: 4},
-                      ]}
-                      source={require('../../assets/chat.png')}
-                    />
-                  </View>
-                </TouchableOpacity>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                  }}>
+                  <TouchableOpacity onPress={() => toggleModal(item.id)}>
+                    <View style={[styles.view, styles.actionView]}>
+                      <Image
+                        style={[
+                          styles.view,
+                          {width: 13},
+                          {height: 13},
+                          {marginLeft: 4},
+                          {marginTop: 4},
+                        ]}
+                        source={require('../../assets/visible.png')}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate('TeacherComment' as never)
+                    }>
+                    <View style={[styles.comment, styles.actionView]}>
+                      <Image
+                        style={[
+                          styles.comment,
+                          {width: 13},
+                          {height: 13},
+                          {marginLeft: 4},
+                          {marginTop: 4},
+                        ]}
+                        source={require('../../assets/chat.png')}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
+      />
 
-                <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate('TeacherComment' as never)
-                  }>
-                  <View style={[styles.commnt, styles.actionView]}>
-                    <Image
-                      style={[
-                        styles.commnt,
-                        {width: 13},
-                        {height: 13},
-                        {marginLeft: 4},
-                        {marginTop: 4},
-                      ]}
-                      source={require('../../assets/chat.png')}
-                    />
-                  </View>
-                </TouchableOpacity>
+      <Modal isVisible={isOpen}>
+        <View style={[styles.cards, {overflow: 'hidden'}]}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
+
+          {selectedTransaction && (
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: 'bold',
+                color: '#3b82f6',
+                textAlign: 'center',
+                marginVertical: 10,
+              }}>
+              {
+                originalData.find(item => item.id === selectedTransaction)
+                  ?.title
+              }
+            </Text>
+          )}
+
+          <FlatList
+            data={originalData.filter(
+              entry => entry.id === selectedTransaction,
+            )}
+            keyExtractor={(item, index) =>
+              item.id.toString() || `item-${index}`
+            }
+            renderItem={({item}) => (
+              <View
+                style={{
+                  marginLeft: '15%',
+                  marginRight: '15%',
+                  marginTop: 5,
+                }}>
+                <EntryRow
+                  label="Start Date:"
+                  value={formatDate(item.start_date)}
+                />
+                <EntryRow label="End Date:" value={formatDate(item.end_date)} />
+                <EntryRow
+                  label="Deadline:"
+                  value={formatDate(item.deadline_date)}
+                />
               </View>
             )}
           />
-        </View>
-      </ScrollView>
-
-      <View style={styles.pagination}>
-        <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
-          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
-          {tableData.length} entries
-        </Text>
-        <View style={styles.paginationButtons}>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
-            <Text style={styles.paginationText}>Previous</Text>
+          <TouchableOpacity
+            onPress={() => {
+              setSelectedTransaction(null);
+              setIsOpen(false);
+            }}>
+            <View
+              style={{
+                backgroundColor: '#3b82f6',
+                borderRadius: 5,
+                width: 50,
+                height: 23,
+                alignSelf: 'center',
+                marginBottom: 15,
+              }}>
+              <Text style={{color: 'white', fontSize: 16, textAlign: 'center'}}>
+                Close
+              </Text>
+            </View>
           </TouchableOpacity>
-          <View style={styles.pageNumber}>
-            <Text style={styles.pageText}>{currentPage}</Text>
-          </View>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
-            <Text style={styles.paginationText}>Next</Text>
-          </TouchableOpacity>
         </View>
-      </View>
+      </Modal>
 
-      {/* View Modal */}
       <Modal isVisible={isModalVisible}>
         <View
           style={{
@@ -322,231 +344,102 @@ const TeacherTodos = ({navigation}: any) => {
             borderRadius: 5,
             borderWidth: 1,
             borderColor: '#6C757D',
+            overflow: 'hidden',
           }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 20,
-            }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>Todo Detail</Text>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
 
+          <Text
+            style={{
+              color: '#3b82f6',
+              fontSize: 18,
+              fontWeight: 'bold',
+              textAlign: 'center',
+              margin: 10,
+            }}>
+            Todo Detail
+          </Text>
+
+          <Text
+            style={{
+              fontWeight: 'bold',
+              marginLeft: '15%',
+              color: '#3b82f6',
+              fontSize: 16,
+              marginTop: 15,
+            }}>
+            Description:
+          </Text>
+          <Text
+            style={{
+              marginLeft: '15%',
+              marginRight: '15%',
+              color: '#3b82f6',
+            }}>
+            {todoDetail?.todo.description}
+          </Text>
+
+          <View style={{flex: 1, justifyContent: 'flex-end'}}>
             <TouchableOpacity onPress={() => setModalVisible(!isModalVisible)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
+              <View
+                style={{
+                  backgroundColor: '#3b82f6',
+                  borderRadius: 5,
+                  width: 50,
+                  height: 23,
+                  alignSelf: 'center',
+                  marginBottom: 15,
+                  marginTop: 15,
+                }}>
+                <Text
+                  style={{color: 'white', fontSize: 16, textAlign: 'center'}}>
+                  Close
+                </Text>
+              </View>
             </TouchableOpacity>
-          </View>
-          <View
-            style={{
-              flexDirection: 'column',
-              borderWidth: 1,
-              borderColor: '#6C757D',
-            }}
-          />
-          <View
-            style={{
-              flexDirection: 'row',
-            }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'flex-end',
-              }}>
-              <Text
-                style={{
-                  fontWeight: 'bold',
-                  margin: 8,
-                }}>
-                Name
-              </Text>
-
-              <Text
-                style={{
-                  margin: 8,
-                }}>
-                {todoDetail?.teacher.app_name}
-              </Text>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'flex-end',
-              }}>
-              <Text
-                style={{
-                  fontWeight: 'bold',
-                  margin: 8,
-                }}>
-                Title
-              </Text>
-
-              <Text
-                style={{
-                  margin: 8,
-                }}>
-                {todoDetail?.todo.title}
-              </Text>
-            </View>
-          </View>
-          <View
-            style={{
-              flexDirection: 'column',
-              borderWidth: 1,
-              borderColor: '#6C757D',
-            }}
-          />
-          <View
-            style={{
-              flexDirection: 'row',
-            }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'flex-end',
-              }}>
-              <Text
-                style={{
-                  fontWeight: 'bold',
-                  marginTop: 8,
-                  marginLeft: 10,
-                  marginRight: 5,
-                }}>
-                Start Date
-              </Text>
-
-              <Text
-                style={{
-                  marginTop: 8,
-                  marginRight: 10,
-                }}>
-                {formatDate(todoDetail?.todo.start_date ?? '--')}
-              </Text>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'flex-end',
-              }}>
-              <Text
-                style={{
-                  fontWeight: 'bold',
-                  margin: 8,
-                }}>
-                End Date
-              </Text>
-
-              <Text
-                style={{
-                  margin: 8,
-                }}>
-                {formatDate(todoDetail?.todo.end_date ?? '--')}
-              </Text>
-            </View>
-          </View>
-          <View
-            style={{
-              flexDirection: 'column',
-              borderWidth: 1,
-              borderColor: '#6C757D',
-            }}
-          />
-          <View
-            style={{
-              flexDirection: 'row',
-            }}>
-            <Text
-              style={{
-                fontWeight: 'bold',
-                margin: 10,
-              }}>
-              Deadline
-            </Text>
-
-            <Text
-              style={{
-                margin: 10,
-              }}>
-              {formatDate(todoDetail?.todo.deadline_date ?? '--')}
-            </Text>
-          </View>
-          <View
-            style={{
-              flexDirection: 'column',
-            }}>
-            <Text
-              style={{
-                fontWeight: 'bold',
-                marginLeft: 10,
-                marginTop: 10,
-              }}>
-              Description:
-            </Text>
-            <Text
-              style={{
-                fontWeight: 'bold',
-                marginLeft: 10,
-              }}>
-              {todoDetail?.todo.description}
-            </Text>
           </View>
         </View>
       </Modal>
     </View>
   );
 };
+const EntryRow = ({label, value}: {label: string; value: string}) => (
+  <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+    <Text style={{fontWeight: 'bold', color: '#3b82f6'}}>{label}</Text>
+    <Text
+      style={{
+        color: '#3b82f6',
+      }}>
+      {value}
+    </Text>
+  </View>
+);
 
 export default TeacherTodos;
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    marginTop: 12,
-    width: 90,
-    height: 30,
-    marginRight: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 4,
-    borderRadius: 4,
-    textAlign: 'center',
-    color: 'gray',
-  },
-  dropdown: {
-    borderWidth: 1,
-    borderColor: '#d5d5d9',
-    borderRadius: 5,
-    minHeight: 30,
-    marginLeft: 10,
-  },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  column: {
-    width: 140,
-    padding: 1,
-    textAlign: 'center',
-  },
-  headTable: {
-    fontWeight: 'bold',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
-    paddingVertical: 15,
-    paddingHorizontal: 15,
+    paddingVertical: 10,
     backgroundColor: '#3b82f6',
-    justifyContent: 'center',
+    top: -6,
   },
   backButton: {
     width: 24,
     height: 24,
+    marginRight: 10,
     tintColor: 'white',
+    marginLeft: 10,
   },
   headerText: {
     fontSize: 20,
@@ -555,45 +448,70 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
-  pagination: {
+
+  info: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    margin: 10,
+    marginTop: 5,
   },
-  paginationButtons: {
-    flexDirection: 'row',
-  },
-  paginationText: {
+  text: {
     fontWeight: 'bold',
-  },
-  pageNumber: {
-    width: 22,
-    height: 22,
-    backgroundColor: '#3b82f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
-    marginRight: 10,
-  },
-  pageText: {
+    padding: 2,
     color: 'white',
+  },
+  value: {
+    padding: 2,
+    color: 'white',
+  },
+  box: {
+    marginTop: 10,
+    width: '96%',
+    borderRadius: 10,
+    padding: 7,
+    alignSelf: 'center',
+    backgroundColor: '#3b82f6',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 5},
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 10,
+    opacity: 1,
+    marginBottom: 5,
+    height: 130,
+  },
+  cards: {
+    borderRadius: 10,
+    marginBottom: 10,
+    margin: '2%',
+    height: 170,
+    backgroundColor: 'white',
+  },
+  card: {
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 8,
+    marginLeft: '2%',
+    elevation: 5,
+    opacity: 1,
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+    marginRight: '2%',
+    marginTop: '1%',
+  },
+  title: {
+    fontSize: 16,
     fontWeight: 'bold',
+    color: '#3b82f6',
   },
-  flatList: {
-    margin: 10,
-    flex: 1,
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
   },
-  comment: {
-    color: '#1DB9AA',
-    tintColor: '#1DB9AA',
-    width: 'auto',
-    borderRadius: 5,
-  },
-  commnt: {
-    width: 'auto',
-    borderRadius: 5,
-    color: '#F39C12',
-    tintColor: '#F39C12',
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
   view: {
     width: 'auto',
@@ -610,5 +528,11 @@ const styles = StyleSheet.create({
     marginTop: 1,
     marginBottom: 1,
     alignSelf: 'center',
+  },
+  comment: {
+    width: 'auto',
+    borderRadius: 5,
+    color: '#F39C12',
+    tintColor: '#3b82f6',
   },
 });

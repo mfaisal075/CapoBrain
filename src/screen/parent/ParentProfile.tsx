@@ -1,7 +1,9 @@
 import {
   Alert,
+  Animated,
   BackHandler,
   Image,
+  ImageBackground,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Formik} from 'formik';
 import * as Yup from 'yup';
 import Modal from 'react-native-modal';
@@ -85,7 +87,23 @@ const ParentProfile = ({navigation}: any) => {
     setModalVisible(!isModalVisible);
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
     fetchData();
     const backAction = () => {
       navigation.goBack();
@@ -99,14 +117,27 @@ const ParentProfile = ({navigation}: any) => {
 
     return () => backHandler.remove();
   }, []);
+
   return (
     <ScrollView
       style={{
         backgroundColor: 'white',
+        flex: 1,
       }}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.replace('ParentHome' as never)}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon
             name="arrow-left"
             size={38}
@@ -125,6 +156,7 @@ const ParentProfile = ({navigation}: any) => {
         />
         <Text style={styles.nameText}>{userData?.user.name}</Text>
       </View>
+
       <View style={styles.details}>
         <View
           style={{
@@ -145,6 +177,7 @@ const ParentProfile = ({navigation}: any) => {
               marginTop: hp('1.7%'),
               fontSize: 16,
               marginLeft: hp('3%'),
+              color: '#3b82f6',
             }}>
             {userData?.user.name}
           </Text>
@@ -169,8 +202,9 @@ const ParentProfile = ({navigation}: any) => {
               marginTop: hp('1.7%'),
               fontSize: 16,
               marginLeft: hp('3%'),
+              color: '#3b82f6',
             }}>
-            {userData?.user.email ?? '--'}
+            {userData?.user.email ?? 'NILL'}
           </Text>
         </View>
 
@@ -193,8 +227,9 @@ const ParentProfile = ({navigation}: any) => {
               marginTop: hp('1.7%'),
               fontSize: 16,
               marginLeft: hp('3%'),
+              color: '#3b82f6',
             }}>
-            {userData?.user.contact ?? '--'}
+            {userData?.user.contact ?? 'NILL'}
           </Text>
         </View>
         <View
@@ -216,8 +251,9 @@ const ParentProfile = ({navigation}: any) => {
               marginTop: hp('1.7%'),
               fontSize: 16,
               marginLeft: hp('3%'),
+              color: '#3b82f6',
             }}>
-            {userData?.user.cnic ?? '--'}
+            {userData?.user.cnic}
           </Text>
         </View>
       </View>
@@ -264,37 +300,49 @@ const ParentProfile = ({navigation}: any) => {
         </View>
       </TouchableOpacity>
 
-      {/* Modal */}
+      {/* Change Password Modal */}
       <Modal isVisible={isModalVisible}>
         <View
           style={{
             flex: 1,
             backgroundColor: 'white',
             width: 'auto',
-            maxHeight: 500,
+            maxHeight: 400,
             borderRadius: 5,
             borderWidth: 1,
-            borderColor: '#6C757D',
+            borderColor: '#3b82f6',
+            overflow: 'hidden',
           }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
               margin: 20,
             }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>
+            <Text style={{color: '#3b82f6', fontSize: 18}}>
               Change Password
             </Text>
 
             <TouchableOpacity onPress={() => setModalVisible(!isModalVisible)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
+              <Text style={{color: 'red'}}>✖</Text>
             </TouchableOpacity>
           </View>
           <View
             style={{
               flexDirection: 'column',
               borderWidth: 1,
-              borderColor: '#6C757D',
+              borderColor: '#3b82f6',
             }}
           />
 
@@ -322,7 +370,7 @@ const ParentProfile = ({navigation}: any) => {
                       top: -11,
                       left: 28,
                       fontSize: 14,
-                      color: 'black',
+                      color: '#3b82f6',
                       backgroundColor: 'white',
                       paddingHorizontal: 4,
                       zIndex: 10,
@@ -336,15 +384,16 @@ const ParentProfile = ({navigation}: any) => {
                     onBlur={handleBlur('oldPassword')}
                     style={{
                       borderBottomWidth: 1,
-                      borderColor: 'gray',
+                      borderColor: '#3b82f6',
                       borderRadius: 5,
                       borderTopWidth: 1,
                       borderLeftWidth: 1,
                       borderRightWidth: 1,
                       paddingTop: 20,
                       padding: 10,
+                      height: 30,
                     }}
-                    placeholderTextColor="black"
+                    placeholderTextColor="#3b82f6"
                   />
                   {touched.oldPassword && errors.oldPassword && (
                     <Text style={{color: 'red', marginTop: 5, fontSize: 12}}>
@@ -360,7 +409,7 @@ const ParentProfile = ({navigation}: any) => {
                       top: -10,
                       left: 28,
                       fontSize: 14,
-                      color: 'black',
+                      color: '#3b82f6',
                       backgroundColor: 'white',
                       paddingHorizontal: 4,
                       zIndex: 10,
@@ -375,15 +424,16 @@ const ParentProfile = ({navigation}: any) => {
                     onBlur={handleBlur('newPassword')}
                     style={{
                       borderBottomWidth: 1,
-                      borderColor: 'gray',
+                      borderColor: '#3b82f6',
                       borderRadius: 5,
                       borderTopWidth: 1,
                       borderLeftWidth: 1,
                       borderRightWidth: 1,
                       paddingTop: 20,
                       padding: 10,
+                      height: 30,
                     }}
-                    placeholderTextColor="black"
+                    placeholderTextColor="#3b82f6"
                   />
                   {errors.newPassword && touched.newPassword && (
                     <Text style={{fontSize: 12, color: 'red', marginTop: 5}}>
@@ -399,7 +449,7 @@ const ParentProfile = ({navigation}: any) => {
                       top: -10,
                       left: 28,
                       fontSize: 14,
-                      color: 'black',
+                      color: '#3b82f6',
                       backgroundColor: 'white',
                       paddingHorizontal: 4,
                       zIndex: 10,
@@ -414,15 +464,16 @@ const ParentProfile = ({navigation}: any) => {
                     onBlur={handleBlur('confirmPassword')}
                     style={{
                       borderBottomWidth: 1,
-                      borderColor: 'gray',
+                      borderColor: '#3b82f6',
                       borderRadius: 5,
                       borderTopWidth: 1,
                       borderLeftWidth: 1,
                       borderRightWidth: 1,
                       paddingTop: 20,
                       padding: 10,
+                      height: 30,
                     }}
-                    placeholderTextColor="black"
+                    placeholderTextColor="#3b82f6"
                   />
                   {errors.confirmPassword && touched.confirmPassword && (
                     <Text style={{fontSize: 12, color: 'red', marginTop: 5}}>
@@ -437,7 +488,7 @@ const ParentProfile = ({navigation}: any) => {
                     style={{
                       borderRadius: 5,
                       height: 30,
-                      backgroundColor: '#218838',
+                      backgroundColor: '#3b82f6',
                       alignSelf: 'center',
                       marginTop: 20,
                       width: 160,
@@ -483,7 +534,7 @@ const styles = StyleSheet.create({
     marginTop: hp('3%'),
   },
   btn: {
-    borderColor: 'gray',
+    borderColor: '#3b82f6',
     width: 160,
     height: 35,
     borderWidth: 1,
@@ -501,7 +552,7 @@ const styles = StyleSheet.create({
     color: '#3b82f6',
   },
   btnlog: {
-    borderColor: 'gray',
+    borderColor: '#3b82f6',
     width: 160,
     height: 35,
     borderWidth: 1,
@@ -512,5 +563,15 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 20,
     padding: 5,
     marginLeft: hp('2%'),
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });

@@ -73,15 +73,7 @@ const Result = ({navigation}: any) => {
     label: item.exam_type,
     value: item.exam_type,
   }));
-  const examTables: Results[] = [];
-  const [tableData, setTableData] = useState<Results[]>(examTables);
-
-  const studentInfo = [
-    {key: 'Student Name', value: userData?.candidate.cand_name},
-    {key: 'Father Name', value: userData?.parent.par_fathername},
-    {key: 'Class', value: userData?.class.cls_name},
-    {key: 'Section', value: userData?.section.sec_name},
-  ];
+  const [tableData, setTableData] = useState<Results[]>();
 
   const fetchData = async () => {
     if (token) {

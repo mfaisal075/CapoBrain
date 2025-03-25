@@ -1,47 +1,20 @@
 import {
   Alert,
+  Animated,
   BackHandler,
   FlatList,
-  ScrollView,
+  ImageBackground,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import RNPrint from 'react-native-print';
-import {heightPercentageToDP as hp} from 'react-native-responsive-screen';
-
-interface UserData {
-  student: {
-    student_id: string;
-    cand_name: string;
-  };
-  parent: {
-    par_fathername: string;
-  };
-  class: {
-    cls_name: string;
-  };
-  section: {
-    sec_name: string;
-  };
-  school: {
-    scl_institute_name: string;
-  };
-  branch: {
-    bra_name: string;
-  };
-}
-
-interface Printer {
-  name: string;
-  url: string;
-}
 
 interface ResultData {
   id: number;
@@ -52,24 +25,8 @@ interface ResultData {
 
 const SummerHomeWorkResult = ({navigation}: any) => {
   const {token} = useUser();
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [selectedPrinter, setSelectedPrinter] = useState<Printer | null>(null);
-
   const originalData: ResultData[] = [];
-
   const [tableData, setTableData] = useState<ResultData[]>(originalData);
-
-  const silentPrint = async () => {
-    if (!selectedPrinter) {
-      Alert.alert('Error', 'Must select printer first');
-      return;
-    }
-
-    await RNPrint.print({
-      printerURL: selectedPrinter.url,
-      html: '<h1>Silent Print</h1>',
-    });
-  };
 
   const printPDF = async () => {
     try {
@@ -89,12 +46,6 @@ const SummerHomeWorkResult = ({navigation}: any) => {
       Alert.alert('Error', 'Something went wrong while generating the PDF.');
     }
   };
-  const studentInfo = [
-    {key: 'Student Name', value: userData?.student.cand_name},
-    {key: 'Father Name', value: userData?.parent.par_fathername},
-    {key: 'Class', value: userData?.class.cls_name},
-    {key: 'Section', value: userData?.section.sec_name},
-  ];
 
   const fetchData = async () => {
     if (token) {
@@ -107,7 +58,6 @@ const SummerHomeWorkResult = ({navigation}: any) => {
             },
           },
         );
-        setUserData(response.data);
         setTableData(response.data.marking);
       } catch (error) {
         console.log(error);
@@ -117,8 +67,25 @@ const SummerHomeWorkResult = ({navigation}: any) => {
     }
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     fetchData();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+
     const backAction = () => {
       navigation.navigate('LMS');
       return true;
@@ -133,6 +100,18 @@ const SummerHomeWorkResult = ({navigation}: any) => {
   }, []);
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.navigate('LMS' as never)}>
           <Icon
@@ -145,83 +124,44 @@ const SummerHomeWorkResult = ({navigation}: any) => {
         <Text style={styles.headerText}>Summer HomeWork Result</Text>
       </View>
 
-      <View style={styles.schoolInfo}>
-        <Text style={{fontSize: 18, textAlign: 'center'}}>
-          Gujranwala City Grammar School
-        </Text>
-        <Text style={{fontSize: 16, textAlign: 'center'}}>Main Branch</Text>
-        <FlatList
-          data={studentInfo}
-          keyExtractor={item => item.key}
-          renderItem={({item}) => (
-            <View style={styles.infoRow}>
-              <Text style={styles.txt}>{item.key}:</Text>
-              <Text style={styles.valu}>{item.value}</Text>
+      <FlatList
+        data={tableData}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({item}) => (
+          <View style={styles.card}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={styles.titl}>{item.sub_name}</Text>
+              <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                Total Marks: {item.total_marks}
+              </Text>
             </View>
-          )}
-        />
-      </View>
-
-      <ScrollView
-        horizontal
-        style={{marginBottom: hp('5%')}}
-        contentContainerStyle={{flexGrow: 0.8}}>
-        <View>
-          <FlatList
-            style={styles.flatList}
-            data={[
-              ...tableData,
-              {
-                id: -1,
-                sub_name: '',
-                total_marks: tableData
-                  .reduce((sum, item) => sum + parseFloat(item.total_marks), 0)
-                  .toString(),
-                obtain_marks: tableData
-                  .reduce((sum, item) => sum + parseFloat(item.obtain_marks), 0)
-                  .toString(),
-              },
-            ]}
-            nestedScrollEnabled
-            keyExtractor={(item, index) =>
-              item.id ? item.id.toString() : index.toString()
-            }
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                {['Sr#', 'Subject', 'Total Marks', 'Obtain Marks'].map(
-                  header => (
-                    <Text
-                      key={header}
-                      style={[styles.column, styles.headTable]}>
-                      {header}
-                    </Text>
-                  ),
-                )}
-              </View>
-            )}
-            renderItem={({item, index}) => (
-              <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={styles.column}>
-                  {item.id === -1 ? 'Total' : index + 1}
-                </Text>
-                <Text style={styles.column}>{item.sub_name}</Text>
-                <Text style={styles.column}>{item.total_marks}</Text>
-                <Text style={styles.column}>{item.obtain_marks}</Text>
-              </View>
-            )}
-          />
-        </View>
-      </ScrollView>
-      <TouchableOpacity onPress={() => printPDF()}>
-        <View style={styles.printButton}>
-          <Icon name="printer" size={18} color={'#fff'} />
-          <Text style={styles.printText}>Print</Text>
-        </View>
-      </TouchableOpacity>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <TouchableOpacity onPress={printPDF}>
+                <View style={styles.printButton}>
+                  <Icon
+                    name="printer"
+                    size={20}
+                    color="#3b82f6"
+                    style={styles.printIcon}
+                  />
+                  <Text style={styles.printText}>Print</Text>
+                </View>
+              </TouchableOpacity>
+              <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                Obtain Marks: {item.obtain_marks}
+              </Text>
+            </View>
+          </View>
+        )}
+      />
     </View>
   );
 };
@@ -253,14 +193,6 @@ const styles = StyleSheet.create({
     margin: 5,
     padding: 10,
   },
-  schoolInfo: {
-    marginVertical: 10,
-  },
-  studentInfo: {
-    flexDirection: 'row',
-    marginTop: 10,
-    alignItems: 'center',
-  },
   text: {
     fontWeight: 'bold',
     marginLeft: 15,
@@ -269,26 +201,17 @@ const styles = StyleSheet.create({
     padding: 2,
     marginLeft: 10,
   },
-  noRecordText: {
-    textAlign: 'center',
-    marginTop: 40,
-    color: '#6C757D',
-  },
   printButton: {
     flexDirection: 'row',
-    backgroundColor: '#218838',
-    borderRadius: 5,
-    borderWidth: 1,
-    width: 54,
-    height: 30,
-    alignSelf: 'center',
-    marginTop: 15,
-    marginBottom: 30,
+    alignSelf: 'flex-start',
     justifyContent: 'center',
     alignItems: 'center',
   },
+  printIcon: {
+    marginRight: 5,
+  },
   printText: {
-    color: 'white',
+    color: '#3b82f6',
     textAlign: 'center',
   },
   header: {
@@ -296,6 +219,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     backgroundColor: '#3b82f6',
+    marginBottom: 10,
+  },
+  backButton: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+    tintColor: 'white',
+    marginLeft: 10,
   },
   headerText: {
     fontSize: 20,
@@ -318,23 +249,34 @@ const styles = StyleSheet.create({
     padding: 5,
     marginLeft: 10,
   },
-  flatList: {
-    margin: 10,
-    flex: 1,
+  card: {
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 20,
+    marginLeft: '2%',
+    marginRight: '2%',
+    marginTop: '1%',
+    borderWidth: 1,
+    borderColor: '#3b82f6',
   },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  column: {
-    width: 140,
-    padding: 1,
-    textAlign: 'center',
-  },
-  headTable: {
+  titl: {
+    fontSize: 16,
     fontWeight: 'bold',
-    backgroundColor: '#3b82f6',
-    color: 'white',
+    color: '#3b82f6',
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });

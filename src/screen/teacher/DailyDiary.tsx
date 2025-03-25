@@ -8,8 +8,10 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  Animated,
+  ImageBackground,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {DateTimePickerEvent} from '@react-native-community/datetimepicker';
@@ -73,11 +75,7 @@ export default function DailyDiary({navigation}: any) {
   });
   const [endDate, setEndDate] = useState(new Date());
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
   const [originalData, setOriginalData] = useState<Dailydiary[]>([]);
-  const [tableData, setTableData] = useState<Dailydiary[]>(originalData);
   const [dailydiaryData, setDailydiaryData] = useState<DailydiaryData | null>(
     null,
   );
@@ -97,43 +95,6 @@ export default function DailyDiary({navigation}: any) {
     setEndDate(currentDate);
   };
 
-  const items = [
-    {label: '10', value: 10},
-    {label: '25', value: 25},
-    {label: '50', value: 50},
-    {label: '100', value: 100},
-  ];
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setTableData(originalData);
-    } else {
-      const filtered = originalData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered);
-    }
-  };
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(tableData.length / entriesPerPage);
-
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const currentEntries = tableData.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage,
-  );
-  {
-    /*view modal*/
-  }
   const [isModalVisi, setModalVisi] = useState(false);
 
   const toggleModl = async (id: number) => {
@@ -201,14 +162,29 @@ export default function DailyDiary({navigation}: any) {
           },
         );
         setOriginalData(res.data.dailydiary);
-        setTableData(res.data.dailydiary);
       } catch (error) {
         console.log(error);
       }
     }
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
     fetchData();
     const backAction = () => {
       navigation.goBack();
@@ -240,6 +216,18 @@ export default function DailyDiary({navigation}: any) {
         backgroundColor: 'white',
         flex: 1,
       }}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon
@@ -251,15 +239,17 @@ export default function DailyDiary({navigation}: any) {
         </TouchableOpacity>
         <Text style={styles.headerText}>Daily Diary</Text>
       </View>
+
       <TouchableOpacity onPress={toggleModal}>
         <View
           style={{
             width: 90,
             height: 30,
-            backgroundColor: '#218838',
+            backgroundColor: '#3b82f6',
             borderRadius: 5,
-            margin: 10,
+            marginTop: 10,
             alignSelf: 'flex-end',
+            marginRight: 10,
           }}>
           <Text
             style={{
@@ -278,7 +268,8 @@ export default function DailyDiary({navigation}: any) {
         style={{
           flexDirection: 'row',
           justifyContent: 'space-between',
-          marginTop: hp('2%'),
+          marginTop: hp('1%'),
+          marginBottom: hp('1%'),
         }}>
         <View
           style={{
@@ -290,7 +281,7 @@ export default function DailyDiary({navigation}: any) {
             borderRightWidth: 1,
             borderLeftWidth: 1,
             borderRadius: 5,
-            borderColor: 'gray',
+            borderColor: '#3b82f6',
             marginLeft: hp('1%'),
             height: 30,
           }}>
@@ -301,7 +292,7 @@ export default function DailyDiary({navigation}: any) {
               flexDirection: 'row',
               alignItems: 'center',
               borderRadius: 5,
-              borderColor: 'gray',
+              borderColor: '#3b82f6',
             }}>
             <Text style={{marginLeft: 10}}>
               {`${startDate.toLocaleDateString()}`}
@@ -314,6 +305,7 @@ export default function DailyDiary({navigation}: any) {
                   resizeMode: 'stretch',
                   alignItems: 'center',
                   marginLeft: 25,
+                  tintColor: '#3b82f6',
                 }}
                 source={require('../../assets/calendar.png')}
               />
@@ -325,6 +317,7 @@ export default function DailyDiary({navigation}: any) {
                   is24Hour={true}
                   display="default"
                   onChange={onStartDateChange}
+                  textColor="#3b82f6"
                 />
               )}
             </TouchableOpacity>
@@ -341,7 +334,7 @@ export default function DailyDiary({navigation}: any) {
             borderRightWidth: 1,
             borderLeftWidth: 1,
             borderRadius: 5,
-            borderColor: 'gray',
+            borderColor: '#3b82f6',
             marginLeft: hp('1%'),
             marginRight: hp('1%'),
           }}>
@@ -352,7 +345,7 @@ export default function DailyDiary({navigation}: any) {
               flexDirection: 'row',
               alignItems: 'center',
               borderRadius: 5,
-              borderColor: 'gray',
+              borderColor: '#3b82f6',
             }}>
             <Text
               style={{
@@ -368,6 +361,7 @@ export default function DailyDiary({navigation}: any) {
                   resizeMode: 'stretch',
                   alignItems: 'center',
                   marginLeft: 25,
+                  tintColor: '#3b82f6',
                 }}
                 source={require('../../assets/calendar.png')}
               />
@@ -379,118 +373,123 @@ export default function DailyDiary({navigation}: any) {
                   is24Hour={true}
                   display="default"
                   onChange={onEndDateChange}
+                  textColor="#3b82f6"
                 />
               )}
             </TouchableOpacity>
           </View>
         </View>
       </View>
+      {originalData.length > 0 ? (
+        <FlatList
+          data={originalData}
+          keyExtractor={(item, index) => item.id.toString() || `item-${index}`}
+          renderItem={({item}) => (
+            <View style={styles.card}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={styles.title}>{item.sub_name}</Text>
+                <Text style={{color: '#3b82f6'}}>{formatDate(item.date)}</Text>
+              </View>
 
-      <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-        <View style={{width: 80, marginTop: 9}}>
-          <DropDownPicker
-            items={items}
-            open={isOpen}
-            setOpen={setIsOpen}
-            value={entriesPerPage}
-            setValue={callback => {
-              setEntriesPerPage(prev =>
-                typeof callback === 'function' ? callback(prev) : callback,
-              );
-            }}
-            maxHeight={200}
-            placeholder=""
-            style={styles.dropdown}
-          />
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text
+                  style={{
+                    color: '#3b82f6',
+                  }}>{`${item.cls_name} (${item.sec_name})`}</Text>
+                <TouchableOpacity
+                  style={styles.iconContainer}
+                  onPress={() => toggleModl(item.id)}>
+                  <Image
+                    style={styles.actionIcon}
+                    source={require('../../assets/visible.png')}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        />
+      ) : (
+        <View style={{width: '100%', marginTop: 20}}>
+          <Text style={{fontSize: 18, fontWeight: 'bold', textAlign: 'center'}}>
+            No data found in the database!
+          </Text>
         </View>
-
-        <View style={styles.container}>
-          <TextInput
-            style={styles.input}
-            placeholder="Search..."
-            placeholderTextColor={'gray'}
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </View>
-      </View>
-
-      {/* Table */}
-      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        {currentEntries.length > 0 ? (
-          <View>
-            <FlatList
-              style={styles.flatList}
-              data={currentEntries}
-              keyExtractor={(item, index) =>
-                item.id ? item.id.toString() : index.toString()
-              }
-              ListHeaderComponent={() => (
-                <View style={styles.row}>
-                  {['Sr#', 'Class', 'Subject', 'Date', 'Action'].map(header => (
-                    <Text
-                      key={header}
-                      style={[styles.column, styles.headTable]}>
-                      {header}
-                    </Text>
-                  ))}
-                </View>
-              )}
-              renderItem={({item, index}) => (
-                <View
-                  style={[
-                    styles.row,
-                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                  ]}>
-                  <Text style={styles.column}>{index + 1}</Text>
-                  <Text
-                    style={
-                      styles.column
-                    }>{`${item.cls_name} (${item.sec_name})`}</Text>
-                  <Text style={styles.column}>{item.sub_name}</Text>
-                  <Text style={styles.column}>{item.date}</Text>
-                  <TouchableOpacity
-                    style={styles.iconContainer}
-                    onPress={() => toggleModl(item.id)}>
-                    <Image
-                      style={styles.actionIcon}
-                      source={require('../../assets/visible.png')}
-                    />
-                  </TouchableOpacity>
-                </View>
-              )}
-            />
-          </View>
-        ) : (
-          <View style={{width: '100%', marginTop: 20}}>
-            <Text
-              style={{fontSize: 18, fontWeight: 'bold', textAlign: 'center'}}>
-              No record present in the database!
-            </Text>
-          </View>
-        )}
-      </ScrollView>
-
-      <View style={styles.pagination}>
-        <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
-          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
-          {tableData.length} entries
-        </Text>
-        <View style={styles.paginationButtons}>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
-            <Text style={styles.paginationText}>Previous</Text>
-          </TouchableOpacity>
-          <View style={styles.pageNumber}>
-            <Text style={styles.pageText}>{currentPage}</Text>
-          </View>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
-            <Text style={styles.paginationText}>Next</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      )}
 
       {/* Modal */}
+      <Modal isVisible={isModalVisi}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'white',
+            width: 'auto',
+            maxHeight: 250,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: '#3b82f6',
+            overflow: 'hidden',
+          }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
+
+          <Text
+            style={{
+              color: '#3b82f6',
+              fontSize: 18,
+              fontWeight: 'bold',
+              textAlign: 'center',
+              margin: 10,
+            }}>
+            Diary Detail
+          </Text>
+
+          <View
+            style={{
+              height: 1,
+              backgroundColor: '#3b82f6',
+              width: wp('90%'),
+              marginBottom: 5,
+            }}
+          />
+
+          <Text style={styles.lblText}>Description:</Text>
+          <Text style={styles.valueText}>{dailydiaryData?.diary.diary}</Text>
+
+          <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
+            <View
+              style={{
+                backgroundColor: '#3b82f6',
+                borderRadius: 5,
+                width: 50,
+                height: 23,
+                alignSelf: 'center',
+                marginTop: 20,
+              }}>
+              <Text style={{color: 'white', fontSize: 16, textAlign: 'center'}}>
+                Close
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
       <Modal isVisible={isModalVisible}>
         <ScrollView
           style={{
@@ -498,9 +497,21 @@ export default function DailyDiary({navigation}: any) {
             backgroundColor: 'white',
             borderRadius: 5,
             borderWidth: 1,
-            borderColor: '#6C757D',
+            borderColor: '#3b82f6',
             padding: 10,
+            overflow: 'hidden',
           }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
           <View
             style={{
               flexDirection: 'row',
@@ -509,12 +520,13 @@ export default function DailyDiary({navigation}: any) {
             <Text
               style={{
                 fontSize: 18,
-                color: '#6C757D',
+                color: '#3b82f6',
+                fontWeight: 'bold',
               }}>
               Add Diary
             </Text>
             <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
+              <Text style={{color: 'red'}}>✖</Text>
             </TouchableOpacity>
           </View>
 
@@ -522,20 +534,21 @@ export default function DailyDiary({navigation}: any) {
             style={{
               height: 1,
               width: wp('85%'),
-              backgroundColor: 'gray',
+              backgroundColor: '#3b82f6',
             }}
           />
           <Text
             style={{
               marginTop: 10,
               left: 7,
+              color: '#3b82f6',
             }}>
             Class
           </Text>
           <View style={styles.pickerContainer}>
             <Picker
               style={styles.picker}
-              dropdownIconColor="gray"
+              dropdownIconColor="#3b82f6"
               mode="dropdown"
               selectedValue={selectedClass}
               onValueChange={itemValue => setSelectedClass(itemValue)}>
@@ -547,13 +560,14 @@ export default function DailyDiary({navigation}: any) {
           <Text
             style={{
               left: 7,
+              color: '#3b82f6',
             }}>
             Section
           </Text>
           <View style={styles.pickerContainer}>
             <Picker
               style={styles.picker}
-              dropdownIconColor="gray"
+              dropdownIconColor="#3b82f6"
               mode="dropdown"
               selectedValue={selectedSection}
               onValueChange={itemValue => setSelectedSection(itemValue)}>
@@ -567,7 +581,7 @@ export default function DailyDiary({navigation}: any) {
               flexDirection: 'row',
               alignItems: 'center',
               borderWidth: 1,
-              borderColor: 'gray',
+              borderColor: '#3b82f6',
               padding: 7,
               borderRadius: 5,
               justifyContent: 'space-between',
@@ -577,7 +591,7 @@ export default function DailyDiary({navigation}: any) {
             <TouchableOpacity onPress={() => setShowStartDtePicker(true)}>
               <Image
                 source={require('../../assets/calendar.png')}
-                style={{height: 20, width: 20}}
+                style={{height: 20, width: 20, tintColor: '#3b82f6'}}
               />
             </TouchableOpacity>
           </View>
@@ -586,17 +600,23 @@ export default function DailyDiary({navigation}: any) {
               value={startDte}
               mode="date"
               display="default"
+              textColor="#3b82f6"
               onChange={onStartDteChange}
             />
           )}
 
           {Object.keys(formData).map(subject => (
             <View key={subject} style={{marginVertical: 10}}>
-              <Text>{subject.charAt(0).toUpperCase() + subject.slice(1)}</Text>
+              <Text
+                style={{
+                  color: '#3b82f6',
+                }}>
+                {subject.charAt(0).toUpperCase() + subject.slice(1)}
+              </Text>
               <TextInput
                 style={{
                   borderWidth: 1,
-                  borderColor: 'gray',
+                  borderColor: '#3b82f6',
                   padding: 5,
                   borderRadius: 5,
                 }}
@@ -605,6 +625,7 @@ export default function DailyDiary({navigation}: any) {
                   handleInputChange(subject as keyof typeof formData, text)
                 }
                 placeholder={`Enter ${subject} details`}
+                placeholderTextColor={'#3b82f6'}
               />
             </View>
           ))}
@@ -617,7 +638,7 @@ export default function DailyDiary({navigation}: any) {
             }}>
             <View
               style={{
-                backgroundColor: '#218838',
+                backgroundColor: '#3b82f6',
                 padding: 10,
                 borderRadius: 5,
                 alignItems: 'center',
@@ -635,85 +656,6 @@ export default function DailyDiary({navigation}: any) {
           </TouchableOpacity>
         </ScrollView>
       </Modal>
-
-      {/* View Modal */}
-      <Modal isVisible={isModalVisi}>
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: 'white',
-            width: 'auto',
-            maxHeight: 300,
-            borderRadius: 5,
-            borderWidth: 1,
-            borderColor: '#6C757D',
-          }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 20,
-            }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>Diary Detail</Text>
-
-            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
-            </TouchableOpacity>
-          </View>
-          <View
-            style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 10,
-            }}>
-            <View
-              style={{
-                flexDirection: 'row',
-              }}>
-              <Text style={styles.lblText}>Date</Text>
-              <Text style={styles.valueText}>
-                {formatDate(dailydiaryData?.diary.date ?? '')}
-              </Text>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                marginRight: 50,
-              }}>
-              <Text style={styles.lblText}>Class</Text>
-              <Text style={styles.valueText}>
-                {dailydiaryData?.class.cls_name}
-              </Text>
-            </View>
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              marginLeft: 10,
-            }}>
-            <Text style={styles.lblText}>Subject</Text>
-            <Text style={styles.valueText}>
-              {dailydiaryData?.subject.sub_name}
-            </Text>
-          </View>
-          <View
-            style={{
-              marginLeft: 10,
-              marginTop: 10,
-            }}>
-            <Text style={styles.lblText}>Description:</Text>
-            <Text style={styles.valueText}>{dailydiaryData?.diary.diary}</Text>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -724,7 +666,7 @@ const styles = StyleSheet.create({
     top: -10,
     left: 14,
     fontSize: 10,
-    color: 'black',
+    color: '#3b82f6',
     backgroundColor: 'white',
     paddingHorizontal: 4,
   },
@@ -755,85 +697,61 @@ const styles = StyleSheet.create({
     height: 30,
     marginRight: 10,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 4,
-    borderRadius: 4,
-    textAlign: 'center',
-    color: 'gray',
-  },
-  dropdown: {
-    borderWidth: 1,
-    borderColor: '#d5d5d9',
-    borderRadius: 5,
-    minHeight: 30,
-    marginLeft: 10,
-  },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  column: {
-    width: 140,
-    padding: 1,
-  },
-  headTable: {
-    fontWeight: 'bold',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-  },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    margin: 10,
-  },
-  paginationButtons: {
-    flexDirection: 'row',
-  },
-  paginationText: {
-    fontWeight: 'bold',
-  },
-  pageNumber: {
-    width: 22,
-    height: 22,
-    backgroundColor: '#3b82f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
-    marginRight: 10,
-  },
-  pageText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  flatList: {
-    margin: 10,
-    flex: 1,
-  },
+
   lblText: {
     fontWeight: 'bold',
-    marginRight: 10,
+    color: '#3b82f6',
+    marginLeft: '10%',
+    fontSize: 16,
   },
   valueText: {
-    marginRight: hp('5%'),
+    marginRight: '10%',
+    color: '#3b82f6',
+    marginLeft: '10%',
   },
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 50,
-    height: 20,
   },
 
   actionIcon: {
-    width: 17,
-    height: 17,
+    width: 15,
+    height: 15,
     tintColor: '#3b82f6',
+  },
+  card: {
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 20,
+    marginLeft: '2%',
+    marginRight: '2%',
+    marginTop: '1%',
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#3b82f6',
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: 'gray',
+    borderColor: '#3b82f6',
     borderRadius: 5,
     backgroundColor: 'white',
     width: wp('83%'),
@@ -844,7 +762,7 @@ const styles = StyleSheet.create({
   },
   picker: {
     paddingHorizontal: 10,
-    color: 'black',
+    color: '#3b82f6',
     fontSize: 16,
     height: 50,
     paddingLeft: 10,

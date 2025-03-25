@@ -1,33 +1,18 @@
 import {
-  Dimensions,
-  Image,
-  RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
   FlatList,
+  Animated,
+  ImageBackground,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {BackHandler} from 'react-native';
 import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
-import DropDownPicker from 'react-native-dropdown-picker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
-type TableRow = {
-  sr: string;
-  date: string;
-  payable: string;
-  inventory: string;
-  arrears: string;
-  paidAmount: string;
-  balance: string;
-  paymentMethod: string;
-  transactionType: string;
-};
+import Modal from 'react-native-modal';
 
 interface UserData {
   teacher_account: {
@@ -52,48 +37,11 @@ interface Account {
 const TeacherAccount = ({navigation}: any) => {
   const {token} = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [accountData, setAccountData] = useState<UserData | null>(null);
-
-  const [originalData, setOriginalData] = useState<Account[]>([]);
-  const [tableData, setTableData] = useState<Account[]>(originalData);
-
-  const items = [
-    {label: '10', value: 10},
-    {label: '25', value: 25},
-    {label: '50', value: 50},
-    {label: '100', value: 100},
-  ];
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setTableData(originalData);
-    } else {
-      const filtered = originalData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered);
-    }
-  };
-
-  const totalPages = Math.ceil(tableData.length / entriesPerPage);
-
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const currentEntries = tableData.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage,
+  const [selectedTransaction, setSelectedTransaction] = useState<number | null>(
+    null,
   );
-
+  const [originalData, setOriginalData] = useState<Account[]>([]);
   const Info = [
     {
       key: 'Salary Payable',
@@ -122,7 +70,6 @@ const TeacherAccount = ({navigation}: any) => {
         );
 
         setOriginalData(response.data.accounts);
-        setTableData(response.data.accounts);
       } catch (error) {
         console.log(error);
         throw error;
@@ -156,7 +103,23 @@ const TeacherAccount = ({navigation}: any) => {
     }
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
     fetchData();
     fetchAccountData();
     const backAction = () => {
@@ -182,8 +145,33 @@ const TeacherAccount = ({navigation}: any) => {
 
     return `${day}-${month}-${year}`; // Return formatted date
   };
+
+  const EntryRow = ({label, value}: {label: string; value: string}) => (
+    <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+      <Text style={{fontWeight: 'bold', color: '#3b82f6'}}>{label}</Text>
+      <Text
+        style={{
+          color: '#3b82f6',
+        }}>
+        {value}
+      </Text>
+    </View>
+  );
+
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon
@@ -195,131 +183,137 @@ const TeacherAccount = ({navigation}: any) => {
         </TouchableOpacity>
         <Text style={styles.headerText}>Accounts</Text>
       </View>
-      <View>
+
+      <View style={styles.box}>
         <FlatList
           data={Info}
           keyExtractor={item => item.key}
           renderItem={({item}) => (
-            <View style={styles.infoRow}>
+            <View style={styles.info}>
               <Text style={styles.text}>{item.key}:</Text>
               <Text style={styles.value}>{item.value}</Text>
             </View>
           )}
         />
       </View>
-      <View
+      <Text
         style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
+          marginLeft: '3%',
+          fontWeight: 'bold',
+          fontSize: 18,
+          color: '#3b82f6',
         }}>
-        <View style={{width: 80, marginTop: 9}}>
-          <DropDownPicker
-            items={items}
-            open={isOpen}
-            setOpen={setIsOpen}
-            value={entriesPerPage}
-            setValue={callback => {
-              setEntriesPerPage(prev =>
-                typeof callback === 'function' ? callback(prev) : callback,
-              );
-            }}
-            maxHeight={200}
-            placeholder=""
-            style={styles.dropdown}
-          />
-        </View>
+        Account Details
+      </Text>
 
-        <View style={styles.container}>
-          <TextInput
-            style={styles.input}
-            placeholder="Search..."
-            placeholderTextColor={'gray'}
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </View>
-      </View>
-
-      {/* Table */}
-      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        {currentEntries.length > 0 ? (
-          <View>
-            <FlatList
-              style={styles.flatList}
-              data={currentEntries}
-              keyExtractor={(item, index) =>
-                item.id ? `${item.id}-${index}` : index.toString()
-              }
-              ListHeaderComponent={() => (
-                <View style={styles.row}>
-                  {[
-                    'Sr#',
-                    'Date',
-                    'Payable',
-                    'Inventory',
-                    'Arrears',
-                    'Paid Amount',
-                    'Balance',
-                    'Payment Method',
-                    'Transaction Type',
-                  ].map(header => (
-                    <Text
-                      key={header}
-                      style={[styles.column, styles.headTable]}>
-                      {header}
-                    </Text>
-                  ))}
-                </View>
-              )}
-              renderItem={({item, index}) => (
-                <View
-                  style={[
-                    styles.row,
-                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                  ]}>
-                  <Text style={styles.column}>{index + 1}</Text>
-                  <Text style={styles.column}>{formatDate(item.acc_date)}</Text>
-                  <Text style={styles.column}>{item.acc_payable_amount}</Text>
-                  <Text style={styles.column}>
-                    {item.stationary_paid_amount}
-                  </Text>
-                  <Text style={styles.column}>{item.arrears_amount}</Text>
-                  <Text style={styles.column}>{item.acc_paid_amount}</Text>
-                  <Text style={styles.column}>{item.acc_balance}</Text>
-                  <Text style={styles.column}>{item.payment_method}</Text>
-                  <Text style={styles.column}>{item.payment_mode}</Text>
-                </View>
-              )}
-            />
-          </View>
-        ) : (
-          <View style={{marginTop: 20, width: '100%'}}>
-            <Text
-              style={{textAlign: 'center', fontSize: 18, fontWeight: 'bold'}}>
-              No data found in the database
-            </Text>
-          </View>
+      <FlatList
+        style={{paddingVertical: 15, paddingBottom: 30}}
+        data={originalData}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({item}) => (
+          <TouchableOpacity
+            onPress={() => {
+              setSelectedTransaction(item.id);
+              setIsOpen(true);
+            }}>
+            <View style={styles.card}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={styles.title}>{item.payment_method}</Text>
+                <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                  {formatDate(item.acc_date)}
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={{color: '#3b82f6'}}>{item.payment_mode}</Text>
+                <Text style={{color: '#3b82f6'}}>{item.acc_paid_amount}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
         )}
-      </ScrollView>
+      />
 
-      <View style={styles.pagination}>
-        <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
-          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
-          {tableData.length} entries
-        </Text>
-        <View style={styles.paginationButtons}>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
-            <Text style={styles.paginationText}>Previous</Text>
-          </TouchableOpacity>
-          <View style={styles.pageNumber}>
-            <Text style={styles.pageText}>{currentPage}</Text>
-          </View>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
-            <Text style={styles.paginationText}>Next</Text>
+      {/* Modal */}
+      <Modal isVisible={isOpen}>
+        <View style={[styles.cards, {overflow: 'hidden'}]}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
+
+          {selectedTransaction && (
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: 'bold',
+                color: '#3b82f6',
+                textAlign: 'center',
+                marginVertical: 10,
+              }}>
+              {
+                originalData.find(item => item.id === selectedTransaction)
+                  ?.payment_method
+              }
+            </Text>
+          )}
+
+          <FlatList
+            data={originalData.filter(
+              entry => entry.id === selectedTransaction,
+            )}
+            keyExtractor={item => item.id.toString()}
+            renderItem={({item}) => (
+              <View
+                style={{
+                  marginLeft: '15%',
+                  marginRight: '15%',
+                  marginTop: 5,
+                }}>
+                <EntryRow label="Payable:" value={item.acc_payable_amount} />
+                <EntryRow
+                  label="Inventory:"
+                  value={item.stationary_paid_amount ?? 0}
+                />
+                <EntryRow label="Arrears:" value={item.arrears_amount} />
+                <EntryRow label="Balance:" value={item.acc_balance} />
+              </View>
+            )}
+          />
+          <TouchableOpacity
+            onPress={() => {
+              setSelectedTransaction(null);
+              setIsOpen(false);
+            }}>
+            <View
+              style={{
+                backgroundColor: '#3b82f6',
+                borderRadius: 5,
+                width: 50,
+                height: 23,
+                alignSelf: 'center',
+                marginBottom: 15,
+              }}>
+              <Text style={{color: 'white', fontSize: 16, textAlign: 'center'}}>
+                Close
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
-      </View>
+      </Modal>
     </View>
   );
 };
@@ -327,56 +321,19 @@ const TeacherAccount = ({navigation}: any) => {
 export default TeacherAccount;
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    marginTop: 12,
-    width: 90,
-    height: 30,
-    marginRight: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 4,
-    borderRadius: 4,
-    textAlign: 'center',
-    color: 'gray',
-  },
-  dropdown: {
-    borderWidth: 1,
-    borderColor: '#d5d5d9',
-    borderRadius: 5,
-    minHeight: 30,
-    marginLeft: 10,
-  },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  column: {
-    width: 140,
-    padding: 1,
-    textAlign: 'center',
-  },
-  headTable: {
-    fontWeight: 'bold',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
-    paddingVertical: 15,
-    paddingHorizontal: 15,
+    paddingVertical: 10,
     backgroundColor: '#3b82f6',
-    justifyContent: 'center',
+    top: -6,
   },
   backButton: {
     width: 24,
     height: 24,
+    marginRight: 10,
     tintColor: 'white',
+    marginLeft: 10,
   },
   headerText: {
     fontSize: 20,
@@ -385,46 +342,69 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
-  pagination: {
+
+  info: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    margin: 10,
-  },
-  paginationButtons: {
-    flexDirection: 'row',
-  },
-  paginationText: {
-    fontWeight: 'bold',
-  },
-  pageNumber: {
-    width: 22,
-    height: 22,
-    backgroundColor: '#3b82f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
-    marginRight: 10,
-  },
-  pageText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  flatList: {
-    margin: 10,
-    flex: 1,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginTop: 5,
   },
   text: {
     fontWeight: 'bold',
-    marginLeft: 15,
-    padding: 5,
+    padding: 2,
+    color: 'white',
   },
   value: {
-    padding: 5,
-    marginLeft: 10,
+    padding: 2,
+    color: 'white',
+  },
+  box: {
+    marginTop: 10,
+    width: '96%',
+    borderRadius: 10,
+    padding: 7,
+    alignSelf: 'center',
+    backgroundColor: '#3b82f6',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 5},
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 10,
+    opacity: 1,
+    marginBottom: 5,
+    height: 130,
+  },
+  cards: {
+    borderRadius: 10,
+    marginBottom: 10,
+    margin: '2%',
+    height: 180,
+    backgroundColor: 'white',
+  },
+  card: {
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 8,
+    marginLeft: '2%',
+    elevation: 5,
+    opacity: 1,
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+    marginRight: '2%',
+    marginTop: '1%',
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#3b82f6',
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });

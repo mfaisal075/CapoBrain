@@ -1,6 +1,8 @@
 import {
+  Animated,
   BackHandler,
   Image,
+  ImageBackground,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   widthPercentageToDP as wp,
@@ -62,7 +64,23 @@ const ParentChat = ({navigation}: any) => {
     setInputText('');
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
     hendleGetMessages();
     const backAction = () => {
       navigation.goBack();
@@ -76,8 +94,20 @@ const ParentChat = ({navigation}: any) => {
 
     return () => backHandler.remove();
   }, []);
+
   return (
     <View style={{flex: 1, backgroundColor: 'white'}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
       <ScrollView style={{flex: 1}}>
         <View
           style={{
@@ -95,7 +125,7 @@ const ParentChat = ({navigation}: any) => {
             />
           </TouchableOpacity>
           <Image
-            style={{width: 40, height: 40, marginRight: 10}}
+            style={{width: 40, height: 40, marginRight: 10, marginLeft: 10}}
             source={require('../../assets/avatar.png')}
           />
 
@@ -123,16 +153,21 @@ const ParentChat = ({navigation}: any) => {
               styles.messageBubble,
               message.sender === 'me' ? styles.myMessage : styles.otherMessage,
             ]}>
-            <Text style={{color: message.sender === 'me' ? 'black' : 'black'}}>
+            <Text
+              style={{
+                color: message.sender === 'me' ? 'white' : 'white',
+                fontWeight: 'bold',
+              }}>
               Name
             </Text>
-            <Text style={{color: message.sender === 'me' ? 'white' : 'black'}}>
+            <Text style={{color: message.sender === 'me' ? 'white' : 'white'}}>
               {message.text}
             </Text>
             <Text
               style={{
-                color: message.sender === 'me' ? 'black' : 'black',
+                color: message.sender === 'me' ? 'white' : 'white',
                 textAlign: 'right',
+                fontSize: 10,
               }}>
               3:30PM
             </Text>
@@ -221,5 +256,15 @@ const styles = StyleSheet.create({
     marginRight: 10,
     tintColor: 'white',
     marginLeft: 3,
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });

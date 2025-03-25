@@ -1,24 +1,20 @@
 import {
   BackHandler,
-  ScrollView,
   StyleSheet,
   Text,
   View,
   Image,
   TouchableOpacity,
-  TextInput,
   FlatList,
+  Animated,
+  ImageBackground,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useUser} from '../../../Ctx/UserContext';
 import axios from 'axios';
-import DropDownPicker from 'react-native-dropdown-picker';
 import Modal from 'react-native-modal';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from 'react-native-responsive-screen';
+import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 
 interface DateSheet {
   id: number;
@@ -26,6 +22,7 @@ interface DateSheet {
   sec_name: string;
   bra_name: string;
   class_id: number;
+  datesheet_no: string;
 }
 
 interface DateSheetData {
@@ -36,69 +33,12 @@ interface DateSheetData {
   time_to: string;
 }
 
-interface Details {
-  school: {
-    scl_institute_name: string;
-  };
-  branch: {
-    bra_name: string;
-  };
-  class: {
-    cls_name: string;
-  };
-  section: {
-    sec_name: string;
-  };
-}
-
 const ParentDateSheet = ({navigation}: any) => {
   const {token} = useUser();
-  const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
   const [originalData, setOriginalData] = useState<DateSheet[]>([]);
-  const [tableData, setTableData] = useState<DateSheet[]>(originalData);
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(tableData.length / entriesPerPage);
-  const [details, setDetails] = useState<Details | null>(null);
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setTableData(originalData);
-    } else {
-      const filtered = originalData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered);
-    }
-  };
-
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const currentEntries = tableData.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage,
-  );
-  {
-    /*view modal*/
-  }
   const [isModalVisi, setModalVisi] = useState(false);
 
-  const Info = [
-    {key: 'Class', value: details?.class.cls_name},
-    {key: 'Section', value: details?.section.sec_name},
-  ];
-
-  const originalDta: DateSheetData[] = [];
-
-  const [ModalData, setModalData] = useState<DateSheetData[]>(originalDta);
+  const [ModalData, setModalData] = useState<DateSheetData[]>([]);
 
   const fetchData = async () => {
     if (token) {
@@ -112,7 +52,6 @@ const ParentDateSheet = ({navigation}: any) => {
           },
         );
         setOriginalData(response.data.datesheets);
-        setTableData(response.data.datesheets);
       } catch (error) {
         console.log(error);
         throw error;
@@ -122,7 +61,23 @@ const ParentDateSheet = ({navigation}: any) => {
     }
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+
     fetchData();
     const backAction = () => {
       navigation.navigate('ParentLMS');
@@ -137,13 +92,6 @@ const ParentDateSheet = ({navigation}: any) => {
     return () => backHandler.remove();
   }, []);
 
-  const items = [
-    {label: '10', value: 10},
-    {label: '25', value: 25},
-    {label: '50', value: 50},
-    {label: '100', value: 100},
-  ];
-
   const formatDate = (dateString: string) => {
     if (!dateString) return ''; // Handle empty or invalid dates
 
@@ -156,11 +104,19 @@ const ParentDateSheet = ({navigation}: any) => {
   };
 
   return (
-    <View
-      style={{
-        backgroundColor: 'white',
-        flex: 1,
-      }}>
+    <View style={{backgroundColor: 'white', flex: 1}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.navigate('ParentLMS' as never)}>
@@ -171,126 +127,56 @@ const ParentDateSheet = ({navigation}: any) => {
             style={{paddingHorizontal: 10}}
           />
         </TouchableOpacity>
-        <Text style={styles.headerText}>DateSheet</Text>
+        <Text style={styles.headerText}>Date Sheet</Text>
       </View>
 
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: 10,
-        }}>
-        <View style={{width: 80, marginTop: 9}}>
-          <DropDownPicker
-            items={items}
-            open={isOpen}
-            setOpen={setIsOpen}
-            value={entriesPerPage}
-            setValue={callback => {
-              setEntriesPerPage(prev =>
-                typeof callback === 'function' ? callback(prev) : callback,
-              );
-            }}
-            maxHeight={200}
-            placeholder=""
-            style={styles.dropdown}
-          />
-        </View>
-
-        <View style={styles.container}>
-          <TextInput
-            style={styles.input}
-            placeholder="Search..."
-            placeholderTextColor={'gray'}
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </View>
-      </View>
-
-      {/* Table */}
-      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        <View>
-          <FlatList
-            style={styles.flatList}
-            data={currentEntries}
-            keyExtractor={(item, index) =>
-              item.id ? `${item.id}-${index}` : index.toString()
-            }
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                {['Sr#', 'Branch', 'Class', 'Action'].map(header => (
-                  <Text key={header} style={[styles.column, styles.headTable]}>
-                    {header}
-                  </Text>
-                ))}
-              </View>
-            )}
-            renderItem={({item, index}) => (
-              <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={styles.column}>{index + 1}</Text>
-                <Text style={styles.column}>{item.bra_name}</Text>
-                <Text
-                  style={
-                    styles.column
-                  }>{`${item.cls_name} (${item.sec_name})`}</Text>
-                <TouchableOpacity
-                  style={styles.iconContainer}
-                  onPress={() => {
-                    const handleView = async (id: number) => {
-                      try {
-                        const response = await axios.get(
-                          `https://demo.capobrain.com/showdatesheet?id=${item.class_id}&_token=${token}`,
-                          {
-                            headers: {
-                              Authorization: `Bearer ${token}`,
-                            },
+      <FlatList
+        data={originalData}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({item}) => (
+          <View style={styles.card}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text
+                style={
+                  styles.title
+                }>{`${item.cls_name} (${item.sec_name})`}</Text>
+              <TouchableOpacity
+                style={styles.iconContainer}
+                onPress={() => {
+                  const handleView = async (datesheet_no: string) => {
+                    try {
+                      const response = await axios.get(
+                        `https://demo.capobrain.com/showdatesheet?id=${item.datesheet_no}&_token=${token}`,
+                        {
+                          headers: {
+                            Authorization: `Bearer ${token}`,
                           },
-                        );
-                        setDetails(response.data);
-                        setModalData(response.data.datesheet_detail);
-                        setModalVisi(true);
-                      } catch (error) {
-                        console.log(error);
-                        throw error;
-                      }
-                    };
+                        },
+                      );
 
-                    handleView(item.id);
-                  }}>
-                  <Image
-                    style={styles.actionIcon}
-                    source={require('../../../assets/visible.png')}
-                  />
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-        </View>
-      </ScrollView>
+                      setModalData(response.data.datesheet_detail);
+                      setModalVisi(true);
+                    } catch (error) {
+                      console.log(error);
+                      throw error;
+                    }
+                  };
 
-      <View style={styles.pagination}>
-        <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
-          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
-          {tableData.length} entries
-        </Text>
-        <View style={styles.paginationButtons}>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
-            <Text style={styles.paginationText}>Previous</Text>
-          </TouchableOpacity>
-          <View style={styles.pageNumber}>
-            <Text style={styles.pageText}>{currentPage}</Text>
+                  handleView(item.datesheet_no);
+                }}>
+                <Image
+                  style={styles.actionIcon}
+                  source={require('../../../assets/visible.png')}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
-            <Text style={styles.paginationText}>Next</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        )}
+      />
 
       <Modal isVisible={isModalVisi}>
         <View
@@ -301,100 +187,83 @@ const ParentDateSheet = ({navigation}: any) => {
             maxHeight: 'auto',
             borderRadius: 5,
             borderWidth: 1,
-            borderColor: '#6C757D',
+            borderColor: '#3b82f6',
+            overflow: 'hidden',
           }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
-              margin: 20,
+              margin: 10,
             }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>DateSheet</Text>
+            <Text style={{color: '#3b82f6', fontSize: 18, fontWeight: 'bold'}}>
+              DateSheet
+            </Text>
 
             <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
+              <Text style={{color: 'red'}}>✖</Text>
             </TouchableOpacity>
           </View>
           <View
             style={{
               height: 1,
-              backgroundColor: 'gray',
+              backgroundColor: '#3b82f6',
               width: wp('90%'),
+              marginBottom: 10,
             }}
           />
-          <Text
-            style={{
-              textAlign: 'center',
-              marginTop: 5,
-              fontSize: 16,
-            }}>
-            {details?.school.scl_institute_name}
-          </Text>
-          <Text
-            style={{
-              textAlign: 'center',
-            }}>
-            {details?.branch.bra_name}
-          </Text>
 
           <FlatList
-            style={{
-              flexGrow: 0,
-            }}
-            data={Info}
-            keyExtractor={item => item.key}
+            style={{marginBottom: 20}}
+            data={ModalData}
+            keyExtractor={item => item.id.toString()}
             renderItem={({item}) => (
-              <View style={styles.infoRow}>
-                <Text style={styles.text}>{item.key}:</Text>
-                <Text style={styles.value}>{item.value}</Text>
+              <View style={styles.card}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                  }}>
+                  <Text style={styles.title}>{item.sub_name}</Text>
+                  <Text
+                    style={{
+                      color: '#3b82f6',
+                    }}>
+                    {formatDate(item.date)}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                  }}>
+                  <Text
+                    style={{
+                      color: '#3b82f6',
+                    }}>
+                    Start Time: {item.time_from}
+                  </Text>
+                  <Text
+                    style={{
+                      color: '#3b82f6',
+                    }}>
+                    End Time: {item.time_to}
+                  </Text>
+                </View>
               </View>
             )}
           />
-          <ScrollView
-            horizontal
-            style={{marginBottom: hp('5%')}}
-            contentContainerStyle={{flexGrow: 0.8}}>
-            <View>
-              <FlatList
-                style={styles.flatList}
-                data={ModalData}
-                nestedScrollEnabled
-                keyExtractor={(item, index) =>
-                  item.id ? `${item.id}-${index}` : index.toString()
-                }
-                ListHeaderComponent={() => (
-                  <View style={styles.row}>
-                    {['Sr#', 'Subject', 'Date', 'Time Start', 'Time end'].map(
-                      header => (
-                        <Text
-                          key={header}
-                          style={[styles.column, styles.headTable]}>
-                          {header}
-                        </Text>
-                      ),
-                    )}
-                  </View>
-                )}
-                renderItem={({item, index}) => (
-                  <View style={styles.row}>
-                    <Text style={[styles.column, styles.withBorder]}>
-                      {index + 1}
-                    </Text>
-                    <Text style={[styles.column, styles.withBorder]}>
-                      {item.sub_name}
-                    </Text>
-                    <Text style={[styles.column, styles.withBorder]}>
-                      {formatDate(item.date)}
-                    </Text>
-                    <Text style={[styles.column, styles.withBorder]}>
-                      {item.time_from}
-                    </Text>
-                    <Text style={styles.column}>{item.time_to}</Text>
-                  </View>
-                )}
-              />
-            </View>
-          </ScrollView>
         </View>
       </Modal>
     </View>
@@ -404,15 +273,6 @@ const ParentDateSheet = ({navigation}: any) => {
 export default ParentDateSheet;
 
 const styles = StyleSheet.create({
-  label: {
-    position: 'absolute',
-    top: -8,
-    left: 14,
-    fontSize: 8,
-    color: 'black',
-    backgroundColor: 'white',
-    paddingHorizontal: 4,
-  },
   container: {
     backgroundColor: '#fff',
     marginTop: 12,
@@ -443,7 +303,6 @@ const styles = StyleSheet.create({
   column: {
     width: 140,
     padding: 1,
-    textAlign: 'center',
   },
   headTable: {
     fontWeight: 'bold',
@@ -458,6 +317,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     backgroundColor: '#3b82f6',
     justifyContent: 'center',
+    marginBottom: 20,
+  },
+  backButton: {
+    width: 24,
+    height: 24,
+    tintColor: 'white',
   },
   headerText: {
     fontSize: 20,
@@ -497,15 +362,12 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 50,
-    height: 20,
   },
 
   actionIcon: {
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    marginLeft: 90,
   },
   infoRow: {
     flexDirection: 'row',
@@ -522,5 +384,35 @@ const styles = StyleSheet.create({
   withBorder: {
     borderRightWidth: 1,
     borderColor: '#ccc',
+  },
+  card: {
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 20,
+    marginLeft: '2%',
+    marginRight: '2%',
+    marginTop: '1%',
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#3b82f6',
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });

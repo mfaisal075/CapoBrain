@@ -8,8 +8,10 @@ import {
   ScrollView,
   TextInput,
   FlatList,
+  Animated,
+  ImageBackground,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -26,6 +28,7 @@ interface DateSheet {
   sec_name: string;
   bra_name: string;
   class_id: number;
+  datesheet_no: string;
 }
 
 interface DateSheetData {
@@ -83,22 +86,23 @@ const TeacherDateSheet = ({navigation}: any) => {
       throw new Error('User is not Authenticated');
     }
   };
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setTableData(originalData);
-    } else {
-      const filtered = originalData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered);
-    }
-  };
+  const moveAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
     fetchData();
     const backAction = () => {
       navigation.goBack();
@@ -113,32 +117,9 @@ const TeacherDateSheet = ({navigation}: any) => {
     return () => backHandler.remove();
   }, []);
 
-  const items = [
-    {label: '10', value: 10},
-    {label: '25', value: 25},
-    {label: '50', value: 50},
-    {label: '100', value: 100},
-  ];
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(tableData.length / entriesPerPage);
-
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const currentEntries = tableData.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage,
-  );
-  {
-    /*view modal*/
-  }
   const [isModalVisi, setModalVisi] = useState(false);
 
-  const toggleModl = async (id: number) => {
+  const toggleModl = async (id: string) => {
     try {
       const res = await axios.get(
         `https://demo.capobrain.com/showdatesheet?id=${id}&_token=${token}`,
@@ -151,16 +132,11 @@ const TeacherDateSheet = ({navigation}: any) => {
       setOriginalDta(res.data.datesheet_detail);
       setModalData(res.data.datesheet_detail);
       setOtherData(res.data);
-      setModalVisi(!isModalVisi);
+      setModalVisi(true);
     } catch (error) {
       console.log(error);
     }
   };
-
-  const Info = [
-    {key: 'Class', value: otherData?.class.cls_name},
-    {key: 'Section', value: otherData?.section.sec_name},
-  ];
 
   const formatDate = (dateString: string) => {
     if (!dateString) return ''; // Handle empty or invalid dates
@@ -174,11 +150,19 @@ const TeacherDateSheet = ({navigation}: any) => {
   };
 
   return (
-    <View
-      style={{
-        backgroundColor: 'white',
-        flex: 1,
-      }}>
+    <View style={{backgroundColor: 'white', flex: 1}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon
@@ -188,121 +172,38 @@ const TeacherDateSheet = ({navigation}: any) => {
             style={{paddingHorizontal: 10}}
           />
         </TouchableOpacity>
-        <Text style={styles.headerText}>DateSheet</Text>
+        <Text style={styles.headerText}>Date Sheet</Text>
       </View>
 
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: 10,
-        }}>
-        <View style={{width: 80, marginTop: 9}}>
-          <DropDownPicker
-            items={items}
-            open={isOpen}
-            setOpen={setIsOpen}
-            value={entriesPerPage}
-            setValue={callback => {
-              setEntriesPerPage(prev =>
-                typeof callback === 'function' ? callback(prev) : callback,
-              );
-            }}
-            maxHeight={200}
-            placeholder=""
-            style={styles.dropdown}
-          />
-        </View>
-
-        <View style={styles.container}>
-          <TextInput
-            style={styles.input}
-            placeholder="Search..."
-            placeholderTextColor={'gray'}
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </View>
-      </View>
-
-      {/* Table */}
-      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        {currentEntries.length > 0 ? (
-          <View>
-            <FlatList
-              style={styles.flatList}
-              data={currentEntries}
-              keyExtractor={(item, index) =>
-                item.id ? item.id.toString() : index.toString()
-              }
-              ListHeaderComponent={() => (
-                <View style={styles.row}>
-                  {['Sr#', 'Branch', 'Class', 'Action'].map(header => (
-                    <Text
-                      key={header}
-                      style={[styles.column, styles.headTable]}>
-                      {header}
-                    </Text>
-                  ))}
-                </View>
-              )}
-              renderItem={({item, index}) => (
-                <View
-                  style={[
-                    styles.row,
-                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                  ]}>
-                  <Text style={styles.column}>{index + 1}</Text>
-                  <Text style={styles.column}>{item.bra_name}</Text>
-                  <Text
-                    style={
-                      styles.column
-                    }>{`${item.cls_name} (${item.sec_name})`}</Text>
-                  <TouchableOpacity
-                    style={styles.iconContainer}
-                    onPress={() => toggleModl(item.class_id)}>
-                    <Image
-                      style={styles.actionIcon}
-                      source={require('../../assets/visible.png')}
-                    />
-                  </TouchableOpacity>
-                </View>
-              )}
-            />
-          </View>
-        ) : (
-          <View style={{width: '100%', marginTop: 20}}>
-            <Text
+      <FlatList
+        style={{paddingVertical: 10}}
+        data={originalData}
+        keyExtractor={(item, index) => item.id.toString() || `item-${index}`}
+        renderItem={({item}) => (
+          <View style={styles.card}>
+            <View
               style={{
-                fontSize: 18,
-                fontWeight: 'bold',
-                textAlign: 'center',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
               }}>
-              No record found in the database!
-            </Text>
+              <Text
+                style={
+                  styles.title
+                }>{`${item.cls_name} (${item.sec_name})`}</Text>
+              <TouchableOpacity
+                style={styles.iconContainer}
+                onPress={() => toggleModl(item.datesheet_no)}>
+                <Image
+                  style={styles.actionIcon}
+                  source={require('../../assets/visible.png')}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
-      </ScrollView>
+      />
 
-      <View style={styles.pagination}>
-        <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
-          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
-          {tableData.length} entries
-        </Text>
-        <View style={styles.paginationButtons}>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
-            <Text style={styles.paginationText}>Previous</Text>
-          </TouchableOpacity>
-          <View style={styles.pageNumber}>
-            <Text style={styles.pageText}>{currentPage}</Text>
-          </View>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
-            <Text style={styles.paginationText}>Next</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
+      {/* Modal */}
       <Modal isVisible={isModalVisi}>
         <View
           style={{
@@ -312,113 +213,84 @@ const TeacherDateSheet = ({navigation}: any) => {
             maxHeight: 'auto',
             borderRadius: 5,
             borderWidth: 1,
-            borderColor: '#6C757D',
+            borderColor: '#3b82f6',
+            overflow: 'hidden',
           }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
-              margin: 20,
+              margin: 10,
             }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>DateSheet</Text>
+            <Text style={{color: '#3b82f6', fontSize: 18, fontWeight: 'bold'}}>
+              DateSheet
+            </Text>
 
             <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
+              <Text style={{color: 'red'}}>✖</Text>
             </TouchableOpacity>
           </View>
           <View
             style={{
               height: 1,
-              backgroundColor: 'gray',
+              backgroundColor: '#3b82f6',
               width: wp('90%'),
             }}
           />
-          <Text
-            style={{
-              textAlign: 'center',
-              marginTop: 5,
-              fontSize: 16,
-            }}>
-            Gujranwala City Grammar School
-          </Text>
-          <Text
-            style={{
-              textAlign: 'center',
-            }}>
-            Main Branch
-          </Text>
 
           <FlatList
-            style={{
-              flexGrow: 0,
-            }}
-            data={Info}
-            keyExtractor={item => item.key}
+            style={{paddingVertical: 10}}
+            data={originalDta}
+            keyExtractor={(item, index) =>
+              item.id.toString() || `item-${index}`
+            }
             renderItem={({item}) => (
-              <View style={styles.infoRow}>
-                <Text style={styles.text}>{item.key}:</Text>
-                <Text style={styles.value}>{item.value}</Text>
+              <View style={styles.card}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                  }}>
+                  <Text style={styles.title}>{item.sub_name}</Text>
+                  <Text
+                    style={{
+                      color: '#3b82f6',
+                    }}>
+                    {formatDate(item.date)}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                  }}>
+                  <Text
+                    style={{
+                      color: '#3b82f6',
+                    }}>
+                    Start Time: {item.time_from}
+                  </Text>
+                  <Text
+                    style={{
+                      color: '#3b82f6',
+                    }}>
+                    End Time: {item.time_to}
+                  </Text>
+                </View>
               </View>
             )}
           />
-          <ScrollView
-            horizontal
-            style={{marginBottom: hp('5%')}}
-            contentContainerStyle={{flexGrow: 0.8}}>
-            {ModalData.length > 0 ? (
-              <View>
-                <FlatList
-                  style={styles.flatList}
-                  data={ModalData}
-                  nestedScrollEnabled
-                  keyExtractor={(item, index) =>
-                    item.id ? item.id.toString() : index.toString()
-                  }
-                  ListHeaderComponent={() => (
-                    <View style={styles.row}>
-                      {['Sr#', 'Subject', 'Date', 'Time Start', 'Time end'].map(
-                        header => (
-                          <Text
-                            key={header}
-                            style={[styles.column, styles.headTable]}>
-                            {header}
-                          </Text>
-                        ),
-                      )}
-                    </View>
-                  )}
-                  renderItem={({item, index}) => (
-                    <View style={styles.row}>
-                      <Text style={[styles.column, styles.withBorder]}>
-                        {index + 1}
-                      </Text>
-                      <Text style={[styles.column, styles.withBorder]}>
-                        {item.sub_name}
-                      </Text>
-                      <Text style={[styles.column, styles.withBorder]}>
-                        {formatDate(item.date)}
-                      </Text>
-                      <Text style={[styles.column, styles.withBorder]}>
-                        {item.time_from}
-                      </Text>
-                      <Text style={styles.column}>{item.time_to}</Text>
-                    </View>
-                  )}
-                />
-              </View>
-            ) : (
-              <View style={{width: '100%', marginTop: 20}}>
-                <Text
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 'bold',
-                    textAlign: 'center',
-                  }}>
-                  No record found in the database!
-                </Text>
-              </View>
-            )}
-          </ScrollView>
         </View>
       </Modal>
     </View>
@@ -428,15 +300,6 @@ const TeacherDateSheet = ({navigation}: any) => {
 export default TeacherDateSheet;
 
 const styles = StyleSheet.create({
-  label: {
-    position: 'absolute',
-    top: -8,
-    left: 14,
-    fontSize: 8,
-    color: 'black',
-    backgroundColor: 'white',
-    paddingHorizontal: 4,
-  },
   container: {
     backgroundColor: '#fff',
     marginTop: 12,
@@ -525,8 +388,6 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 50,
-    height: 20,
   },
 
   actionIcon: {
@@ -549,5 +410,35 @@ const styles = StyleSheet.create({
   withBorder: {
     borderRightWidth: 1,
     borderColor: '#ccc',
+  },
+  card: {
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 20,
+    marginLeft: '2%',
+    marginRight: '2%',
+    marginTop: '1%',
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#3b82f6',
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });

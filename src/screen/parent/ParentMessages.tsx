@@ -1,13 +1,14 @@
 import {
+  Animated,
   BackHandler,
   FlatList,
-  Image,
+  ImageBackground,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
@@ -53,8 +54,23 @@ const getRandomColor = (index: number) => {
 const ParentMessages = ({navigation}: any) => {
   const {token} = useUser();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const moveAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
     const fetchNotifications = async () => {
       try {
         const response = await axios.get(
@@ -84,9 +100,31 @@ const ParentMessages = ({navigation}: any) => {
     fetchNotifications();
     return () => backHandler.remove();
   }, []);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''; // Handle empty or invalid dates
+
+    const date = new Date(dateString); // Parse the date string
+    const day = String(date.getDate()).padStart(2, '0'); // Ensure 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Return formatted date
+  };
+
   return (
     <View style={styles.container}>
-     
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
 
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -101,6 +139,7 @@ const ParentMessages = ({navigation}: any) => {
       </View>
 
       <FlatList
+        style={{paddingVertical: 20}}
         data={notifications}
         keyExtractor={item => item.id}
         numColumns={2}
@@ -117,7 +156,7 @@ const ParentMessages = ({navigation}: any) => {
             <Text style={styles.title}>{item.msg_subject}</Text>
             <Text style={styles.message}>{item.msg_message}</Text>
 
-            <Text style={styles.date}>{item.msg_date}</Text>
+            <Text style={styles.date}>{formatDate(item.msg_date)}</Text>
           </View>
         )}
       />
@@ -144,47 +183,60 @@ const styles = StyleSheet.create({
     height: 130,
     margin: 10,
     borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 8, height: 8},
-    shadowOpacity: 0.8, 
+    shadowColor: '#000',
+    shadowOffset: {width: 8, height: 8},
+    shadowOpacity: 0.8,
     shadowRadius: 10,
-    elevation: 20, 
+    elevation: 20,
   },
   title: {
-    fontWeight: "bold",
+    fontWeight: 'bold',
     fontSize: 14,
+    color: '#3b82f6',
   },
   date: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 10,
     right: 10,
     fontSize: 12,
-    color: "#555",
+    color: '#3b82f6',
   },
   headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "100%",  
-    paddingHorizontal: wp("5%"), 
-    paddingVertical: hp("2%"),
-    position: "absolute",
-    backgroundColor:'#3b82f6'
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: wp('5%'),
+    paddingVertical: hp('2%'),
+    position: 'absolute',
+    backgroundColor: '#3b82f6',
+    zIndex: 100,
   },
   backButton: {
     width: 25,
     height: 25,
-    tintColor: "white",
+    tintColor: 'white',
   },
   headerText: {
-    fontWeight: "bold",
+    fontWeight: 'bold',
     fontSize: 18,
-    color: "white",
-    textAlign:'center',
-    flex:1
+    color: 'white',
+    textAlign: 'center',
+    flex: 1,
   },
-  message:{
-  fontSize: 12,
-    color: "#444",
+
+  message: {
+    fontSize: 12,
+    color: '#3b82f6',
     marginTop: 5,
-}
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+  },
 });

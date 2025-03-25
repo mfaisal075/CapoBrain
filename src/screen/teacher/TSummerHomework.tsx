@@ -8,8 +8,10 @@ import {
   ScrollView,
   Image,
   FlatList,
+  Animated,
+  ImageBackground,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DateTimePicker, {
@@ -18,23 +20,23 @@ import DateTimePicker, {
 import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
 import Modal from 'react-native-modal';
-import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 
-type TableRow = {
-  sr: string;
-  branch: string;
-  class: string;
-  section: string;
-  subject: string;
-  action: string;
-};
+interface SummerHomework {
+  id: number;
+  cls_name: string;
+  sec_name: string;
+  sub_name: string;
+  bra_name: string;
+}
+
+interface SummerHomeworkData {
+  total_marks: string;
+  desc: string;
+}
 
 const TSummerHomework = ({navigation}: any) => {
   const {token} = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisible, setModalVisible] = useState(false);
   const [value, setValue] = useState('');
   const [date, setDate] = useState('');
@@ -53,124 +55,10 @@ const TSummerHomework = ({navigation}: any) => {
   const [currentVale, setCurrentVale] = useState(null);
   const itemo = [{label: 'Select Section First', value: 1}];
   const [isModalVisi, setModalVisi] = useState(false);
-
-  const originalData: TableRow[] = [
-    {
-      sr: '1',
-      branch: 'Main Branch',
-      class: 'Ten',
-      section: 'A',
-      subject: 'Biology',
-      action: '',
-    },
-    {
-      sr: '2',
-      branch: 'Main Branch',
-      class: 'Ten',
-      section: 'A',
-      subject: 'Chemistry',
-      action: '',
-    },
-    {
-      sr: '3',
-      branch: 'Main Branch',
-      class: 'Ten',
-      section: 'A',
-      subject: 'Physics',
-      action: '',
-    },
-    {
-      sr: '4',
-      branch: 'Main Branch',
-      class: 'Ten',
-      section: 'A',
-      subject: 'Pakistan Studies',
-      action: '',
-    },
-    {
-      sr: '5',
-      branch: 'Main Branch',
-      class: 'Ten',
-      section: 'A',
-      subject: 'English',
-      action: '',
-    },
-    {
-      sr: '6',
-      branch: 'Main Branch',
-      class: 'Ten',
-      section: 'A',
-      subject: 'Urdu',
-      action: '',
-    },
-    {
-      sr: '7',
-      branch: 'Main Branch',
-      class: 'Ten',
-      section: 'A',
-      subject: 'Math',
-      action: '',
-    },
-    {
-      sr: '8',
-      branch: 'Main Branch',
-      class: 'Ten',
-      section: 'A',
-      subject: 'Islamiyat',
-      action: '',
-    },
-    {
-      sr: '9',
-      branch: 'Main Branch',
-      class: 'Ten',
-      section: 'A',
-      subject: 'Computer',
-      action: '',
-    },
-    {
-      sr: '10',
-      branch: 'Main Branch',
-      class: 'Ten',
-      section: 'A',
-      subject: 'Economics',
-      action: '',
-    },
-  ];
-
-  const [tableData, setTableData] = useState<TableRow[]>(originalData);
-
-  const items = [
-    {label: '10', value: 10},
-    {label: '25', value: 25},
-    {label: '50', value: 50},
-    {label: '100', value: 100},
-  ];
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setTableData(originalData);
-    } else {
-      const filtered = originalData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered);
-    }
-  };
-
-  const totalPages = Math.ceil(tableData.length / entriesPerPage);
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const currentEntries = tableData.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage,
+  const [summerHwData, setSummerHwData] = useState<SummerHomeworkData | null>(
+    null,
   );
+  const [originalData, setOriginalData] = useState<SummerHomework[]>([]);
 
   const onStartDateChange = (
     event: DateTimePickerEvent,
@@ -235,8 +123,21 @@ const TSummerHomework = ({navigation}: any) => {
     return isValid;
   };
 
-  const toggleModl = () => {
-    setModalVisi(!isModalVisi);
+  const toggleModl = async (id: number) => {
+    try {
+      const res = await axios.get(
+        `https://demo.capobrain.com/showsummerhomework?id=${id}&_token=${token}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      setModalVisi(!isModalVisi);
+      setSummerHwData(res.data.homework);
+    } catch (error) {
+      console.log();
+    }
   };
 
   const [isModalV, setModalV] = useState(false);
@@ -259,7 +160,7 @@ const TSummerHomework = ({navigation}: any) => {
             },
           },
         );
-        return response.data.output;
+        setOriginalData(response.data.homework);
       } catch (error) {
         console.log(error);
         throw error;
@@ -269,7 +170,23 @@ const TSummerHomework = ({navigation}: any) => {
     }
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
     fetchData();
     const backAction = () => {
       navigation.goBack();
@@ -285,8 +202,21 @@ const TSummerHomework = ({navigation}: any) => {
   }, []);
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('TeacherHomework' as never)}>
           <Icon
             name="arrow-left"
             size={38}
@@ -301,7 +231,7 @@ const TSummerHomework = ({navigation}: any) => {
           style={{
             width: 190,
             height: 30,
-            backgroundColor: '#218838',
+            backgroundColor: '#3b82f6',
             borderRadius: 5,
             alignSelf: 'flex-end',
             margin: 10,
@@ -319,98 +249,64 @@ const TSummerHomework = ({navigation}: any) => {
         </View>
       </TouchableOpacity>
 
-      <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-        <View style={{width: 80, marginTop: 9}}>
-          <DropDownPicker
-            items={items}
-            open={isOpen}
-            setOpen={setIsOpen}
-            value={entriesPerPage}
-            setValue={callback => {
-              setEntriesPerPage(prev =>
-                typeof callback === 'function' ? callback(prev) : callback,
-              );
-            }}
-            maxHeight={200}
-            placeholder=""
-            style={styles.dropdown}
-          />
-        </View>
-
-        <View style={styles.container}>
-          <TextInput
-            style={styles.input}
-            placeholder="Search..."
-            placeholderTextColor={'gray'}
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </View>
-      </View>
-
-      {/* Table */}
-      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        <View>
-          <FlatList
-            style={styles.flatList}
-            data={currentEntries}
-            keyExtractor={(item, index) =>
-              item.sr ? item.sr.toString() : index.toString()
-            }
-            ListHeaderComponent={() => (
-              <View style={styles.row}>
-                {['Sr#', 'Branch', 'Class', 'Section', 'Subject', 'Action'].map(
-                  header => (
-                    <Text
-                      key={header}
-                      style={[styles.column, styles.headTable]}>
-                      {header}
-                    </Text>
-                  ),
-                )}
-              </View>
-            )}
-            renderItem={({item, index}) => (
+      <FlatList
+        data={originalData}
+        keyExtractor={(item, index) => item.id.toString() || `item-${index}`}
+        renderItem={({item}) => (
+          <View style={styles.card}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text
+                style={{
+                  fontWeight: 'bold',
+                  color: '#3b82f6',
+                  fontSize: 16,
+                }}>
+                {item.sub_name}
+              </Text>
+              <Text
+                style={{
+                  color: '#3b82f6',
+                }}>
+                {item.bra_name}
+              </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text
+                style={{
+                  color: '#3b82f6',
+                  fontSize: 16,
+                }}>
+                {item.cls_name}({item.sec_name})
+              </Text>
               <View
-                style={[
-                  styles.row,
-                  {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                ]}>
-                <Text style={styles.column}>{item.sr}</Text>
-                <Text style={styles.column}>{item.branch}</Text>
-                <Text style={styles.column}>{item.class}</Text>
-                <Text style={styles.column}>{item.section}</Text>
-                <Text style={styles.column}>{item.subject}</Text>
+                style={{
+                  flexDirection: 'row',
+                }}>
                 <TouchableOpacity
                   style={[
                     styles.iconContainer,
                     styles.actionIcon,
-                    {marginTop: 8, marginRight: 5, marginLeft: 5},
+                    {marginTop: 6},
                   ]}
-                  onPress={toggleModl}>
+                  onPress={() => toggleModl(item.id)}>
                   <Image
                     style={styles.actionIcon}
                     source={require('../../assets/visible.png')}
                   />
                 </TouchableOpacity>
+
                 <TouchableOpacity onPress={toggleMdl}>
-                  <View
-                    style={[
-                      item.action === 'Not Available'
-                        ? styles.notAvailable
-                        : styles.available,
-                      styles.actionView,
-                    ]}>
+                  <View style={[styles.available, styles.actionView]}>
                     <Image
-                      style={[
-                        item.action === 'Not Available'
-                          ? styles.notAvailable
-                          : styles.available,
-                        {width: 13},
-                        {height: 13},
-                        {marginTop: 4},
-                        {marginLeft: 40},
-                      ]}
+                      style={[styles.available, {width: 13}, {height: 13}]}
                       source={require('../../assets/pencil.png')}
                     />
                   </View>
@@ -419,306 +315,53 @@ const TSummerHomework = ({navigation}: any) => {
                 <TouchableOpacity onPress={tglModal}>
                   <View style={[styles.availble, styles.actionView]}>
                     <Image
-                      style={[
-                        styles.availble,
-                        {width: 13},
-                        {height: 13},
-                        {marginTop: 4},
-                      ]}
+                      style={[styles.availble, {width: 13}, {height: 13}]}
                       source={require('../../assets/dlt.png')}
                     />
                   </View>
                 </TouchableOpacity>
               </View>
-            )}
-          />
-        </View>
-      </ScrollView>
-
-      <View style={styles.pagination}>
-        <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
-          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
-          {tableData.length} entries
-        </Text>
-        <View style={styles.paginationButtons}>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
-            <Text style={styles.paginationText}>Previous</Text>
-          </TouchableOpacity>
-          <View style={styles.pageNumber}>
-            <Text style={styles.pageText}>{currentPage}</Text>
-          </View>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
-            <Text style={styles.paginationText}>Next</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Modal */}
-      <Modal isVisible={isModalVisi}>
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: 'white',
-            width: 'auto',
-            maxHeight: 300,
-            borderRadius: 5,
-            borderWidth: 1,
-            borderColor: '#6C757D',
-          }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              margin: 20,
-            }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>
-              Summer Home Work
-            </Text>
-
-            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
-            </TouchableOpacity>
-          </View>
-          <View
-            style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-            }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                margin: 10,
-              }}>
-              <Text style={styles.lblText}>Class</Text>
-              <Text style={styles.valueText}>Ten</Text>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                marginTop: 10,
-                marginRight: 40,
-              }}>
-              <Text style={styles.lblText}>Section</Text>
-              <Text style={styles.valueText}>A</Text>
             </View>
           </View>
-          <View
-            style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-            }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                margin: 10,
-              }}>
-              <Text style={styles.lblText}>Subject</Text>
-              <Text style={styles.valueText}>Biology</Text>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                margin: 10,
-              }}>
-              <Text style={styles.lblText}>Total Marks</Text>
-              <Text style={styles.valueText}>60</Text>
-            </View>
-          </View>
-          <View
-            style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
-          <View
-            style={{
-              margin: 10,
-            }}>
-            <Text style={styles.lblText}>Description:</Text>
-            <Text style={styles.valueText}>
-              write Ch # 1, 2 long questions and short questions.
-            </Text>
-          </View>
-          <View
-            style={{
-              height: 1,
-              backgroundColor: 'gray',
-              width: wp('90%'),
-            }}
-          />
-        </View>
-      </Modal>
+        )}
+      />
 
-      <Modal isVisible={isModalV}>
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: 'white',
-            width: 'auto',
-            maxHeight: 250,
-            borderRadius: 5,
-            borderWidth: 1,
-            borderColor: '#6C757D',
-          }}>
-          <Image
-            style={{
-              width: 60,
-              height: 60,
-              tintColor: 'red',
-              alignSelf: 'center',
-              marginTop: 30,
-            }}
-            source={require('../../assets/info.png')}
-          />
-          <Text
-            style={{
-              fontWeight: 'bold',
-              fontSize: 22,
-              textAlign: 'center',
-              marginTop: 20,
-            }}>
-            Warning{' '}
-          </Text>
-          <Text
-            style={{
-              color: 'gray',
-              textAlign: 'center',
-            }}>
-            You may have not permission to delete this record!
-          </Text>
-          <View
-            style={{
-              flexDirection: 'row',
-              marginTop: 30,
-              justifyContent: 'flex-end',
-            }}>
-            <TouchableOpacity onPress={() => setModalV(!isModalV)}>
-              <View
-                style={{
-                  backgroundColor: '#78CBF2',
-                  borderRadius: 5,
-                  width: 'auto',
-                  height: 30,
-                  padding: 5,
-                  marginRight: 10,
-                }}>
-                <Text
-                  style={{
-                    color: 'white',
-                  }}>
-                  OK
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal isVisible={isMdlVsble}>
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: 'white',
-            width: 'auto',
-            maxHeight: 250,
-            borderRadius: 5,
-            borderWidth: 1,
-            borderColor: '#6C757D',
-          }}>
-          <Image
-            style={{
-              width: 60,
-              height: 60,
-              tintColor: 'red',
-              alignSelf: 'center',
-              marginTop: 30,
-            }}
-            source={require('../../assets/info.png')}
-          />
-          <Text
-            style={{
-              fontWeight: 'bold',
-              fontSize: 22,
-              textAlign: 'center',
-              marginTop: 20,
-            }}>
-            Warning{' '}
-          </Text>
-          <Text
-            style={{
-              color: 'gray',
-              textAlign: 'center',
-            }}>
-            You may have not permission to edit this record!
-          </Text>
-          <View
-            style={{
-              flexDirection: 'row',
-              marginTop: 30,
-              justifyContent: 'flex-end',
-            }}>
-            <TouchableOpacity onPress={() => setMdlVsble(!isMdlVsble)}>
-              <View
-                style={{
-                  backgroundColor: '#78CBF2',
-                  borderRadius: 5,
-                  width: 'auto',
-                  height: 30,
-                  padding: 5,
-                  marginRight: 10,
-                }}>
-                <Text
-                  style={{
-                    color: 'white',
-                  }}>
-                  OK
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Add Summer Homework Modal */}
+      {/*Add hw*/}
       <Modal isVisible={isModalVisible}>
         <View
           style={{
             flex: 1,
             backgroundColor: 'white',
             width: 'auto',
-            maxHeight: 570,
+            maxHeight: 450,
             borderRadius: 5,
             borderWidth: 1,
-            borderColor: '#6C757D',
+            borderColor: '#3b82f6',
+            overflow: 'hidden',
           }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
-              margin: 20,
+              margin: 10,
             }}>
-            <Text style={{color: '#6C757D', fontSize: 18}}>
+            <Text style={{color: '#3b82f6', fontSize: 18, fontWeight: 'bold'}}>
               Add Summer Home Work
             </Text>
 
             <TouchableOpacity onPress={() => setModalVisible(!isModalVisible)}>
-              <Text style={{color: '#6C757D'}}>✖</Text>
+              <Text style={{color: 'red'}}>✖</Text>
             </TouchableOpacity>
           </View>
           <View
@@ -726,7 +369,7 @@ const TSummerHomework = ({navigation}: any) => {
               flexDirection: 'row',
               width: 'auto',
               height: 1,
-              borderColor: 'gray',
+              borderColor: '#3b82f6',
               borderWidth: 1,
               borderBottomWidth: 1,
             }}
@@ -744,7 +387,7 @@ const TSummerHomework = ({navigation}: any) => {
                 borderRightWidth: 1,
                 borderLeftWidth: 1,
                 borderRadius: 5,
-                borderColor: 'gray',
+                borderColor: '#3b82f6',
                 marginLeft: 10,
                 height: 32,
                 borderBottomWidth: 1,
@@ -770,7 +413,7 @@ const TSummerHomework = ({navigation}: any) => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   borderRadius: 5,
-                  borderColor: 'gray',
+                  borderColor: '#3b82f6',
                 }}>
                 <DropDownPicker
                   items={itemc}
@@ -809,7 +452,7 @@ const TSummerHomework = ({navigation}: any) => {
                 borderRightWidth: 1,
                 borderLeftWidth: 1,
                 borderRadius: 5,
-                borderColor: 'gray',
+                borderColor: '#3b82f6',
                 marginLeft: 10,
                 height: 32,
                 borderBottomWidth: 1,
@@ -835,7 +478,7 @@ const TSummerHomework = ({navigation}: any) => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   borderRadius: 5,
-                  borderColor: 'gray',
+                  borderColor: '#3b82f6',
                 }}>
                 <DropDownPicker
                   items={itemz}
@@ -883,7 +526,7 @@ const TSummerHomework = ({navigation}: any) => {
                 borderRightWidth: 1,
                 borderLeftWidth: 1,
                 borderRadius: 5,
-                borderColor: 'gray',
+                borderColor: '#3b82f6',
                 marginLeft: 10,
                 height: 32,
                 borderBottomWidth: 1,
@@ -909,7 +552,7 @@ const TSummerHomework = ({navigation}: any) => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   borderRadius: 5,
-                  borderColor: 'gray',
+                  borderColor: '#3b82f6',
                 }}>
                 <DropDownPicker
                   items={itemo}
@@ -953,7 +596,7 @@ const TSummerHomework = ({navigation}: any) => {
                 borderRightWidth: 1,
                 borderLeftWidth: 1,
                 borderRadius: 5,
-                borderColor: 'gray',
+                borderColor: '#3b82f6',
                 marginRight: 20,
               }}>
               <Text style={styles.label}>Date</Text>
@@ -973,7 +616,7 @@ const TSummerHomework = ({navigation}: any) => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   borderRadius: 5,
-                  borderColor: 'gray',
+                  borderColor: '#3b82f6',
                 }}>
                 <Text
                   style={{
@@ -989,7 +632,8 @@ const TSummerHomework = ({navigation}: any) => {
                       width: 20,
                       resizeMode: 'stretch',
                       alignItems: 'center',
-                      marginLeft: 20,
+                      marginLeft: 30,
+                      tintColor: '#3b82f6',
                     }}
                     source={require('../../assets/calendar.png')}
                   />
@@ -1029,7 +673,7 @@ const TSummerHomework = ({navigation}: any) => {
               borderRightWidth: 1,
               borderLeftWidth: 1,
               borderRadius: 5,
-              borderColor: 'gray',
+              borderColor: '#3b82f6',
               marginLeft: 10,
               marginTop: 30,
               height: 30,
@@ -1050,11 +694,11 @@ const TSummerHomework = ({navigation}: any) => {
             <View
               style={{
                 borderRadius: 5,
-                borderColor: 'gray',
+                borderColor: '#3b82f6',
               }}>
               <TextInput
                 style={{
-                  color: 'black',
+                  color: '#3b82f6',
                 }}
                 value={des}
                 onChangeText={setDes}
@@ -1084,7 +728,7 @@ const TSummerHomework = ({navigation}: any) => {
               borderRightWidth: 1,
               borderLeftWidth: 1,
               borderRadius: 5,
-              borderColor: 'gray',
+              borderColor: '#3b82f6',
               marginLeft: 10,
               marginTop: 30,
               height: 100,
@@ -1105,11 +749,11 @@ const TSummerHomework = ({navigation}: any) => {
             <View
               style={{
                 borderRadius: 5,
-                borderColor: 'gray',
+                borderColor: '#3b82f6',
               }}>
               <TextInput
                 style={{
-                  color: 'black',
+                  color: '#3b82f6',
                 }}
                 value={desc}
                 onChangeText={setDesc}
@@ -1139,7 +783,7 @@ const TSummerHomework = ({navigation}: any) => {
             }}>
             <View
               style={{
-                backgroundColor: '#218838',
+                backgroundColor: '#3b82f6',
                 borderRadius: 5,
                 width: 50,
                 height: 30,
@@ -1157,6 +801,235 @@ const TSummerHomework = ({navigation}: any) => {
               </Text>
             </View>
           </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/*eye modal*/}
+      <Modal isVisible={isModalVisi}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'white',
+            width: 'auto',
+            maxHeight: 300,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: '#3b82f6',
+            overflow: 'hidden',
+          }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
+
+          <Text
+            style={{
+              color: '#3b82f6',
+              fontSize: 18,
+              fontWeight: 'bold',
+              textAlign: 'center',
+              margin: 10,
+            }}>
+            Summer Home Work
+          </Text>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}>
+            <Text style={styles.lblText}>Total Marks</Text>
+            <Text style={styles.valueText}>{summerHwData?.total_marks}</Text>
+          </View>
+
+          <Text style={styles.lblText}>Description:</Text>
+          <Text style={[styles.valueText, {marginLeft: '15%'}]}>
+            {summerHwData?.desc}
+          </Text>
+
+          <View style={{flex: 1, justifyContent: 'flex-end', marginBottom: 10}}>
+            <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
+              <View
+                style={{
+                  backgroundColor: '#3b82f6',
+                  borderRadius: 5,
+                  width: 50,
+                  height: 23,
+                  alignSelf: 'center',
+                }}>
+                <Text
+                  style={{color: 'white', fontSize: 16, textAlign: 'center'}}>
+                  Close
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/*delete*/}
+      <Modal isVisible={isModalV}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'white',
+            width: 'auto',
+            maxHeight: 220,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: '#6C757D',
+            overflow: 'hidden',
+          }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
+          <Image
+            style={{
+              width: 60,
+              height: 60,
+              tintColor: '#3b82f6',
+              alignSelf: 'center',
+              marginTop: 30,
+            }}
+            source={require('../../assets/info.png')}
+          />
+          <Text
+            style={{
+              fontWeight: 'bold',
+              fontSize: 22,
+              textAlign: 'center',
+              marginTop: 10,
+              color: '#3b82f6',
+            }}>
+            Warning{' '}
+          </Text>
+          <Text
+            style={{
+              color: '#3b82f6',
+              textAlign: 'center',
+            }}>
+            You may have not permission to delete this record!
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              marginTop: 10,
+              justifyContent: 'center',
+            }}>
+            <TouchableOpacity onPress={() => setModalV(!isModalV)}>
+              <View
+                style={{
+                  backgroundColor: '#3b82f6',
+                  borderRadius: 5,
+                  width: 50,
+                  height: 30,
+                  padding: 5,
+                }}>
+                <Text
+                  style={{
+                    color: 'white',
+                    textAlign: 'center',
+                  }}>
+                  OK
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/*edit*/}
+      <Modal isVisible={isMdlVsble}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'white',
+            width: 'auto',
+            maxHeight: 220,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: '#3b82f6',
+            overflow: 'hidden',
+          }}>
+          <Animated.View
+            style={[
+              styles.animatedBackground,
+              {transform: [{translateY: moveAnim}]},
+            ]}>
+            <ImageBackground
+              resizeMode="cover"
+              style={styles.backgroundImage}
+              source={require('../../assets/bgimg.jpg')}
+            />
+          </Animated.View>
+          <Image
+            style={{
+              width: 60,
+              height: 60,
+              tintColor: '#3b82f6',
+              alignSelf: 'center',
+              marginTop: 30,
+            }}
+            source={require('../../assets/info.png')}
+          />
+          <Text
+            style={{
+              fontWeight: 'bold',
+              fontSize: 22,
+              textAlign: 'center',
+              marginTop: 10,
+              color: '#3b82f6',
+            }}>
+            Warning{' '}
+          </Text>
+          <Text
+            style={{
+              color: '#3b82f6',
+              textAlign: 'center',
+            }}>
+            You may have not permission to edit this record!
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              marginTop: 10,
+              justifyContent: 'center',
+            }}>
+            <TouchableOpacity onPress={() => setMdlVsble(!isMdlVsble)}>
+              <View
+                style={{
+                  backgroundColor: '#3b82f6',
+                  borderRadius: 5,
+                  width: 50,
+                  height: 30,
+                  padding: 5,
+                  marginRight: 10,
+                }}>
+                <Text
+                  style={{
+                    color: 'white',
+                    textAlign: 'center',
+                  }}>
+                  OK
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </View>
@@ -1178,8 +1051,6 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 4,
     borderRadius: 4,
-    textAlign:'center',
-    color:'gray'
   },
   dropdown: {
     borderWidth: 1,
@@ -1196,7 +1067,6 @@ const styles = StyleSheet.create({
   column: {
     width: 150,
     padding: 1,
-    textAlign: 'center',
   },
   headTable: {
     fontWeight: 'bold',
@@ -1229,25 +1099,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     margin: 10,
   },
-  paginationButtons: {
-    flexDirection: 'row',
-  },
-  paginationText: {
-    fontWeight: 'bold',
-  },
-  pageNumber: {
-    width: 22,
-    height: 22,
-    backgroundColor: '#3b82f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
-    marginRight: 10,
-  },
-  pageText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
+
   flatList: {
     margin: 10,
     flex: 1,
@@ -1257,38 +1109,33 @@ const styles = StyleSheet.create({
     top: -10,
     left: 14,
     fontSize: 14,
-    color: 'black',
+    color: '#3b82f6',
     backgroundColor: 'white',
     paddingHorizontal: 4,
   },
   lblText: {
     fontWeight: 'bold',
-    marginRight: 10,
+    marginLeft: '15%',
+    color: '#3b82f6',
   },
   valueText: {
-    marginRight: 10,
+    marginRight: '15%',
+    color: '#3b82f6',
   },
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 60,
-    height: 20,
   },
   actionIcon: {
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    marginLeft: 80,
-    marginTop:-12  
   },
   actionView: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: -6,
-    marginRight: 5,
     marginLeft: 5,
   },
-
   available: {
     color: 'green',
     tintColor: 'green',
@@ -1299,15 +1146,37 @@ const styles = StyleSheet.create({
   availble: {
     color: 'red',
     tintColor: 'red',
-    width: 'auto',
+
     height: 27,
     borderRadius: 5,
   },
   notAvailable: {
     color: 'red',
     tintColor: 'red',
-    width: 'auto',
+
     height: 27,
     borderRadius: 5,
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+  },
+  card: {
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 8,
+    marginLeft: '2%',
+    elevation: 5,
+    opacity: 1,
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+    marginRight: '2%',
+    marginTop: '1%',
   },
 });
