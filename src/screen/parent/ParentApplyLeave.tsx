@@ -423,13 +423,17 @@ const ParentApplyLeave = ({navigation}: any) => {
                 setValue={setSelectedChild}
                 maxHeight={200}
                 placeholder="Select Student"
+                placeholderStyle={{color: '#3b82f6'}}
+                labelStyle={{color: '#3b82f6'}}
+                textStyle={{color: '#3b82f6'}}
+                arrowIconStyle={{tintColor: '#3b82f6'}}
                 style={{
                   borderWidth: 1,
                   borderColor: 'white',
                   borderRadius: 5,
                   minHeight: 5,
                 }}
-              />{' '}
+              />
             </View>
           </View>
           {branchError ? (

@@ -1,11 +1,13 @@
 import {
+  Animated,
   BackHandler,
+  ImageBackground,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const TeacherAttendance = ({navigation}: any) => {
@@ -34,7 +36,23 @@ const TeacherAttendance = ({navigation}: any) => {
     setAttendanceStatus('not_marked');
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
     const backAction = () => {
       navigation.navigate('TeacherHome');
       return true;
@@ -57,6 +75,18 @@ const TeacherAttendance = ({navigation}: any) => {
 
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.navigate('TeacherHome' as never)}>
@@ -75,16 +105,16 @@ const TeacherAttendance = ({navigation}: any) => {
         style={{
           flexDirection: 'row',
           marginTop: 10,
-          alignSelf: 'flex-end',
+          alignSelf: 'center',
           marginRight: 10,
         }}>
         <TouchableOpacity
           onPress={() => navigation.navigate('StaffAttendanceList' as never)}>
           <View
             style={{
-              width: 120,
+              width: 170,
               height: 30,
-              backgroundColor: '#0069D9',
+              backgroundColor: '#3b82f6',
               borderRadius: 5,
               marginLeft: 10,
             }}>
@@ -102,12 +132,12 @@ const TeacherAttendance = ({navigation}: any) => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => navigation.navigate('StdAttendanceList' as never)}>
+          onPress={() => navigation.navigate('StdAttendance' as never)}>
           <View
             style={{
-              width: 150,
+              width: 170,
               height: 30,
-              backgroundColor: '#0069D9',
+              backgroundColor: '#3b82f6',
               borderRadius: 5,
               marginLeft: 5,
             }}>
@@ -130,7 +160,7 @@ const TeacherAttendance = ({navigation}: any) => {
         {attendanceStatus === 'not_marked'
           ? 'Please Click on Clock In to mark Attendance'
           : attendanceStatus === 'clocked_in'
-          ? `Your Attendance is marked at ${clockInTime?.toLocaleTimeString()}`
+          ? `Clocked In at ${clockInTime?.toLocaleTimeString()}`
           : `Clocked Out at ${clockOutTime?.toLocaleTimeString()}`}
       </Text>
 
@@ -151,23 +181,23 @@ const TeacherAttendance = ({navigation}: any) => {
         <View style={styles.tableContainer}>
           <Text style={styles.tableHeader}>Attendance Summary</Text>
           <View style={styles.tableRow}>
+            <Text style={[styles.tableCell, {fontWeight: 'bold'}]}>Date</Text>
             <Text style={[styles.tableCell, {fontWeight: 'bold'}]}>
               Clock In
             </Text>
             <Text style={[styles.tableCell, {fontWeight: 'bold'}]}>
               Clock Out
             </Text>
-            <Text style={[styles.tableCell, {fontWeight: 'bold'}]}>Date</Text>
           </View>
           <View style={styles.tableRow}>
+            <Text style={styles.tableCell}>
+              {clockInTime?.toLocaleDateString()}
+            </Text>
             <Text style={styles.tableCell}>
               {clockInTime?.toLocaleTimeString()}
             </Text>
             <Text style={styles.tableCell}>
               {clockOutTime?.toLocaleTimeString()}
-            </Text>
-            <Text style={styles.tableCell}>
-              {clockInTime?.toLocaleDateString()}
             </Text>
           </View>
           <TouchableOpacity onPress={handleReset} style={styles.okButton}>
@@ -184,9 +214,10 @@ export default TeacherAttendance;
 const styles = StyleSheet.create({
   statusText: {
     fontSize: 16,
-    marginVertical: 20,
+    marginVertical: 10,
     textAlign: 'center',
-    color: 'gray',
+    color: '#3b82f6',
+    fontWeight: 'bold',
   },
   header: {
     flexDirection: 'row',
@@ -213,19 +244,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 18,
     marginLeft: 10,
+    color: '#3b82f6',
   },
   currentTime: {
-    alignSelf: 'flex-end',
+    alignSelf: 'center',
     marginRight: 10,
     marginTop: 10,
     fontWeight: 'bold',
     fontSize: 18,
+    color: '#3b82f6',
+    marginLeft: 10,
   },
   clockInButton: {
     borderRadius: 5,
     width: 70,
     alignSelf: 'center',
-    backgroundColor: '#218838',
+    backgroundColor: '#3b82f6',
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
@@ -234,16 +268,16 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     width: 70,
     alignSelf: 'center',
-    backgroundColor: '#E0A800',
+    backgroundColor: '#3b82f6',
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
   },
   tableContainer: {
-    marginTop: 20,
+    marginTop: 5,
     padding: 10,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#3b82f6',
     marginHorizontal: 20,
     backgroundColor: 'white',
     borderRadius: 5,
@@ -253,6 +287,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
+    color: '#3b82f6',
   },
   tableRow: {
     flexDirection: 'row',
@@ -263,10 +298,11 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     fontSize: 16,
+    color: '#3b82f6',
   },
   okButton: {
     marginTop: 10,
-    backgroundColor: '#0069D9',
+    backgroundColor: '#3b82f6',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
@@ -274,5 +310,15 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
   },
 });

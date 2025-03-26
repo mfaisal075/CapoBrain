@@ -462,7 +462,7 @@ const ParentLMS = ({navigation}: any) => {
                   textAlign: 'center',
                 }}>
                 Summer HomeWork
-              </Text>{' '}
+              </Text>
             </View>
           </TouchableOpacity>
           <TouchableOpacity

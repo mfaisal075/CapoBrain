@@ -156,6 +156,88 @@ const Result = ({navigation}: any) => {
     return () => backHandler.remove();
   }, [value]);
 
+  const {totalMarks, totalObtain, totalPercentageDisplay, grade, remark} =
+    React.useMemo(() => {
+      let totalMarks = 0;
+      let totalObtain = 0;
+
+      if (tableData) {
+        totalMarks = tableData.reduce(
+          (acc, item) => acc + parseFloat(item.res_total_marks || '0'),
+          0,
+        );
+        totalObtain = tableData.reduce(
+          (acc, item) => acc + parseFloat(item.res_obtain_marks || '0'),
+          0,
+        );
+      }
+
+      const totalPercentage =
+        totalMarks > 0 ? (totalObtain / totalMarks) * 100 : 0;
+
+      // Grade calculation function
+      const getGradeAndRemark = (percentage: number) => {
+        const flooredPercentage = Math.floor(percentage);
+        let grade = '';
+        let remark = '';
+
+        if (flooredPercentage >= 95) {
+          grade = 'A+';
+          remark = 'Outstanding performance! Continue to excel.';
+        } else if (flooredPercentage >= 90) {
+          grade = 'A';
+          remark = 'Outstanding performance! Continue to excel.';
+        } else if (flooredPercentage >= 87) {
+          grade = 'B+';
+          remark = "Very good effort, but there's always room for improvement!";
+        } else if (flooredPercentage >= 83) {
+          grade = 'B';
+          remark = "Very good effort, but there's always room for improvement!";
+        } else if (flooredPercentage >= 80) {
+          grade = 'B-';
+          remark = "Very good effort, but there's always room for improvement!";
+        } else if (flooredPercentage >= 77) {
+          grade = 'C+';
+          remark =
+            "Good work, but let's work on understanding the concepts even better.";
+        } else if (flooredPercentage >= 73) {
+          grade = 'C';
+          remark =
+            "Good work, but let's work on understanding the concepts even better.";
+        } else if (flooredPercentage >= 70) {
+          grade = 'C-';
+          remark =
+            "Good work, but let's work on understanding the concepts even better.";
+        } else if (flooredPercentage >= 67) {
+          grade = 'D+';
+          remark = "You need to put in more effort. Let's try to improve.";
+        } else if (flooredPercentage >= 63) {
+          grade = 'D';
+          remark = "You need to put in more effort. Let's try to improve.";
+        } else if (flooredPercentage >= 60) {
+          grade = 'D-';
+          remark = "You need to put in more effort. Let's try to improve.";
+        } else {
+          grade = 'F';
+          remark =
+            "It's important to focus more on studies, seek help if you're struggling.";
+        }
+
+        return {grade, remark};
+      };
+
+      const {grade: calculatedGrade, remark: calculatedRemark} =
+        getGradeAndRemark(totalPercentage);
+
+      return {
+        totalMarks,
+        totalObtain,
+        totalPercentageDisplay: totalPercentage.toFixed(0),
+        grade: calculatedGrade,
+        remark: calculatedRemark,
+      };
+    }, [tableData]);
+
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
       <Animated.View
@@ -175,7 +257,7 @@ const Result = ({navigation}: any) => {
             name="arrow-left"
             size={38}
             color={'#fff'}
-            style={{paddingHorizontal: 10, paddingVertical: 10}}
+            style={{paddingHorizontal: 10}}
           />
         </TouchableOpacity>
         <Text style={styles.headerText}>Results</Text>
@@ -190,63 +272,176 @@ const Result = ({navigation}: any) => {
           setValue={setValue}
           maxHeight={200}
           placeholder="Select Exam Type Filter"
+          placeholderStyle={{color: '#3b82f6'}}
+          labelStyle={{color: '#3b82f6'}}
+          textStyle={{color: '#3b82f6'}}
+          arrowIconStyle={{tintColor: '#3b82f6'}}
           style={styles.dropdown}
           dropDownContainerStyle={{marginLeft: 10}}
         />
       </View>
 
+      <View style={styles.row}>
+        <Text
+          style={[styles.column, styles.headTable, {width: 50, height: 40}]}>
+          Sr#
+        </Text>
+        <Text
+          style={[styles.column, styles.headTable, {width: 50, height: 40}]}>
+          Subject
+        </Text>
+
+        {/* Exam Type sirf "Select Exams Type Filter" per dikhega */}
+        {value === null && (
+          <Text
+            style={[
+              {
+                textAlign: 'center',
+                color: 'white',
+                fontWeight: 'bold',
+                width: 50,
+                height: 40,
+                backgroundColor: '#3b82f6',
+                fontSize: 10,
+                paddingVertical: 5,
+              },
+            ]}>
+            Exam Type
+          </Text>
+        )}
+
+        <Text
+          style={[styles.column, styles.headTable, {width: 50, height: 40}]}>
+          Total Marks
+        </Text>
+        <Text
+          style={[styles.column, styles.headTable, {width: 50, height: 40}]}>
+          Obtain Marks
+        </Text>
+        <Text
+          style={[styles.column, styles.headTable, {width: 50, height: 40}]}>
+          Percentage
+        </Text>
+        <Text
+          style={[styles.column, styles.headTable, {width: 50, height: 40}]}>
+          Grade
+        </Text>
+      </View>
+
       <FlatList
         data={tableData}
         keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => (
-          <View style={styles.card}>
+        renderItem={({item, index}) => {
+          return (
             <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <Text style={styles.title}>{item.sub_name}</Text>
-              <Text
-                style={{
-                  color: '#3b82f6',
-                }}>
-                {item.res_exam_type_id}
+              style={[
+                styles.row,
+                {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+              ]}>
+              <Text style={[styles.column, {width: 50}]}>{index + 1}</Text>
+              <Text style={[styles.column, styles.boldText, {width: 50}]}>
+                {item.sub_name}
               </Text>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <Text
-                style={{
-                  color: '#3b82f6',
-                }}>
-                Total Marks: {item.res_total_marks}
+
+              {/* Exam Type sirf tab dikhayen jab "Select Exams Type Filter" ho */}
+              {value === null && (
+                <Text
+                  style={[
+                    {
+                      textAlign: 'center',
+                      color: '#3b82f6',
+                      fontSize: 10,
+                    },
+                    {width: 50},
+                  ]}>
+                  {item.res_exam_type_id}
+                </Text>
+              )}
+
+              <Text style={[styles.column, {width: 50}]}>
+                {item.res_total_marks}
               </Text>
-              <Text
-                style={{
-                  color: '#3b82f6',
-                }}>
-                Obtain Marks: {item.res_obtain_marks}
+              <Text style={[styles.column, {width: 50}]}>
+                {item.res_obtain_marks}
               </Text>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <Text
-                style={{
-                  color: '#3b82f6',
-                }}>
+              <Text style={[styles.column, {width: 50}]}>
                 {item.percentage}
               </Text>
               <Text
-                style={{
-                  color: '#3b82f6',
-                }}>
+                style={[
+                  {
+                    textAlign: 'center',
+                    color: '#3b82f6',
+                    fontSize: 11,
+                    flex: 1,
+                  },
+                  {width: 50},
+                ]}>
                 {item.grade}
+              </Text>
+            </View>
+          );
+        }}
+        ListFooterComponent={() => (
+          <View>
+            {/* Total Row */}
+            <View style={[styles.row, {backgroundColor: '#E2F0FF'}]}>
+              <Text style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
+                Total
+              </Text>
+              <Text style={[styles.column, {width: 50}]}></Text>
+              {value === null ? (
+                <Text style={[styles.column, {width: 50}]}></Text>
+              ) : null}
+
+              <Text style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
+                {totalMarks}
+              </Text>
+              <Text style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
+                {totalObtain}
+              </Text>
+              <Text style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
+                {totalPercentageDisplay}%
+              </Text>
+              <Text style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
+                {grade}
+              </Text>
+            </View>
+
+            {/* Remark Row */}
+            <View
+              style={[
+                styles.row,
+                {
+                  backgroundColor: '#E2F0FF',
+                  borderTopWidth: 1,
+                  height: 85,
+                  borderTopColor: '#3b82f6',
+                  marginBottom: 5,
+
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  padding: 10,
+                },
+              ]}>
+              <Text
+                style={[
+                  {
+                    fontWeight: 'bold',
+                    color: '#3b82f6',
+                    marginBottom: 5,
+                    marginTop: 5,
+                  },
+                ]}>
+                Teacher Review for Student:
+              </Text>
+              <Text
+                style={[
+                  {
+                    color: '#3b82f6',
+                  },
+                ]}>
+                {remark}
               </Text>
             </View>
           </View>
@@ -286,20 +481,7 @@ const styles = StyleSheet.create({
     minHeight: 30,
     marginLeft: 10,
   },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  column: {
-    width: 140,
-    padding: 2,
-  },
-  headTable: {
-    fontWeight: 'bold',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-  },
+
   flatList: {
     margin: 10,
     flex: 1,
@@ -333,5 +515,33 @@ const styles = StyleSheet.create({
   backgroundImage: {
     width: '100%',
     height: '100%',
+  },
+  row: {
+    flexDirection: 'row',
+    width: '95%',
+    height: 35,
+    alignSelf: 'center',
+    alignItems: 'center',
+    paddingVertical: 5,
+  },
+  column: {
+    textAlign: 'center',
+    borderRightColor: '#3b82f6',
+    color: '#3b82f6',
+    fontSize: 11,
+    flex: 1,
+  },
+  headTable: {
+    backgroundColor: '#3b82f6',
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 10,
+    paddingVertical: 5,
+    textAlignVertical: 'center',
+  },
+  boldText: {
+    fontWeight: 'bold',
+    fontSize: 12,
+    color: '#3b82f6',
   },
 });

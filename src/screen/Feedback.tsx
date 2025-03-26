@@ -237,6 +237,10 @@ const Feedback = ({navigation}: any) => {
           dropDownContainerStyle={{
             marginLeft: 10,
           }}
+          placeholderStyle={{ color: "#3b82f6" }} 
+                          labelStyle={{ color: "#3b82f6" }} 
+                          textStyle={{ color: "#3b82f6" }} 
+                          arrowIconStyle={{ tintColor: "#3b82f6" }} 
         />
       </View>
       <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
@@ -411,8 +415,8 @@ const Feedback = ({navigation}: any) => {
 
       <View style={styles.pagination}>
         <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to{' '}
-          {Math.min(currentPage * entriesPerPage, tableData.length)} of{' '}
+          Showing {(currentPage - 1) * entriesPerPage + 1} to
+          {Math.min(currentPage * entriesPerPage, tableData.length)} of
           {tableData.length} entries
         </Text>
         <View style={styles.paginationButtons}>

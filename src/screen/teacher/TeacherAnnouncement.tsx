@@ -104,7 +104,7 @@ const TeacherAnnouncement = ({navigation}: any) => {
               <Text style={styles.cardTitle}>{item.new_name}</Text>
             </View>
             <Text style={styles.cardDate}>
-              {new Date(item.new_date).toLocaleDateString()} | Posted by:{' '}
+              {new Date(item.new_date).toLocaleDateString()} | Posted by:
               {item.new_postedby}
             </Text>
             <Text style={styles.cardDescription}>{item.new_desc}</Text>

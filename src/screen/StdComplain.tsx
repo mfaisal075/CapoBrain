@@ -22,6 +22,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useUser} from '../Ctx/UserContext';
 import axios from 'axios';
+import {errorCodes} from '@react-native-documents/picker';
 
 interface Complains {
   id: number;
@@ -38,18 +39,15 @@ interface ComplainData {
 const StdComplain = ({navigation}: any) => {
   const {token} = useUser();
   const [complainData, setComplainData] = useState<ComplainData | null>(null);
-
   const [complaintsData, setComplaintsData] = useState<Complains[]>([]);
-
-  //Complain Modal
   const [isModalVisible, setModalVisible] = useState(false);
+  const [desc, setDesc] = useState('');
+  const [descError, setDescError] = useState('');
+  const [isModalVisi, setModalVisi] = useState(false);
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
-
-  const [desc, setDesc] = useState('');
-  const [descError, setDescError] = useState('');
 
   const validateFields = () => {
     let isValid = true;
@@ -63,10 +61,6 @@ const StdComplain = ({navigation}: any) => {
 
     return isValid;
   };
-  {
-    /*view modal*/
-  }
-  const [isModalVisi, setModalVisi] = useState(false);
 
   const toggleModl = async (id: number) => {
     try {
@@ -97,6 +91,36 @@ const StdComplain = ({navigation}: any) => {
           },
         );
         setComplaintsData(response.data.complains);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  };
+
+  const storeComplain = async () => {
+    if (token) {
+      try {
+        const res = await axios.post(
+          'https://demo.capobrain.com/portal_complain_store',
+          {
+            description: desc,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            withCredentials: true,
+          },
+        );
+
+        if (res.data.status === 200) {
+          console.log('Complain Added');
+          fetchData();
+          setModalVisible(false); // Close the modal
+          setDesc(''); // Clear the input field
+        } else {
+          console.log(res.data);
+        }
       } catch (error) {
         console.log(error);
       }
@@ -183,6 +207,53 @@ const StdComplain = ({navigation}: any) => {
           </Text>
         </View>
       </TouchableOpacity>
+
+      <FlatList
+        data={complaintsData}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({item}) => (
+          <View style={styles.card}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={styles.title}>{item.name}</Text>
+              <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                {item.contact ?? 'NILL'}
+              </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={{color: '#3b82f6'}}>{item.email ?? 'NILL'}</Text>
+
+              <View style={styles.iconContainer}>
+                <Image
+                  style={styles.statusIcon}
+                  source={
+                    item.status === 'Approved'
+                      ? require('../assets/approved.png')
+                      : require('../assets/rejected.png')
+                  }
+                />
+                <TouchableOpacity
+                  style={styles.iconContainer}
+                  onPress={() => toggleModl(item.id)}>
+                  <Image
+                    style={styles.actionIcon}
+                    source={require('../assets/visible.png')}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+      />
+
+      {/* Add Complain Modal */}
       <Modal isVisible={isModalVisible}>
         <View
           style={{
@@ -287,7 +358,7 @@ const StdComplain = ({navigation}: any) => {
           <TouchableOpacity
             onPress={() => {
               if (validateFields()) {
-                console.log('Form is valid');
+                storeComplain();
               } else {
                 console.log('Form is invalid');
               }
@@ -314,51 +385,6 @@ const StdComplain = ({navigation}: any) => {
           </TouchableOpacity>
         </View>
       </Modal>
-
-      <FlatList
-        data={complaintsData}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => (
-          <View style={styles.card}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <Text style={styles.title}>{item.name}</Text>
-              <Text style={{textAlign: 'right', color: '#3b82f6'}}>
-                {item.contact ?? 'NILL'}
-              </Text>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <Text style={{color: '#3b82f6'}}>{item.email ?? 'NILL'}</Text>
-
-              <View style={styles.iconContainer}>
-                <Image
-                  style={styles.statusIcon}
-                  source={
-                    item.status === 'Approved'
-                      ? require('../assets/approved.png')
-                      : require('../assets/rejected.png')
-                  }
-                />
-                <TouchableOpacity
-                  style={styles.iconContainer}
-                  onPress={() => toggleModl(item.id)}>
-                  <Image
-                    style={styles.actionIcon}
-                    source={require('../assets/visible.png')}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        )}
-      />
 
       <Modal isVisible={isModalVisi}>
         <View

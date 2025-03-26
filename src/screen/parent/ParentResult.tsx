@@ -263,6 +263,10 @@ const ParentResult = ({navigation}: any) => {
                 width: '95%',
                 marginLeft: 9,
               }}
+              placeholderStyle={{ color: "#3b82f6" }} 
+                          labelStyle={{ color: "#3b82f6" }} 
+                          textStyle={{ color: "#3b82f6" }} 
+                          arrowIconStyle={{ tintColor: "#3b82f6" }} 
             />
 
             <View style={{maxHeight: 300, marginTop: 10}}>
