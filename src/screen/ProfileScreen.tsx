@@ -139,18 +139,6 @@ const ProfileScreen = ({navigation}: any) => {
         backgroundColor: 'white',
         flex: 1,
       }}>
-      <Animated.View
-        style={[
-          styles.animatedBackground,
-          {transform: [{translateY: moveAnim}]},
-        ]}>
-        <ImageBackground
-          resizeMode="cover"
-          style={styles.backgroundImage}
-          source={require('../assets/bgimg.jpg')}
-        />
-      </Animated.View>
-
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.replace('Home')}>
           <Icon
@@ -172,157 +160,45 @@ const ProfileScreen = ({navigation}: any) => {
         <Text style={styles.nameText}>{userData?.cand.cand_name}</Text>
       </View>
 
-      <View style={styles.details}>
-        <View
-          style={{
-            flexDirection: 'row',
-          }}>
-          <Image
-            style={{
-              width: 20,
-              height: 20,
-              marginTop: hp('1.3%'),
-              tintColor: '#3b82f6',
-            }}
-            source={require('../assets/dad.png')}
+      <View style={{height: '110%'}}>
+        <Animated.View
+          style={[
+            styles.animatedBackground,
+            {transform: [{translateY: moveAnim}]},
+          ]}>
+          <ImageBackground
+            resizeMode="cover"
+            style={styles.backgroundImage}
+            source={require('../assets/bgimg.jpg')}
           />
+        </Animated.View>
 
-          <Text
+        <View style={styles.details}>
+          <View
             style={{
-              marginTop: hp('1.7%'),
-              fontSize: 16,
-              marginLeft: hp('3%'),
-              color: '#3b82f6',
+              flexDirection: 'row',
             }}>
-            {userData?.parent.par_fathername}
-          </Text>
-        </View>
+            <Image
+              style={{
+                width: 20,
+                height: 20,
+                marginTop: hp('1.3%'),
+                tintColor: '#3b82f6',
+              }}
+              source={require('../assets/dad.png')}
+            />
 
-        <View
-          style={{
-            flexDirection: 'row',
-          }}>
-          <Image
-            style={{
-              width: 25,
-              height: 25,
-              marginTop: hp('1.8%'),
-              tintColor: '#3b82f6',
-            }}
-            source={require('../assets/class.png')}
-          />
+            <Text
+              style={{
+                marginTop: hp('1.7%'),
+                fontSize: 16,
+                marginLeft: hp('3%'),
+                color: '#3b82f6',
+              }}>
+              {userData?.parent.par_fathername}
+            </Text>
+          </View>
 
-          <Text
-            style={{
-              marginTop: hp('1.9%'),
-              fontSize: 16,
-              marginLeft: hp('2%'),
-              color: '#3b82f6',
-            }}>
-            {`${userData?.cand_class.cls_name} (${userData?.section.sec_name})`}
-          </Text>
-        </View>
-
-        <View
-          style={{
-            flexDirection: 'row',
-          }}>
-          <Image
-            style={{
-              width: 20,
-              height: 20,
-              marginTop: hp('1.9%'),
-              tintColor: '#3b82f6',
-            }}
-            source={require('../assets/email.png')}
-          />
-
-          <Text
-            style={{
-              marginTop: hp('1.7%'),
-              fontSize: 16,
-              marginLeft: hp('3%'),
-              color: '#3b82f6',
-            }}>
-            {userData?.user.email ?? '--'}
-          </Text>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-          }}>
-          <Image
-            style={{
-              width: 20,
-              height: 20,
-              marginTop: hp('1.9%'),
-              tintColor: '#3b82f6',
-            }}
-            source={require('../assets/location.png')}
-          />
-
-          <Text
-            style={{
-              marginTop: hp('1.7%'),
-              fontSize: 16,
-              marginLeft: hp('3%'),
-              color: '#3b82f6',
-            }}>
-            {userData?.cand.add ?? '--'}
-          </Text>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-          }}>
-          <Image
-            style={{
-              width: 20,
-              height: 20,
-              marginTop: hp('1.9%'),
-              tintColor: '#3b82f6',
-            }}
-            source={require('../assets/smartphone.png')}
-          />
-
-          <Text
-            style={{
-              marginTop: hp('1.7%'),
-              fontSize: 16,
-              marginLeft: hp('3%'),
-              color: '#3b82f6',
-            }}>
-            {userData?.user.contact ?? '--'}
-          </Text>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-          }}>
-          <Image
-            style={{
-              width: 20,
-              height: 20,
-              marginTop: hp('1.9%'),
-              tintColor: '#3b82f6',
-            }}
-            source={require('../assets/id-card.png')}
-          />
-
-          <Text
-            style={{
-              marginTop: hp('1.7%'),
-              fontSize: 16,
-              marginLeft: hp('3%'),
-              color: '#3b82f6',
-            }}>
-            {userData?.cand.cand_bform ?? '--'}
-          </Text>
-        </View>
-      </View>
-
-      <TouchableOpacity onPress={toggleModal}>
-        <View style={styles.btn}>
           <View
             style={{
               flexDirection: 'row',
@@ -331,37 +207,163 @@ const ProfileScreen = ({navigation}: any) => {
               style={{
                 width: 25,
                 height: 25,
-                alignSelf: 'center',
+                marginTop: hp('1.8%'),
                 tintColor: '#3b82f6',
               }}
-              source={require('../assets/reset-password.png')}
+              source={require('../assets/class.png')}
             />
-            <Text style={styles.btnText}>Change Password</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
 
-      <TouchableOpacity onPress={logout}>
-        <View style={styles.btnlog}>
+            <Text
+              style={{
+                marginTop: hp('1.9%'),
+                fontSize: 16,
+                marginLeft: hp('2%'),
+                color: '#3b82f6',
+              }}>
+              {`${userData?.cand_class.cls_name} (${userData?.section.sec_name})`}
+            </Text>
+          </View>
+
           <View
             style={{
               flexDirection: 'row',
-              justifyContent: 'center',
             }}>
             <Image
               style={{
-                width: 15,
-                height: 15,
+                width: 20,
+                height: 20,
+                marginTop: hp('1.9%'),
                 tintColor: '#3b82f6',
-                alignSelf: 'center',
-                marginRight: hp('1%'),
               }}
-              source={require('../assets/logout.png')}
+              source={require('../assets/email.png')}
             />
-            <Text style={styles.btnText}>Log Out</Text>
+
+            <Text
+              style={{
+                marginTop: hp('1.7%'),
+                fontSize: 16,
+                marginLeft: hp('3%'),
+                color: '#3b82f6',
+              }}>
+              {userData?.user.email ?? '--'}
+            </Text>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+            }}>
+            <Image
+              style={{
+                width: 20,
+                height: 20,
+                marginTop: hp('1.9%'),
+                tintColor: '#3b82f6',
+              }}
+              source={require('../assets/location.png')}
+            />
+
+            <Text
+              style={{
+                marginTop: hp('1.7%'),
+                fontSize: 16,
+                marginLeft: hp('3%'),
+                color: '#3b82f6',
+              }}>
+              {userData?.cand.add ?? '--'}
+            </Text>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+            }}>
+            <Image
+              style={{
+                width: 20,
+                height: 20,
+                marginTop: hp('1.9%'),
+                tintColor: '#3b82f6',
+              }}
+              source={require('../assets/smartphone.png')}
+            />
+
+            <Text
+              style={{
+                marginTop: hp('1.7%'),
+                fontSize: 16,
+                marginLeft: hp('3%'),
+                color: '#3b82f6',
+              }}>
+              {userData?.user.contact ?? '--'}
+            </Text>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+            }}>
+            <Image
+              style={{
+                width: 20,
+                height: 20,
+                marginTop: hp('1.9%'),
+                tintColor: '#3b82f6',
+              }}
+              source={require('../assets/id-card.png')}
+            />
+
+            <Text
+              style={{
+                marginTop: hp('1.7%'),
+                fontSize: 16,
+                marginLeft: hp('3%'),
+                color: '#3b82f6',
+              }}>
+              {userData?.cand.cand_bform ?? '--'}
+            </Text>
           </View>
         </View>
-      </TouchableOpacity>
+
+        <TouchableOpacity onPress={toggleModal}>
+          <View style={styles.btn}>
+            <View
+              style={{
+                flexDirection: 'row',
+              }}>
+              <Image
+                style={{
+                  width: 25,
+                  height: 25,
+                  alignSelf: 'center',
+                  tintColor: '#3b82f6',
+                }}
+                source={require('../assets/reset-password.png')}
+              />
+              <Text style={styles.btnText}>Change Password</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={logout}>
+          <View style={styles.btnlog}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'center',
+              }}>
+              <Image
+                style={{
+                  width: 15,
+                  height: 15,
+                  tintColor: '#3b82f6',
+                  alignSelf: 'center',
+                  marginRight: hp('1%'),
+                }}
+                source={require('../assets/logout.png')}
+              />
+              <Text style={styles.btnText}>Log Out</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </View>
 
       {/* Change Password Modal */}
       <Modal isVisible={isModalVisible}>
@@ -584,6 +586,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#3b82f6',
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+    zIndex: 1000,
   },
   nameText: {
     color: 'white',

@@ -191,32 +191,40 @@ const Course = ({navigation}: any) => {
         <Text style={styles.headerText}>Course</Text>
       </View>
 
-      <FlatList
-        data={originalData}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => (
-          <View style={styles.card}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <TouchableOpacity
-                style={styles.iconContainer}
-                onPress={() => toggleModal(item.id)}>
-                <Image
-                  style={styles.actionIcon}
-                  source={require('../assets/visible.png')}
-                />
-              </TouchableOpacity>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={{textAlign: 'right', color: '#3b82f6'}}>
-                {item.price === '0' ? 'Free' : item.price}
-              </Text>
+      {originalData.length > 0 ? (
+        <FlatList
+          data={originalData}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => (
+            <View style={styles.card}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <TouchableOpacity
+                  style={styles.iconContainer}
+                  onPress={() => toggleModal(item.id)}>
+                  <Image
+                    style={styles.actionIcon}
+                    source={require('../assets/visible.png')}
+                  />
+                </TouchableOpacity>
+                <Text style={styles.title}>{item.title}</Text>
+                <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                  {item.price === '0' ? 'Free' : item.price}
+                </Text>
+              </View>
             </View>
-          </View>
-        )}
-      />
+          )}
+        />
+      ) : (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+            No data found in the database!
+          </Text>
+        </View>
+      )}
 
       <Modal isVisible={modalVisible}>
         <View

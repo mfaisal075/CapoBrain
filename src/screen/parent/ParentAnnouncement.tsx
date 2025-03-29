@@ -1,13 +1,16 @@
 import {
+  Animated,
   BackHandler,
   Image,
+  ImageBackground,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
@@ -54,7 +57,23 @@ const ParentAnnouncement = ({navigation}: any) => {
     }
   };
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
     fetchAnnouncements();
 
     const backAction = () => {
@@ -70,6 +89,19 @@ const ParentAnnouncement = ({navigation}: any) => {
     return () => backHandler.remove();
   }, []);
 
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<News | Notice | null>(null);
+
+  function handleCardClick(item: News | Notice): void {
+    setSelectedItem(item);
+    setIsModalVisible(true);
+  }
+
+  function closeModal(): void {
+    setIsModalVisible(false);
+    setSelectedItem(null);
+  }
+
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -77,7 +109,7 @@ const ParentAnnouncement = ({navigation}: any) => {
           name="arrow-left"
           size={38}
           color={'#fff'}
-          style={{paddingHorizontal: 10}}
+          style={{paddingHorizontal: 10, paddingTop: 15}}
         />
       </TouchableOpacity>
 
@@ -86,49 +118,125 @@ const ParentAnnouncement = ({navigation}: any) => {
           style={styles.headerImage}
           source={require('../../assets/schoolnews.png')}
         />
-        <Text style={styles.schoolText}>Announcements</Text>
+        <Text style={styles.schoolText}>School Updates</Text>
       </View>
 
       <ScrollView
         style={styles.bottom}
         contentContainerStyle={styles.scrollContent}>
+        <Animated.View
+          style={[
+            styles.animatedBackground,
+            {transform: [{translateY: moveAnim}]},
+          ]}>
+          <ImageBackground
+            resizeMode="cover"
+            style={styles.backgroundImage}
+            source={require('../../assets/bgimg.jpg')}
+          />
+        </Animated.View>
+
         {/* News Section */}
         <Text style={styles.sectionTitle}>News</Text>
         {news.map(item => (
-          <View key={item.id} style={styles.card}>
+          <TouchableOpacity
+            key={item.id}
+            style={styles.card}
+            onPress={() => handleCardClick(item)}>
             <View style={styles.cardHeader}>
-              <Image
-                style={styles.updateIcon}
-                source={require('../../assets/iconupdate.png')}
-              />
+              <Icon name="newspaper" size={20} color="#3b82f6" />
               <Text style={styles.cardTitle}>{item.new_name}</Text>
             </View>
             <Text style={styles.cardDate}>
               {new Date(item.new_date).toLocaleDateString()} | Posted by:
               {item.new_postedby}
             </Text>
-            <Text style={styles.cardDescription}>{item.new_desc}</Text>
-          </View>
+            <Text
+              style={styles.cardDescription}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {item.new_desc}
+            </Text>
+          </TouchableOpacity>
         ))}
 
         {/* Notices Section */}
         <Text style={styles.sectionTitle}>Notices</Text>
         {notices.map(item => (
-          <View key={item.id} style={styles.card}>
+          <TouchableOpacity
+            key={item.id}
+            style={styles.card}
+            onPress={() => handleCardClick(item)}>
             <View style={styles.cardHeader}>
-              <Image
-                style={styles.updateIcon}
-                source={require('../../assets/iconupdate.png')}
-              />
+              <Icon name="bell" size={20} color="#3b82f6" />
               <Text style={styles.cardTitle}>{item.notice_title}</Text>
             </View>
             <Text style={styles.cardDate}>
               {new Date(item.notice_date).toLocaleDateString()}
             </Text>
-            <Text style={styles.cardDescription}>{item.notice_desc}</Text>
-          </View>
+            <Text
+              style={styles.cardDescription}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {item.notice_desc}
+            </Text>
+          </TouchableOpacity>
         ))}
       </ScrollView>
+
+      {/* Modal for Complete Details */}
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={closeModal}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalInnerContainer}>
+            <View style={styles.modalContent}>
+              {/* Animated background INSIDE the content container */}
+              <Animated.View
+                style={[
+                  styles.animatedBackground,
+                  {transform: [{translateY: moveAnim}]},
+                ]}>
+                <ImageBackground
+                  resizeMode="cover"
+                  style={styles.backgroundImage}
+                  source={require('../../assets/bgimg.jpg')}
+                />
+              </Animated.View>
+
+              {/* Content with higher zIndex */}
+              <View style={styles.modalContentWrapper}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>
+                    {selectedItem && 'new_name' in selectedItem
+                      ? selectedItem.new_name
+                      : selectedItem?.notice_title}
+                  </Text>
+                  <TouchableOpacity onPress={closeModal}>
+                    <Icon name="close" size={24} color="#3b82f6" />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.modalDate}>
+                  {selectedItem &&
+                    new Date(
+                      'new_date' in selectedItem
+                        ? selectedItem.new_date
+                        : selectedItem.notice_date,
+                    ).toLocaleDateString()}
+                </Text>
+                <Text style={styles.modalDescription}>
+                  {selectedItem &&
+                    ('new_desc' in selectedItem
+                      ? selectedItem.new_desc
+                      : selectedItem.notice_desc)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -215,5 +323,60 @@ const styles = StyleSheet.create({
   cardDescription: {
     fontSize: 16,
     color: '#333',
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  //Modal Styling
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: wp('90%'),
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: hp('2%'),
+  },
+  modalTitle: {
+    fontWeight: 'bold',
+    fontSize: 20,
+    color: '#3b82f6',
+  },
+  modalDate: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: hp('2%'),
+  },
+  modalDescription: {
+    fontSize: 16,
+    color: '#333',
+  },
+  modalInnerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContentWrapper: {
+    position: 'relative',
+    zIndex: 1,
+    padding: 20,
   },
 });

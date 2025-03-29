@@ -2,28 +2,16 @@ import {
   Animated,
   BackHandler,
   ImageBackground,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
 import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
-import DropDownPicker from 'react-native-dropdown-picker';
 import {FlatList} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
-type TableRow = {
-  sr: string;
-  student: string;
-  class: string;
-  section: string;
-  status: string;
-  date: string;
-};
 
 interface Attendance {
   id: number;
@@ -36,46 +24,7 @@ interface Attendance {
 
 const ParentAttendance = ({navigation}: any) => {
   const {token} = useUser();
-  const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [originalData, setOriginalData] = useState<Attendance[]>([]);
-  const [tableData, setTableData] = useState<Attendance[]>(originalData);
-
-  const items = [
-    {label: '10', value: 10},
-    {label: '25', value: 25},
-    {label: '50', value: 50},
-    {label: '100', value: 100},
-  ];
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setTableData(originalData);
-    } else {
-      const filtered = originalData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered);
-    }
-  };
-
-  const totalPages = Math.ceil(tableData.length / entriesPerPage);
-
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const currentEntries = tableData.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage,
-  );
 
   const fetchData = async () => {
     if (token) {
@@ -90,7 +39,6 @@ const ParentAttendance = ({navigation}: any) => {
         );
 
         setOriginalData(response.data.attendances);
-        setTableData(response.data.attendances);
       } catch (error) {
         console.error('Error fetching data', error);
         throw error; // Ensure the error is thrown so useQuery can handle it
@@ -169,27 +117,35 @@ const ParentAttendance = ({navigation}: any) => {
         <Text style={styles.headerText}>Attendance</Text>
       </View>
 
-      <FlatList
-        data={originalData}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => (
-          <View style={styles.card}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <Text style={styles.title}>{item.cand_name}</Text>
-              <Text style={{color: '#3b82f6'}}>
-                {item.std_attendance_status}
-              </Text>
-              <Text style={{textAlign: 'right', color: '#3b82f6'}}>
-                {formatDate(item.std_date)}
-              </Text>
+      {originalData.length > 0 ? (
+        <FlatList
+          data={originalData}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => (
+            <View style={styles.card}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={styles.title}>{item.cand_name}</Text>
+                <Text style={{color: '#3b82f6'}}>
+                  {item.std_attendance_status}
+                </Text>
+                <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                  {formatDate(item.std_date)}
+                </Text>
+              </View>
             </View>
-          </View>
-        )}
-      />
+          )}
+        />
+      ) : (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+            No data found in the database!
+          </Text>
+        </View>
+      )}
     </View>
   );
 };

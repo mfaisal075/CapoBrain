@@ -136,52 +136,67 @@ const StdUpdate = ({navigation}: any) => {
             source={require('../assets/bgimg.jpg')}
           />
         </Animated.View>
+
         {/* News Section */}
         <Text style={styles.sectionTitle}>News</Text>
-        {news.map(item => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.card}
-            onPress={() => handleCardClick(item)}>
-            <View style={styles.cardHeader}>
-              <Icon name="newspaper" size={20} color="#3b82f6" />
-              <Text style={styles.cardTitle}>{item.new_name}</Text>
-            </View>
-            <Text style={styles.cardDate}>
-              {new Date(item.new_date).toLocaleDateString()} | Posted by:
-              {item.new_postedby}
-            </Text>
-            <Text
-              style={styles.cardDescription}
-              numberOfLines={1}
-              ellipsizeMode="tail">
-              {item.new_desc}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {news.length > 0 ? (
+          news.map(item => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.card}
+              onPress={() => handleCardClick(item)}>
+              <View style={styles.cardHeader}>
+                <Icon name="newspaper" size={20} color="#3b82f6" />
+                <Text style={styles.cardTitle}>{item.new_name}</Text>
+              </View>
+              <Text style={styles.cardDate}>
+                {new Date(item.new_date).toLocaleDateString()} | Posted by:
+                {item.new_postedby}
+              </Text>
+              <Text
+                style={styles.cardDescription}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {item.new_desc}
+              </Text>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <Text
+            style={{textAlign: 'center', color: '#666', marginVertical: 10}}>
+            No record found in the database!
+          </Text>
+        )}
 
         {/* Notices Section */}
         <Text style={styles.sectionTitle}>Notices</Text>
-        {notices.map(item => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.card}
-            onPress={() => handleCardClick(item)}>
-            <View style={styles.cardHeader}>
-              <Icon name="bell" size={20} color="#3b82f6" />
-              <Text style={styles.cardTitle}>{item.notice_title}</Text>
-            </View>
-            <Text style={styles.cardDate}>
-              {new Date(item.notice_date).toLocaleDateString()}
-            </Text>
-            <Text
-              style={styles.cardDescription}
-              numberOfLines={1}
-              ellipsizeMode="tail">
-              {item.notice_desc}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {notices.length > 0 ? (
+          notices.map(item => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.card}
+              onPress={() => handleCardClick(item)}>
+              <View style={styles.cardHeader}>
+                <Icon name="bell" size={20} color="#3b82f6" />
+                <Text style={styles.cardTitle}>{item.notice_title}</Text>
+              </View>
+              <Text style={styles.cardDate}>
+                {new Date(item.notice_date).toLocaleDateString()}
+              </Text>
+              <Text
+                style={styles.cardDescription}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {item.notice_desc}
+              </Text>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <Text
+            style={{textAlign: 'center', color: '#666', marginVertical: 10}}>
+            No record found in the database!
+          </Text>
+        )}
       </ScrollView>
 
       {/* Modal for Complete Details */}
@@ -191,31 +206,49 @@ const StdUpdate = ({navigation}: any) => {
         animationType="slide"
         onRequestClose={closeModal}>
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {selectedItem && 'new_name' in selectedItem
-                  ? selectedItem.new_name
-                  : selectedItem?.notice_title}
-              </Text>
-              <TouchableOpacity onPress={closeModal}>
-                <Icon name="close" size={24} color="#3b82f6" />
-              </TouchableOpacity>
+          <View style={styles.modalInnerContainer}>
+            <View style={styles.modalContent}>
+              {/* Animated background INSIDE the content container */}
+              <Animated.View
+                style={[
+                  styles.animatedBackground,
+                  {transform: [{translateY: moveAnim}]},
+                ]}>
+                <ImageBackground
+                  resizeMode="cover"
+                  style={styles.backgroundImage}
+                  source={require('../assets/bgimg.jpg')}
+                />
+              </Animated.View>
+
+              {/* Content with higher zIndex */}
+              <View style={styles.modalContentWrapper}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>
+                    {selectedItem && 'new_name' in selectedItem
+                      ? selectedItem.new_name
+                      : selectedItem?.notice_title}
+                  </Text>
+                  <TouchableOpacity onPress={closeModal}>
+                    <Icon name="close" size={24} color="#3b82f6" />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.modalDate}>
+                  {selectedItem &&
+                    new Date(
+                      'new_date' in selectedItem
+                        ? selectedItem.new_date
+                        : selectedItem.notice_date,
+                    ).toLocaleDateString()}
+                </Text>
+                <Text style={styles.modalDescription}>
+                  {selectedItem &&
+                    ('new_desc' in selectedItem
+                      ? selectedItem.new_desc
+                      : selectedItem.notice_desc)}
+                </Text>
+              </View>
             </View>
-            <Text style={styles.modalDate}>
-              {selectedItem &&
-                new Date(
-                  'new_date' in selectedItem
-                    ? selectedItem.new_date
-                    : selectedItem.notice_date,
-                ).toLocaleDateString()}
-            </Text>
-            <Text style={styles.modalDescription}>
-              {selectedItem &&
-                ('new_desc' in selectedItem
-                  ? selectedItem.new_desc
-                  : selectedItem.notice_desc)}
-            </Text>
           </View>
         </View>
       </Modal>
@@ -229,16 +262,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#3b82f6',
-  },
-  animatedBackground: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    opacity: 0.2,
-  },
-  backgroundImage: {
-    width: '100%',
-    height: '100%',
   },
   header: {
     width: wp('100%'),
@@ -311,17 +334,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
   modalContent: {
     width: wp('90%'),
     backgroundColor: '#fff',
     borderRadius: 10,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '120%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    flex: 1,
+  },
+  modalContentWrapper: {
+    position: 'relative',
+    zIndex: 1,
     padding: 20,
+  },
+
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalInnerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalHeader: {
     flexDirection: 'row',

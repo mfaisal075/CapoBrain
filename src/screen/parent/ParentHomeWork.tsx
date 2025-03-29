@@ -1,27 +1,19 @@
 import {
   Animated,
   BackHandler,
-  Dimensions,
   FlatList,
   Image,
   ImageBackground,
-  RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
 import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
-import DropDownPicker from 'react-native-dropdown-picker';
 import Modal from 'react-native-modal';
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from 'react-native-responsive-screen';
+import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface Homework {
@@ -46,52 +38,9 @@ interface HomeworkData {
 
 const ParentHomeWork = ({navigation}: any) => {
   const {token} = useUser();
-  const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisi, setModalVisi] = useState(false);
   const [originalData, setOriginalData] = useState<Homework[]>([]);
-  const [tableData, setTableData] = useState<Homework[]>(originalData);
   const [homeworkData, setHomeworkData] = useState<HomeworkData | null>(null);
-
-  const items = [
-    {label: '10', value: 10},
-    {label: '25', value: 25},
-    {label: '50', value: 50},
-    {label: '100', value: 100},
-  ];
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setTableData(originalData);
-    } else {
-      const filtered = originalData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setTableData(filtered);
-    }
-  };
-
-  const totalPages = Math.ceil(tableData.length / entriesPerPage);
-
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const currentEntries = tableData.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage,
-  );
-
-  {
-    /*view modal*/
-  }
 
   const toggleModl = async (id: number) => {
     try {
@@ -122,7 +71,6 @@ const ParentHomeWork = ({navigation}: any) => {
           },
         );
         setOriginalData(response.data.homework);
-        setTableData(response.data.homework);
       } catch (error) {
         console.log(error);
         throw error;
@@ -225,9 +173,9 @@ const ParentHomeWork = ({navigation}: any) => {
           )}
         />
       ) : (
-        <View style={{width: '100%', marginTop: 20}}>
-          <Text style={{fontSize: 18, fontWeight: 'bold', textAlign: 'center'}}>
-            No record data found in the database!
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+            No data found in the database!
           </Text>
         </View>
       )}

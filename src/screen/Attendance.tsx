@@ -118,24 +118,32 @@ const Attendance = ({navigation}: any) => {
         <Text style={styles.headerText}>Student Attendance</Text>
       </View>
 
-      <FlatList
-        data={attendanceData}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => (
-          <View style={styles.card}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <Text style={styles.title}>{item.std_attendance_status}</Text>
-              <Text style={{textAlign: 'right', color: '#3b82f6'}}>
-                {formatDate(item.std_date)}
-              </Text>
+      {attendanceData.length > 0 ? (
+        <FlatList
+          data={attendanceData}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => (
+            <View style={styles.card}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={styles.title}>{item.std_attendance_status}</Text>
+                <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                  {formatDate(item.std_date)}
+                </Text>
+              </View>
             </View>
-          </View>
-        )}
-      />
+          )}
+        />
+      ) : (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+            No data found in the database!
+          </Text>
+        </View>
+      )}
     </View>
   );
 };

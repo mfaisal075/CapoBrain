@@ -128,18 +128,6 @@ const TeacherProfile = ({navigation}: any) => {
         backgroundColor: 'white',
         flex: 1,
       }}>
-      <Animated.View
-        style={[
-          styles.animatedBackground,
-          {transform: [{translateY: moveAnim}]},
-        ]}>
-        <ImageBackground
-          resizeMode="cover"
-          style={styles.backgroundImage}
-          source={require('../../assets/bgimg.jpg')}
-        />
-      </Animated.View>
-
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon
@@ -160,149 +148,161 @@ const TeacherProfile = ({navigation}: any) => {
         />
         <Text style={styles.nameText}>{userData?.user.name}</Text>
       </View>
-
-      <View style={styles.details}>
-        <View
-          style={{
-            flexDirection: 'row',
-          }}>
-          <Image
-            style={{
-              width: 20,
-              height: 20,
-              marginTop: hp('1.3%'),
-              tintColor: '#3b82f6',
-            }}
-            source={require('../../assets/dad.png')}
+      <View style={{height: '110%'}}>
+        <Animated.View
+          style={[
+            styles.animatedBackground,
+            {transform: [{translateY: moveAnim}]},
+          ]}>
+          <ImageBackground
+            resizeMode="cover"
+            style={styles.backgroundImage}
+            source={require('../../assets/bgimg.jpg')}
           />
-
-          <Text
+        </Animated.View>
+        <View style={styles.details}>
+          <View
             style={{
-              marginTop: hp('1.7%'),
-              fontSize: 16,
-              marginLeft: hp('3%'),
-              color: '#3b82f6',
+              flexDirection: 'row',
             }}>
-            {userData?.user.name}
-          </Text>
+            <Image
+              style={{
+                width: 20,
+                height: 20,
+                marginTop: hp('1.3%'),
+                tintColor: '#3b82f6',
+              }}
+              source={require('../../assets/dad.png')}
+            />
+
+            <Text
+              style={{
+                marginTop: hp('1.7%'),
+                fontSize: 16,
+                marginLeft: hp('3%'),
+                color: '#3b82f6',
+              }}>
+              {userData?.user.name}
+            </Text>
+          </View>
+
+          <View
+            style={{
+              flexDirection: 'row',
+            }}>
+            <Image
+              style={{
+                width: 20,
+                height: 20,
+                marginTop: hp('1.9%'),
+                tintColor: '#3b82f6',
+              }}
+              source={require('../../assets/email.png')}
+            />
+
+            <Text
+              style={{
+                marginTop: hp('1.7%'),
+                fontSize: 16,
+                marginLeft: hp('3%'),
+                color: '#3b82f6',
+              }}>
+              {userData?.user.email ?? 'NILL'}
+            </Text>
+          </View>
+
+          <View
+            style={{
+              flexDirection: 'row',
+            }}>
+            <Image
+              style={{
+                width: 20,
+                height: 20,
+                marginTop: hp('1.9%'),
+                tintColor: '#3b82f6',
+              }}
+              source={require('../../assets/smartphone.png')}
+            />
+
+            <Text
+              style={{
+                marginTop: hp('1.7%'),
+                fontSize: 16,
+                marginLeft: hp('3%'),
+                color: '#3b82f6',
+              }}>
+              {userData?.user.contact ?? 'NILL'}
+            </Text>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+            }}>
+            <Image
+              style={{
+                width: 20,
+                height: 20,
+                marginTop: hp('1.9%'),
+                tintColor: '#3b82f6',
+              }}
+              source={require('../../assets/id-card.png')}
+            />
+
+            <Text
+              style={{
+                marginTop: hp('1.7%'),
+                fontSize: 16,
+                marginLeft: hp('3%'),
+                color: '#3b82f6',
+              }}>
+              {userData?.user.cnic ?? 'NILL'}
+            </Text>
+          </View>
         </View>
 
-        <View
-          style={{
-            flexDirection: 'row',
-          }}>
-          <Image
-            style={{
-              width: 20,
-              height: 20,
-              marginTop: hp('1.9%'),
-              tintColor: '#3b82f6',
-            }}
-            source={require('../../assets/email.png')}
-          />
+        <TouchableOpacity onPress={toggleModal}>
+          <View style={styles.btn}>
+            <View
+              style={{
+                flexDirection: 'row',
+              }}>
+              <Image
+                style={{
+                  width: 25,
+                  height: 25,
+                  alignSelf: 'center',
+                  tintColor: '#3b82f6',
+                }}
+                source={require('../../assets/reset-password.png')}
+              />
+              <Text style={styles.btnText}>Change Password</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
 
-          <Text
-            style={{
-              marginTop: hp('1.7%'),
-              fontSize: 16,
-              marginLeft: hp('3%'),
-              color: '#3b82f6',
-            }}>
-            {userData?.user.email ?? 'NILL'}
-          </Text>
-        </View>
-
-        <View
-          style={{
-            flexDirection: 'row',
-          }}>
-          <Image
-            style={{
-              width: 20,
-              height: 20,
-              marginTop: hp('1.9%'),
-              tintColor: '#3b82f6',
-            }}
-            source={require('../../assets/smartphone.png')}
-          />
-
-          <Text
-            style={{
-              marginTop: hp('1.7%'),
-              fontSize: 16,
-              marginLeft: hp('3%'),
-              color: '#3b82f6',
-            }}>
-            {userData?.user.contact ?? 'NILL'}
-          </Text>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-          }}>
-          <Image
-            style={{
-              width: 20,
-              height: 20,
-              marginTop: hp('1.9%'),
-              tintColor: '#3b82f6',
-            }}
-            source={require('../../assets/id-card.png')}
-          />
-
-          <Text
-            style={{
-              marginTop: hp('1.7%'),
-              fontSize: 16,
-              marginLeft: hp('3%'),
-              color: '#3b82f6',
-            }}>
-            {userData?.user.cnic ?? 'NILL'}
-          </Text>
-        </View>
+        <TouchableOpacity onPress={() => logout()}>
+          <View style={styles.btnlog}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'center',
+              }}>
+              <Image
+                style={{
+                  width: 15,
+                  height: 15,
+                  tintColor: '#3b82f6',
+                  alignSelf: 'center',
+                  marginRight: hp('1%'),
+                }}
+                source={require('../../assets/logout.png')}
+              />
+              <Text style={styles.btnText}>Log Out</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
       </View>
-
-      <TouchableOpacity onPress={toggleModal}>
-        <View style={styles.btn}>
-          <View
-            style={{
-              flexDirection: 'row',
-            }}>
-            <Image
-              style={{
-                width: 25,
-                height: 25,
-                alignSelf: 'center',
-                tintColor: '#3b82f6',
-              }}
-              source={require('../../assets/reset-password.png')}
-            />
-            <Text style={styles.btnText}>Change Password</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => logout()}>
-        <View style={styles.btnlog}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'center',
-            }}>
-            <Image
-              style={{
-                width: 15,
-                height: 15,
-                tintColor: '#3b82f6',
-                alignSelf: 'center',
-                marginRight: hp('1%'),
-              }}
-              source={require('../../assets/logout.png')}
-            />
-            <Text style={styles.btnText}>Log Out</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
 
       {/* Modal */}
       <Modal isVisible={isModalVisible}>
@@ -525,6 +525,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#3b82f6',
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+    zIndex: 1000,
   },
   nameText: {
     color: 'white',

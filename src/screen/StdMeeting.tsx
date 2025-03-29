@@ -147,25 +147,36 @@ const StdMeeting = ({navigation}: any) => {
         <Text style={styles.headerText}>Meeting Notifications</Text>
       </View>
 
-      <FlatList
-        style={{paddingVertical: 10}}
-        data={notifications}
-        keyExtractor={(item, index) => item.id.toString() || `item-${index}`}
-        renderItem={({item}) => (
-          <TouchableOpacity
-            onPress={() => {
-              toggleModal(item.id);
-            }}>
-            <View style={styles.card}>
-              <View
-                style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-                <Text style={styles.meetingTitle}>{item.purpose}</Text>
-                <Text style={{color: '#3b82f6'}}>{item.visit_date}</Text>
+      {notifications.length > 0 ? (
+        <FlatList
+          style={{paddingVertical: 10}}
+          data={notifications}
+          keyExtractor={(item, index) => item.id.toString() || `item-${index}`}
+          renderItem={({item}) => (
+            <TouchableOpacity
+              onPress={() => {
+                toggleModal(item.id);
+              }}>
+              <View style={styles.card}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                  }}>
+                  <Text style={styles.meetingTitle}>{item.purpose}</Text>
+                  <Text style={{color: '#3b82f6'}}>{item.visit_date}</Text>
+                </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
+            </TouchableOpacity>
+          )}
+        />
+      ) : (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+            No data found in the database!
+          </Text>
+        </View>
+      )}
 
       <Modal isVisible={isVisible}>
         <View

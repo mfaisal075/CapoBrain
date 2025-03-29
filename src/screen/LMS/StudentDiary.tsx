@@ -316,8 +316,8 @@ const StudentDiary = ({navigation}: any) => {
           )}
         />
       ) : (
-        <View style={{marginTop: 20, width: '100%'}}>
-          <Text style={{textAlign: 'center', fontSize: 18, fontWeight: 'bold'}}>
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
             No data found in the database!
           </Text>
         </View>

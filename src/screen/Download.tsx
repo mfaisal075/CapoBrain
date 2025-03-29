@@ -131,36 +131,45 @@ const Download = ({navigation}: any) => {
         </TouchableOpacity>
         <Text style={styles.headerText}>Download Material</Text>
       </View>
-      <FlatList
-        data={downloadData}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => (
-          <View style={styles.card}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <TouchableOpacity
-                onPress={() =>
-                  downloadFile(
-                    `https://demo.capobrain.com/files_download/${item.file_notes}`,
-                  )
-                }>
-                <Image
-                  style={styles.actionIcon}
-                  source={require('../assets/dpd.png')}
-                />
-              </TouchableOpacity>
 
-              <Text style={styles.title}>{item.file_title}</Text>
-              <Text style={{textAlign: 'right', color: '#3b82f6'}}>
-                {item.file_date}
-              </Text>
+      {downloadData.length > 0 ? (
+        <FlatList
+          data={downloadData}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => (
+            <View style={styles.card}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <TouchableOpacity
+                  onPress={() =>
+                    downloadFile(
+                      `https://demo.capobrain.com/files_download/${item.file_notes}`,
+                    )
+                  }>
+                  <Image
+                    style={styles.actionIcon}
+                    source={require('../assets/dpd.png')}
+                  />
+                </TouchableOpacity>
+
+                <Text style={styles.title}>{item.file_title}</Text>
+                <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                  {item.file_date}
+                </Text>
+              </View>
             </View>
-          </View>
-        )}
-      />
+          )}
+        />
+      ) : (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+            No data found in the database!
+          </Text>
+        </View>
+      )}
     </View>
   );
 };

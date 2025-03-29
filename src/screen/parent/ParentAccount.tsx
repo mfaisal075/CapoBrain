@@ -175,31 +175,40 @@ const ParentAccount = ({navigation}: any) => {
         }}>
         Account Details
       </Text>
-      <FlatList
-        data={originalData}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => (
-          <View style={styles.card}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <Text style={[styles.title, {width: '40%'}]}>
-                {item.cand_name}
-              </Text>
-              <Text
-                style={{color: '#3b82f6', width: '30%', textAlign: 'center'}}>
-                {item.form_id}
-              </Text>
-              <Text
-                style={{color: '#3b82f6', textAlign: 'right', width: '30%'}}>
-                {item.stuacc_balance}
-              </Text>
+
+      {originalData.length > 0 ? (
+        <FlatList
+          data={originalData}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => (
+            <View style={styles.card}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={[styles.title, {width: '40%'}]}>
+                  {item.cand_name}
+                </Text>
+                <Text
+                  style={{color: '#3b82f6', width: '30%', textAlign: 'center'}}>
+                  {item.form_id}
+                </Text>
+                <Text
+                  style={{color: '#3b82f6', textAlign: 'right', width: '30%'}}>
+                  {item.stuacc_balance}
+                </Text>
+              </View>
             </View>
-          </View>
-        )}
-      />
+          )}
+        />
+      ) : (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+            No data found in the database!
+          </Text>
+        </View>
+      )}
     </View>
   );
 };

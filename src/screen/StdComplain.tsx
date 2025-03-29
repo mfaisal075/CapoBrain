@@ -208,50 +208,58 @@ const StdComplain = ({navigation}: any) => {
         </View>
       </TouchableOpacity>
 
-      <FlatList
-        data={complaintsData}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => (
-          <View style={styles.card}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <Text style={styles.title}>{item.name}</Text>
-              <Text style={{textAlign: 'right', color: '#3b82f6'}}>
-                {item.contact ?? 'NILL'}
-              </Text>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <Text style={{color: '#3b82f6'}}>{item.email ?? 'NILL'}</Text>
+      {complaintsData.length > 0 ? (
+        <FlatList
+          data={complaintsData}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => (
+            <View style={styles.card}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={styles.title}>{item.name}</Text>
+                <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                  {item.contact ?? 'NILL'}
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={{color: '#3b82f6'}}>{item.email ?? 'NILL'}</Text>
 
-              <View style={styles.iconContainer}>
-                <Image
-                  style={styles.statusIcon}
-                  source={
-                    item.status === 'Approved'
-                      ? require('../assets/approved.png')
-                      : require('../assets/rejected.png')
-                  }
-                />
-                <TouchableOpacity
-                  style={styles.iconContainer}
-                  onPress={() => toggleModl(item.id)}>
+                <View style={styles.iconContainer}>
                   <Image
-                    style={styles.actionIcon}
-                    source={require('../assets/visible.png')}
+                    style={styles.statusIcon}
+                    source={
+                      item.status === 'Approved'
+                        ? require('../assets/approved.png')
+                        : require('../assets/rejected.png')
+                    }
                   />
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.iconContainer}
+                    onPress={() => toggleModl(item.id)}>
+                    <Image
+                      style={styles.actionIcon}
+                      source={require('../assets/visible.png')}
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
-        )}
-      />
+          )}
+        />
+      ) : (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+            No data found in the database!
+          </Text>
+        </View>
+      )}
 
       {/* Add Complain Modal */}
       <Modal isVisible={isModalVisible}>

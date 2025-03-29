@@ -4,26 +4,17 @@ import {
   BackHandler,
   Image,
   ImageBackground,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
 import {useUser} from '../../Ctx/UserContext';
 import axios from 'axios';
-import DropDownPicker from 'react-native-dropdown-picker';
 import {FlatList} from 'react-native';
-import {heightPercentageToDP as hp} from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import RNFS from 'react-native-fs';
-
-const srNumber: number = 5;
-const row = {
-  sr: srNumber.toString(),
-};
+import RNFS, {downloadFile} from 'react-native-fs';
 
 interface Download {
   id: number;
@@ -38,49 +29,7 @@ interface Download {
 
 const ParentDownload = ({navigation}: any) => {
   const {token} = useUser();
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [downloadData, setDownloadData] = useState<Download[]>([]);
-
-  const items = [
-    {label: '10', value: 10},
-    {label: '25', value: 25},
-    {label: '50', value: 50},
-    {label: '100', value: 100},
-  ];
-
-  const [filteredDownloadData, setFilteredDownloadData] =
-    useState(downloadData);
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    setCurrentPage(1);
-    if (text === '') {
-      setFilteredDownloadData(downloadData);
-    } else {
-      const filtered = downloadData.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(text.toLowerCase()),
-        ),
-      );
-      setFilteredDownloadData(filtered);
-    }
-  };
-
-  const totalPages = Math.ceil(filteredDownloadData.length / entriesPerPage);
-
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const currentEntries = filteredDownloadData.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage,
-  );
 
   const handleDownload = async (url: any) => {
     try {
@@ -119,7 +68,6 @@ const ParentDownload = ({navigation}: any) => {
           },
         );
         setDownloadData(response.data.file);
-        setFilteredDownloadData(response.data.file);
       } catch (error) {
         console.log(error);
         throw error;
@@ -195,37 +143,53 @@ const ParentDownload = ({navigation}: any) => {
         </TouchableOpacity>
         <Text style={styles.headerText}>Download Material</Text>
       </View>
-      <FlatList
-        style={{marginBottom: 20}}
-        data={downloadData}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => (
-          <View style={styles.card}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <Text style={styles.title}>{item.cand_name}</Text>
-              <Text style={{textAlign: 'right', color: '#3b82f6'}}>
-                {formatDate(item.file_date)}
-              </Text>
-            </View>
 
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <Text style={{color: '#3b82f6'}}>{item.file_title}</Text>
-              <Image
-                style={styles.actionIcon}
-                source={require('../../assets/dpd.png')}
-              />
+      {downloadData.length > 0 ? (
+        <FlatList
+          style={{marginBottom: 20}}
+          data={downloadData}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => (
+            <View style={styles.card}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={styles.title}>{item.cand_name}</Text>
+                <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                  {formatDate(item.file_date)}
+                </Text>
+              </View>
+
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={{color: '#3b82f6'}}>{item.file_title}</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    handleDownload(
+                      `https://demo.capobrain.com/files_download/${item.file_notes}`,
+                    );
+                  }}>
+                  <Image
+                    style={styles.actionIcon}
+                    source={require('../../assets/dpd.png')}
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        )}
-      />
+          )}
+        />
+      ) : (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+            No data found in the database!
+          </Text>
+        </View>
+      )}
     </View>
   );
 };

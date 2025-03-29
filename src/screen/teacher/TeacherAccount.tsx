@@ -207,16 +207,20 @@ const TeacherAccount = ({navigation}: any) => {
       </Text>
 
       <FlatList
-        style={{paddingVertical: 15, paddingBottom: 30}}
+        style={{paddingVertical: 15}}
         data={originalData}
         keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => (
+        renderItem={({item, index}) => (
           <TouchableOpacity
             onPress={() => {
               setSelectedTransaction(item.id);
               setIsOpen(true);
             }}>
-            <View style={styles.card}>
+            <View
+              style={[
+                styles.card,
+                index === originalData.length - 1 && {marginBottom: 20},
+              ]}>
               <View
                 style={{
                   flexDirection: 'row',

@@ -260,71 +260,81 @@ const ApplyLeave = ({navigation}: any) => {
             </View>
           </TouchableOpacity>
         </View>
-        <FlatList
-          data={originalData}
-          keyExtractor={item => item.id.toString()}
-          renderItem={({item}) => (
-            <View style={styles.card}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                }}>
-                <Text style={styles.title}>{item.subject}</Text>
-                <Text style={{textAlign: 'right', color: '#3b82f6'}}>
-                  {formatDate(item.leave_date)}
-                </Text>
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                }}>
-                <View style={styles.iconContainer}>
-                  <Image
-                    style={styles.statusIcon}
-                    source={
-                      item.status === 'Pending'
-                        ? require('../assets/pending.png')
-                        : item.status === 'Approved'
-                        ? require('../assets/approved.png')
-                        : require('../assets/rejected.png')
-                    }
-                  />
-                </View>
 
-                <TouchableOpacity
-                  style={styles.iconContainer}
-                  onPress={() => {
-                    const handleShowLeave = async (id: number) => {
-                      try {
-                        const response = await axios.get(
-                          `https://demo.capobrain.com/showleave?id=${item.id}&_token=${token}`,
-                          {
-                            headers: {
-                              Authorization: `Bearer ${token}`,
-                            },
-                          },
-                        );
-                        setLeaveDetails(response.data);
-                        setModalVisi(true);
-                      } catch (error) {
-                        console.log(error);
-                        throw error;
-                      }
-                    };
-
-                    handleShowLeave(item.id);
+        {originalData.length > 0 ? (
+          <FlatList
+            data={originalData}
+            keyExtractor={item => item.id.toString()}
+            renderItem={({item}) => (
+              <View style={styles.card}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
                   }}>
-                  <Image
-                    style={styles.actionIcon}
-                    source={require('../assets/visible.png')}
-                  />
-                </TouchableOpacity>
+                  <Text style={styles.title}>{item.subject}</Text>
+                  <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                    {formatDate(item.leave_date)}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                  }}>
+                  <View style={styles.iconContainer}>
+                    <Image
+                      style={styles.statusIcon}
+                      source={
+                        item.status === 'Pending'
+                          ? require('../assets/pending.png')
+                          : item.status === 'Approved'
+                          ? require('../assets/approved.png')
+                          : require('../assets/rejected.png')
+                      }
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.iconContainer}
+                    onPress={() => {
+                      const handleShowLeave = async (id: number) => {
+                        try {
+                          const response = await axios.get(
+                            `https://demo.capobrain.com/showleave?id=${item.id}&_token=${token}`,
+                            {
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                              },
+                            },
+                          );
+                          setLeaveDetails(response.data);
+                          setModalVisi(true);
+                        } catch (error) {
+                          console.log(error);
+                          throw error;
+                        }
+                      };
+
+                      handleShowLeave(item.id);
+                    }}>
+                    <Image
+                      style={styles.actionIcon}
+                      source={require('../assets/visible.png')}
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          )}
-        />
+            )}
+          />
+        ) : (
+          <View
+            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+            <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+              No data found in the database!
+            </Text>
+          </View>
+        )}
       </>
 
       {/* Add Leave Modal */}

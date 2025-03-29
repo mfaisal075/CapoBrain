@@ -402,44 +402,52 @@ const TeacherHomework = ({navigation}: any) => {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={originalData}
-        keyExtractor={(item, index) =>
-          item?.home_user_id?.toString() || `item-${index}`
-        }
-        renderItem={({item}) => (
-          <View style={styles.card}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <TouchableOpacity
-                style={styles.iconContainer}
-                onPress={() => toggleModl(item.home_desc)}>
-                <Image
-                  style={styles.actionIcon}
-                  source={require('../../assets/visible.png')}
-                />
-              </TouchableOpacity>
-              <Text
+      {originalData.length > 0 ? (
+        <FlatList
+          data={originalData}
+          keyExtractor={(item, index) =>
+            item?.home_user_id?.toString() || `item-${index}`
+          }
+          renderItem={({item}) => (
+            <View style={styles.card}>
+              <View
                 style={{
-                  fontWeight: 'bold',
-                  color: '#3b82f6',
-                  fontSize: 16,
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
                 }}>
-                {item.sub_name}
-              </Text>
-              <Text
-                style={{
-                  color: '#3b82f6',
-                }}>
-                {formatDate(item.home_date)}
-              </Text>
+                <TouchableOpacity
+                  style={styles.iconContainer}
+                  onPress={() => toggleModl(item.home_desc)}>
+                  <Image
+                    style={styles.actionIcon}
+                    source={require('../../assets/visible.png')}
+                  />
+                </TouchableOpacity>
+                <Text
+                  style={{
+                    fontWeight: 'bold',
+                    color: '#3b82f6',
+                    fontSize: 16,
+                  }}>
+                  {item.sub_name}
+                </Text>
+                <Text
+                  style={{
+                    color: '#3b82f6',
+                  }}>
+                  {formatDate(item.home_date)}
+                </Text>
+              </View>
             </View>
-          </View>
-        )}
-      />
+          )}
+        />
+      ) : (
+        <View style={{width: '100%', marginTop: 20}}>
+          <Text style={{fontWeight: 'bold', fontSize: 18, textAlign: 'center'}}>
+            No data found in the database!
+          </Text>
+        </View>
+      )}
 
       {/* Homework View Modal */}
       <Modal isVisible={isModalVisi}>
@@ -607,10 +615,33 @@ const TeacherHomework = ({navigation}: any) => {
                   setValue={val => setCurrentValue(val)}
                   maxHeight={200}
                   placeholder="Select Class"
-                  placeholderStyle={{ color: "#3b82f6" }} 
-                          labelStyle={{ color: "#3b82f6" }} 
-                          textStyle={{ color: "#3b82f6" }} 
-                          arrowIconStyle={{ tintColor: "#3b82f6" }} 
+                  placeholderStyle={{color: '#3b82f6'}}
+                  labelStyle={{color: '#3b82f6'}}
+                  textStyle={{color: '#3b82f6'}}
+                  ArrowUpIconComponent={({style}) => (
+                    <Icon
+                      name="chevron-up"
+                      size={22}
+                      color="#3b82f6"
+                      style={style}
+                    />
+                  )}
+                  ArrowDownIconComponent={({style}) => (
+                    <Icon
+                      name="chevron-down"
+                      size={22}
+                      color="#3b82f6"
+                      style={style}
+                    />
+                  )}
+                  TickIconComponent={({style}) => (
+                    <Icon
+                      name="check"
+                      size={22}
+                      color="#3b82f6"
+                      style={style}
+                    />
+                  )}
                   style={{
                     borderWidth: 1,
                     borderColor: 'white',
@@ -676,10 +707,33 @@ const TeacherHomework = ({navigation}: any) => {
                   setValue={val => setCurrentValu(val)}
                   maxHeight={200}
                   placeholder="Select Section"
-                  placeholderStyle={{ color: "#3b82f6" }} 
-                          labelStyle={{ color: "#3b82f6" }} 
-                          textStyle={{ color: "#3b82f6" }} 
-                          arrowIconStyle={{ tintColor: "#3b82f6" }} 
+                  placeholderStyle={{color: '#3b82f6'}}
+                  labelStyle={{color: '#3b82f6'}}
+                  textStyle={{color: '#3b82f6'}}
+                  ArrowUpIconComponent={({style}) => (
+                    <Icon
+                      name="chevron-up"
+                      size={22}
+                      color="#3b82f6"
+                      style={style}
+                    />
+                  )}
+                  ArrowDownIconComponent={({style}) => (
+                    <Icon
+                      name="chevron-down"
+                      size={22}
+                      color="#3b82f6"
+                      style={style}
+                    />
+                  )}
+                  TickIconComponent={({style}) => (
+                    <Icon
+                      name="check"
+                      size={22}
+                      color="#3b82f6"
+                      style={style}
+                    />
+                  )}
                   style={{
                     borderWidth: 1,
                     borderColor: 'white',
@@ -754,10 +808,33 @@ const TeacherHomework = ({navigation}: any) => {
                   setValue={val => setCurrentVale(val)}
                   maxHeight={200}
                   placeholder="Select Subject"
-                  placeholderStyle={{ color: "#3b82f6" }} 
-                          labelStyle={{ color: "#3b82f6" }} 
-                          textStyle={{ color: "#3b82f6" }} 
-                          arrowIconStyle={{ tintColor: "#3b82f6" }} 
+                  placeholderStyle={{color: '#3b82f6'}}
+                  labelStyle={{color: '#3b82f6'}}
+                  textStyle={{color: '#3b82f6'}}
+                  ArrowUpIconComponent={({style}) => (
+                    <Icon
+                      name="chevron-up"
+                      size={22}
+                      color="#3b82f6"
+                      style={style}
+                    />
+                  )}
+                  ArrowDownIconComponent={({style}) => (
+                    <Icon
+                      name="chevron-down"
+                      size={22}
+                      color="#3b82f6"
+                      style={style}
+                    />
+                  )}
+                  TickIconComponent={({style}) => (
+                    <Icon
+                      name="check"
+                      size={22}
+                      color="#3b82f6"
+                      style={style}
+                    />
+                  )}
                   style={{
                     borderWidth: 1,
                     borderColor: 'white',

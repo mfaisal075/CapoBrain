@@ -275,178 +275,221 @@ const Result = ({navigation}: any) => {
           placeholderStyle={{color: '#3b82f6'}}
           labelStyle={{color: '#3b82f6'}}
           textStyle={{color: '#3b82f6'}}
-          arrowIconStyle={{tintColor: '#3b82f6'}}
+          ArrowUpIconComponent={({style}) => (
+            <Icon name="chevron-up" size={22} color="#3b82f6" style={style} />
+          )}
+          ArrowDownIconComponent={({style}) => (
+            <Icon name="chevron-down" size={22} color="#3b82f6" style={style} />
+          )}
+          TickIconComponent={({style}) => (
+            <Icon name="check" size={22} color="#3b82f6" style={style} />
+          )}
           style={styles.dropdown}
           dropDownContainerStyle={{marginLeft: 10}}
         />
       </View>
 
-      <View style={styles.row}>
-        <Text
-          style={[styles.column, styles.headTable, {width: 50, height: 40}]}>
-          Sr#
-        </Text>
-        <Text
-          style={[styles.column, styles.headTable, {width: 50, height: 40}]}>
-          Subject
-        </Text>
-
-        {/* Exam Type sirf "Select Exams Type Filter" per dikhega */}
-        {value === null && (
-          <Text
-            style={[
-              {
-                textAlign: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                width: 50,
-                height: 40,
-                backgroundColor: '#3b82f6',
-                fontSize: 10,
-                paddingVertical: 5,
-              },
-            ]}>
-            Exam Type
-          </Text>
-        )}
-
-        <Text
-          style={[styles.column, styles.headTable, {width: 50, height: 40}]}>
-          Total Marks
-        </Text>
-        <Text
-          style={[styles.column, styles.headTable, {width: 50, height: 40}]}>
-          Obtain Marks
-        </Text>
-        <Text
-          style={[styles.column, styles.headTable, {width: 50, height: 40}]}>
-          Percentage
-        </Text>
-        <Text
-          style={[styles.column, styles.headTable, {width: 50, height: 40}]}>
-          Grade
-        </Text>
-      </View>
-
-      <FlatList
-        data={tableData}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({item, index}) => {
-          return (
-            <View
+      {tableData && tableData.length > 0 ? (
+        <>
+          <View style={styles.row}>
+            <Text
               style={[
-                styles.row,
-                {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                styles.column,
+                styles.headTable,
+                {width: 50, height: 40},
               ]}>
-              <Text style={[styles.column, {width: 50}]}>{index + 1}</Text>
-              <Text style={[styles.column, styles.boldText, {width: 50}]}>
-                {item.sub_name}
-              </Text>
+              Sr#
+            </Text>
+            <Text
+              style={[
+                styles.column,
+                styles.headTable,
+                {width: 50, height: 40},
+              ]}>
+              Subject
+            </Text>
 
-              {/* Exam Type sirf tab dikhayen jab "Select Exams Type Filter" ho */}
-              {value === null && (
-                <Text
-                  style={[
-                    {
-                      textAlign: 'center',
-                      color: '#3b82f6',
-                      fontSize: 10,
-                    },
-                    {width: 50},
-                  ]}>
-                  {item.res_exam_type_id}
-                </Text>
-              )}
-
-              <Text style={[styles.column, {width: 50}]}>
-                {item.res_total_marks}
-              </Text>
-              <Text style={[styles.column, {width: 50}]}>
-                {item.res_obtain_marks}
-              </Text>
-              <Text style={[styles.column, {width: 50}]}>
-                {item.percentage}
-              </Text>
+            {value === null && (
               <Text
                 style={[
                   {
                     textAlign: 'center',
-                    color: '#3b82f6',
-                    fontSize: 11,
-                    flex: 1,
-                  },
-                  {width: 50},
-                ]}>
-                {item.grade}
-              </Text>
-            </View>
-          );
-        }}
-        ListFooterComponent={() => (
-          <View>
-            {/* Total Row */}
-            <View style={[styles.row, {backgroundColor: '#E2F0FF'}]}>
-              <Text style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
-                Total
-              </Text>
-              <Text style={[styles.column, {width: 50}]}></Text>
-              {value === null ? (
-                <Text style={[styles.column, {width: 50}]}></Text>
-              ) : null}
-
-              <Text style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
-                {totalMarks}
-              </Text>
-              <Text style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
-                {totalObtain}
-              </Text>
-              <Text style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
-                {totalPercentageDisplay}%
-              </Text>
-              <Text style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
-                {grade}
-              </Text>
-            </View>
-
-            {/* Remark Row */}
-            <View
-              style={[
-                styles.row,
-                {
-                  backgroundColor: '#E2F0FF',
-                  borderTopWidth: 1,
-                  height: 85,
-                  borderTopColor: '#3b82f6',
-                  marginBottom: 5,
-
-                  flexDirection: 'column',
-                  alignItems: 'flex-start',
-                  padding: 10,
-                },
-              ]}>
-              <Text
-                style={[
-                  {
+                    color: 'white',
                     fontWeight: 'bold',
-                    color: '#3b82f6',
-                    marginBottom: 5,
-                    marginTop: 5,
+                    width: 50,
+                    height: 40,
+                    backgroundColor: '#3b82f6',
+                    fontSize: 10,
+                    paddingVertical: 5,
                   },
                 ]}>
-                Teacher Review for Student:
+                Exam Type
               </Text>
-              <Text
-                style={[
-                  {
-                    color: '#3b82f6',
-                  },
-                ]}>
-                {remark}
-              </Text>
-            </View>
+            )}
+
+            <Text
+              style={[
+                styles.column,
+                styles.headTable,
+                {width: 50, height: 40},
+              ]}>
+              Total Marks
+            </Text>
+            <Text
+              style={[
+                styles.column,
+                styles.headTable,
+                {width: 50, height: 40},
+              ]}>
+              Obtain Marks
+            </Text>
+            <Text
+              style={[
+                styles.column,
+                styles.headTable,
+                {width: 50, height: 40},
+              ]}>
+              Percentage
+            </Text>
+            <Text
+              style={[
+                styles.column,
+                styles.headTable,
+                {width: 50, height: 40},
+              ]}>
+              Grade
+            </Text>
           </View>
-        )}
-      />
+
+          <FlatList
+            data={tableData}
+            keyExtractor={item => item.id.toString()}
+            renderItem={({item, index}) => {
+              return (
+                <View
+                  style={[
+                    styles.row,
+                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                  ]}>
+                  <Text style={[styles.column, {width: 50}]}>{index + 1}</Text>
+                  <Text style={[styles.column, styles.boldText, {width: 50}]}>
+                    {item.sub_name}
+                  </Text>
+
+                  {value === null && (
+                    <Text
+                      style={[
+                        {
+                          textAlign: 'center',
+                          color: '#3b82f6',
+                          fontSize: 10,
+                        },
+                        {width: 50},
+                      ]}>
+                      {item.res_exam_type_id}
+                    </Text>
+                  )}
+
+                  <Text style={[styles.column, {width: 50}]}>
+                    {item.res_total_marks}
+                  </Text>
+                  <Text style={[styles.column, {width: 50}]}>
+                    {item.res_obtain_marks}
+                  </Text>
+                  <Text style={[styles.column, {width: 50}]}>
+                    {item.percentage}
+                  </Text>
+                  <Text
+                    style={[
+                      {
+                        textAlign: 'center',
+                        color: '#3b82f6',
+                        fontSize: 11,
+                        flex: 1,
+                      },
+                      {width: 50},
+                    ]}>
+                    {item.grade}
+                  </Text>
+                </View>
+              );
+            }}
+            ListFooterComponent={() => (
+              <View>
+                <View style={[styles.row, {backgroundColor: '#E2F0FF'}]}>
+                  <Text
+                    style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
+                    Total
+                  </Text>
+                  <Text style={[styles.column, {width: 50}]}></Text>
+                  {value === null ? (
+                    <Text style={[styles.column, {width: 50}]}></Text>
+                  ) : null}
+
+                  <Text
+                    style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
+                    {totalMarks}
+                  </Text>
+                  <Text
+                    style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
+                    {totalObtain}
+                  </Text>
+                  <Text
+                    style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
+                    {totalPercentageDisplay}%
+                  </Text>
+                  <Text
+                    style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
+                    {grade}
+                  </Text>
+                </View>
+
+                <View
+                  style={[
+                    styles.row,
+                    {
+                      backgroundColor: '#E2F0FF',
+                      borderTopWidth: 1,
+                      height: 85,
+                      borderTopColor: '#3b82f6',
+                      marginBottom: 5,
+
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      padding: 10,
+                    },
+                  ]}>
+                  <Text
+                    style={[
+                      {
+                        fontWeight: 'bold',
+                        color: '#3b82f6',
+                        marginBottom: 5,
+                        marginTop: 5,
+                      },
+                    ]}>
+                    Teacher Review for Student:
+                  </Text>
+                  <Text
+                    style={[
+                      {
+                        color: '#3b82f6',
+                      },
+                    ]}>
+                    {remark}
+                  </Text>
+                </View>
+              </View>
+            )}
+          />
+        </>
+      ) : (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{color: '#3b82f6', fontSize: 16, fontWeight: 'bold'}}>
+            No data found in the database.
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -519,7 +562,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     width: '95%',
-    height: 35,
+    height: 40,
     alignSelf: 'center',
     alignItems: 'center',
     paddingVertical: 5,

@@ -257,79 +257,89 @@ const ParentApplyLeave = ({navigation}: any) => {
             </View>
           </TouchableOpacity>
         </View>
-        <FlatList
-          data={originalData}
-          keyExtractor={item => item.id.toString()}
-          renderItem={({item}) => (
-            <View style={styles.card}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                }}>
-                <Text style={styles.title}>{item.cand_name}</Text>
 
-                <Text style={{textAlign: 'right', color: '#3b82f6'}}>
-                  {formatDate(item.leave_date)}
-                </Text>
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                }}>
-                <Text style={{color: '#3b82f6'}}>{item.subject}</Text>
-
+        {originalData.length > 0 ? (
+          <FlatList
+            data={originalData}
+            keyExtractor={item => item.id.toString()}
+            renderItem={({item}) => (
+              <View style={styles.card}>
                 <View
                   style={{
                     flexDirection: 'row',
+                    justifyContent: 'space-between',
                   }}>
-                  <View style={styles.iconContainer}>
-                    <Image
-                      style={styles.statusIcon}
-                      source={
-                        item.status === 'pending'
-                          ? require('../../assets/pending.png')
-                          : item.status === 'approved'
-                          ? require('../../assets/approved.png')
-                          : require('../../assets/rejected.png')
-                      }
-                    />
-                  </View>
+                  <Text style={styles.title}>{item.cand_name}</Text>
 
-                  <TouchableOpacity
-                    style={[styles.iconContainer, {marginLeft: 5}]}
-                    onPress={() => {
-                      const handleView = async (id: number) => {
-                        try {
-                          const response = await axios.get(
-                            `https://demo.capobrain.com/showleave?id=${item.id}&_token=${token}`,
-                            {
-                              headers: {
-                                Authorization: `Bearer ${token}`,
-                              },
-                            },
-                          );
-                          setLeaveData(response.data);
-                          setModalVisi(true);
-                        } catch (error) {
-                          console.log(error);
-                          throw error;
-                        }
-                      };
+                  <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                    {formatDate(item.leave_date)}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                  }}>
+                  <Text style={{color: '#3b82f6'}}>{item.subject}</Text>
 
-                      handleView(item.id);
+                  <View
+                    style={{
+                      flexDirection: 'row',
                     }}>
-                    <Image
-                      style={styles.actionIcon}
-                      source={require('../../assets/visible.png')}
-                    />
-                  </TouchableOpacity>
+                    <View style={styles.iconContainer}>
+                      <Image
+                        style={styles.statusIcon}
+                        source={
+                          item.status === 'pending'
+                            ? require('../../assets/pending.png')
+                            : item.status === 'approved'
+                            ? require('../../assets/approved.png')
+                            : require('../../assets/rejected.png')
+                        }
+                      />
+                    </View>
+
+                    <TouchableOpacity
+                      style={[styles.iconContainer, {marginLeft: 5}]}
+                      onPress={() => {
+                        const handleView = async (id: number) => {
+                          try {
+                            const response = await axios.get(
+                              `https://demo.capobrain.com/showleave?id=${item.id}&_token=${token}`,
+                              {
+                                headers: {
+                                  Authorization: `Bearer ${token}`,
+                                },
+                              },
+                            );
+                            setLeaveData(response.data);
+                            setModalVisi(true);
+                          } catch (error) {
+                            console.log(error);
+                            throw error;
+                          }
+                        };
+
+                        handleView(item.id);
+                      }}>
+                      <Image
+                        style={styles.actionIcon}
+                        source={require('../../assets/visible.png')}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
-            </View>
-          )}
-        />
+            )}
+          />
+        ) : (
+          <View
+            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+            <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+              No data found in the database!
+            </Text>
+          </View>
+        )}
       </>
 
       {/* Add Leave Modal */}
@@ -426,7 +436,25 @@ const ParentApplyLeave = ({navigation}: any) => {
                 placeholderStyle={{color: '#3b82f6'}}
                 labelStyle={{color: '#3b82f6'}}
                 textStyle={{color: '#3b82f6'}}
-                arrowIconStyle={{tintColor: '#3b82f6'}}
+                ArrowUpIconComponent={({style}) => (
+                  <Icon
+                    name="chevron-up"
+                    size={22}
+                    color="#3b82f6"
+                    style={style}
+                  />
+                )}
+                ArrowDownIconComponent={({style}) => (
+                  <Icon
+                    name="chevron-down"
+                    size={22}
+                    color="#3b82f6"
+                    style={style}
+                  />
+                )}
+                TickIconComponent={({style}) => (
+                  <Icon name="check" size={22} color="#3b82f6" style={style} />
+                )}
                 style={{
                   borderWidth: 1,
                   borderColor: 'white',

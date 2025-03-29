@@ -1,7 +1,9 @@
 import {
+  Animated,
   BackHandler,
   FlatList,
   Image,
+  ImageBackground,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Modal from 'react-native-modal';
 import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
@@ -68,16 +70,19 @@ interface ReviewDetails {
   branch: {
     bra_name: string;
   };
+  staffreview: {
+    efective_tech_rate: string;
+    tech_staff_rate: string;
+    tech_itigration_rate: string;
+    academic_rate: string;
+    climate_rate: string;
+  };
 }
 
 const TeacherFeedback = ({navigation}: any) => {
-  const {token} = useUser();
+  const {token, userName} = useUser();
   const [isOpn, setIsOpn] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
   const [isModalVisi, setModalVisi] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [feedbackData, setFeedbackData] = useState<FeedbackData[]>([]);
   const [reviewData, setReviewData] = useState<ReviewData[]>([]);
   const [type, setType] = useState('Feedback');
@@ -89,57 +94,9 @@ const TeacherFeedback = ({navigation}: any) => {
   );
 
   const itemz = [
-    {label: 'Feedback', value: 'Feedback'},
-    {label: 'Review', value: 'Review'},
+    {label: '📝 Feedback', value: 'Feedback'},
+    {label: '⭐ Review', value: 'Review'},
   ];
-  const [tableData, setTableData] = useState<(FeedbackData | ReviewData)[]>([]);
-
-  const items = [
-    {label: '10', value: 10},
-    {label: '25', value: 25},
-    {label: '50', value: 50},
-    {label: '100', value: 100},
-  ];
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      if (type === 'Feedback') {
-        setTableData(feedbackData);
-      } else if (type === 'Review') {
-        setTableData(reviewData);
-      }
-    } else {
-      if (type === 'Feedback') {
-        const filteredFeedback = feedbackData.filter(item =>
-          Object.values(item).some(value =>
-            String(value).toLowerCase().includes(text.toLowerCase()),
-          ),
-        );
-        setTableData(filteredFeedback);
-      } else if (type === 'Review') {
-        const filteredReview = reviewData.filter(item =>
-          Object.values(item).some(value =>
-            String(value).toLowerCase().includes(text.toLowerCase()),
-          ),
-        );
-        setTableData(filteredReview);
-      }
-    }
-  };
-
-  const totalPages = Math.ceil(tableData.length / entriesPerPage);
-
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const currentEntries = tableData.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage,
-  );
 
   const fetchData = async () => {
     if (token) {
@@ -155,11 +112,9 @@ const TeacherFeedback = ({navigation}: any) => {
         );
         if (type === 'Feedback') {
           setFeedbackData(response.data.feedback);
-          setTableData(response.data.feedback);
         }
         if (type === 'Review') {
           setReviewData(response.data.staffreview);
-          setTableData(response.data.staffreview);
         }
       } catch (error) {
         console.log(error);
@@ -176,7 +131,23 @@ const TeacherFeedback = ({navigation}: any) => {
     {key: 'Review By', value: reviewDetails?.added_by.name},
   ];
 
+  const moveAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(moveAnim, {
+          toValue: 10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(moveAnim, {
+          toValue: -10,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
     fetchData();
     const backAction = () => {
       navigation.goBack();
@@ -191,12 +162,35 @@ const TeacherFeedback = ({navigation}: any) => {
     return () => backHandler.remove();
   }, [type]);
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''; // Handle empty or invalid dates
+
+    const date = new Date(dateString); // Parse the date string
+    const day = String(date.getDate()).padStart(2, '0'); // Ensure 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Return formatted date
+  };
+
   return (
     <View
       style={{
         backgroundColor: 'white',
         flex: 1,
       }}>
+      <Animated.View
+        style={[
+          styles.animatedBackground,
+          {transform: [{translateY: moveAnim}]},
+        ]}>
+        <ImageBackground
+          resizeMode="cover"
+          style={styles.backgroundImage}
+          source={require('../../assets/bgimg.jpg')}
+        />
+      </Animated.View>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon
@@ -209,7 +203,7 @@ const TeacherFeedback = ({navigation}: any) => {
         <Text style={styles.headerText}>Feedback</Text>
       </View>
 
-      <View style={{width: 150, marginTop: 10}}>
+      <View style={{width: '95%', marginTop: 10, marginBottom: 10}}>
         <DropDownPicker
           items={itemz}
           open={isOpn}
@@ -221,218 +215,113 @@ const TeacherFeedback = ({navigation}: any) => {
             setType(newType);
           }}
           maxHeight={200}
-          placeholder="Feedback"
-          style={styles.dropdown}
           placeholderStyle={{color: '#3b82f6'}}
           labelStyle={{color: '#3b82f6'}}
           textStyle={{color: '#3b82f6'}}
-          arrowIconStyle={{tintColor: '#3b82f6'}}
+          placeholder="📝 Feedback"
+          style={styles.dropdown}
           dropDownContainerStyle={{
             marginLeft: 10,
+            borderColor: '#3b82f6',
           }}
+          ArrowUpIconComponent={({style}) => (
+            <Icon name="chevron-up" size={22} color="#3b82f6" style={style} />
+          )}
+          ArrowDownIconComponent={({style}) => (
+            <Icon name="chevron-down" size={22} color="#3b82f6" style={style} />
+          )}
+          TickIconComponent={({style}) => (
+            <Icon name="check" size={22} color="#3b82f6" style={style} />
+          )}
         />
       </View>
-      <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-        <View style={{width: 80, marginTop: 9}}>
-          <DropDownPicker
-            items={items}
-            open={isOpen}
-            setOpen={setIsOpen}
-            value={entriesPerPage}
-            setValue={callback => {
-              setEntriesPerPage(prev =>
-                typeof callback === 'function' ? callback(prev) : callback,
-              );
-            }}
-            maxHeight={200}
-            placeholder=""
-            style={styles.dropdown}
-            dropDownContainerStyle={{
-              marginLeft: 10,
-            }}
-          />
-        </View>
 
-        <View style={styles.container}>
-          <TextInput
-            style={styles.input}
-            placeholder="Search..."
-            placeholderTextColor={'gray'}
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </View>
-      </View>
-      {/* Table */}
-      <ScrollView horizontal contentContainerStyle={{flexGrow: 1}}>
-        <View>
-          {type === 'Feedback' ? (
-            <FlatList
-              style={styles.flatList}
-              data={currentEntries}
-              keyExtractor={(item, index) =>
-                item.id ? item.id.toString() : index.toString()
-              }
-              ListHeaderComponent={() => (
-                <View style={styles.row}>
-                  {[
-                    'Sr#',
-                    'Branch',
-                    'Class',
-                    'Section',
-                    'Date',
-                    'FeedBack By',
-                    'Action',
-                  ].map(header => (
-                    <Text
-                      key={header}
-                      style={[styles.column, styles.headTable]}>
-                      {header}
-                    </Text>
-                  ))}
-                </View>
-              )}
-              renderItem={({item, index}) => (
-                <View
-                  style={[
-                    styles.row,
-                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                  ]}>
-                  <Text style={styles.column}>{index + 1}</Text>
-                  <Text style={styles.column}>{item.bra_name}</Text>
-                  <Text style={styles.column}>
-                    {'cls_name' in item ? item.cls_name : ''}
-                  </Text>
-                  <Text style={styles.column}>
-                    {'sec_name' in item ? item.sec_name : ''}
-                  </Text>
-                  <Text style={styles.column}>
-                    {'feed_date' in item ? item.feed_date : ''}
-                  </Text>
-                  <Text style={styles.column}>
-                    {'feed_feedbackby' in item ? item.feed_feedbackby : ''}
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.iconContainer}
-                    onPress={() => {
-                      const handleViewFeedback = async (id: number) => {
-                        try {
-                          const response = await axios.get(
-                            `https://demo.capobrain.com/showfeedback?id=${id}&_token=${token}`,
-                            {
-                              headers: {
-                                Authorization: `Bearer ${token}`,
-                              },
+      {type === 'Feedback' ? (
+        <FlatList
+          data={feedbackData}
+          keyExtractor={(item, index) => item.id.toString() || `item-${index}`}
+          renderItem={({item}) => (
+            <View style={styles.card}>
+              <View
+                style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                <Text style={styles.title}>{userName}</Text>
+                <TouchableOpacity
+                  style={styles.iconContainer}
+                  onPress={() => {
+                    const handleViewFeedback = async (id: number) => {
+                      try {
+                        const response = await axios.get(
+                          `https://demo.capobrain.com/showfeedback?id=${id}&_token=${token}`,
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
                             },
-                          );
+                          },
+                        );
 
-                          setFeedbackDetail(response.data);
+                        setFeedbackDetail(response.data);
 
-                          setModalVisi(true);
-                          // You can set the state here to pass the data to the modal
-                          // setFeedbackDetail(feedbackDetail);
-                        } catch (error) {
-                          console.log(error);
-                        }
-                      };
+                        setModalVisi(true);
+                        // You can set the state here to pass the data to the modal
+                        // setFeedbackDetail(feedbackDetail);
+                      } catch (error) {
+                        console.log(error);
+                      }
+                    };
 
-                      handleViewFeedback(item.id);
-                    }}>
-                    <Image
-                      style={styles.actionIcon}
-                      source={require('../../assets/visible.png')}
-                    />
-                  </TouchableOpacity>
-                </View>
-              )}
-            />
-          ) : (
-            <FlatList
-              style={styles.flatList}
-              data={currentEntries}
-              keyExtractor={(item, index) =>
-                item.id ? item.id.toString() : index.toString()
-              }
-              ListHeaderComponent={() => (
-                <View style={styles.row}>
-                  {['Sr#', 'Branch', 'Staff ID', 'Staff Name', 'Action'].map(
-                    header => (
-                      <Text
-                        key={header}
-                        style={[styles.column, styles.headTable]}>
-                        {header}
-                      </Text>
-                    ),
-                  )}
-                </View>
-              )}
-              renderItem={({item, index}) => (
-                <View
-                  style={[
-                    styles.row,
-                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
-                  ]}>
-                  <Text style={styles.column}>{index + 1}</Text>
-                  <Text style={styles.column}>{item.bra_name}</Text>
-                  <Text style={styles.column}>
-                    {'staff_id' in item ? item.staff_id : ''}
-                  </Text>
-                  <Text style={styles.column}>
-                    {'app_name' in item ? item.app_name : ''}
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.iconContainer}
-                    onPress={() => {
-                      const handleViewReview = async (id: number) => {
-                        try {
-                          const response = await axios.get(
-                            `https://demo.capobrain.com/staffreviewshow?id=${id}&_token=${token}`,
-                            {
-                              headers: {
-                                Authorization: `Bearer ${token}`,
-                              },
-                            },
-                          );
-
-                          setReviewDetails(response.data);
-                          setModalVisi(true);
-                        } catch (error) {
-                          console.log(error);
-                        }
-                      };
-
-                      handleViewReview(item.id);
-                    }}>
-                    <Image
-                      style={styles.actionIcon}
-                      source={require('../../assets/visible.png')}
-                    />
-                  </TouchableOpacity>
-                </View>
-              )}
-            />
+                    handleViewFeedback(item.id);
+                  }}>
+                  <Image
+                    style={styles.actionIcon}
+                    source={require('../../assets/visible.png')}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
           )}
-        </View>
-      </ScrollView>
+        />
+      ) : (
+        <FlatList
+          data={reviewData}
+          keyExtractor={(item, index) => item.id.toString() || `item-${index}`}
+          renderItem={({item}) => (
+            <View style={styles.card}>
+              <View
+                style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                <Text style={styles.title}>{item.app_name}</Text>
+                <TouchableOpacity
+                  style={styles.iconContainer}
+                  onPress={() => {
+                    const handleViewReview = async (id: number) => {
+                      try {
+                        const response = await axios.get(
+                          `https://demo.capobrain.com/staffreviewshow?id=${id}&_token=${token}`,
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          },
+                        );
 
-      <View style={styles.pagination}>
-        <Text>
-          Showing {(currentPage - 1) * entriesPerPage + 1} to
-          {Math.min(currentPage * entriesPerPage, tableData.length)} of
-          {tableData.length} entries
-        </Text>
-        <View style={styles.paginationButtons}>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage - 1)}>
-            <Text style={styles.paginationText}>Previous</Text>
-          </TouchableOpacity>
-          <View style={styles.pageNumber}>
-            <Text style={styles.pageText}>{currentPage}</Text>
-          </View>
-          <TouchableOpacity onPress={() => handlePageChange(currentPage + 1)}>
-            <Text style={styles.paginationText}>Next</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+                        setReviewDetails(response.data);
+                        setModalVisi(true);
+                      } catch (error) {
+                        console.log(error);
+                      }
+                    };
+
+                    handleViewReview(item.id);
+                  }}>
+                  <Image
+                    style={styles.actionIcon}
+                    source={require('../../assets/visible.png')}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        />
+      )}
 
       {/* Modal */}
       <Modal isVisible={isModalVisi}>
@@ -445,120 +334,80 @@ const TeacherFeedback = ({navigation}: any) => {
               maxHeight: 300,
               borderRadius: 5,
               borderWidth: 1,
-              borderColor: '#6C757D',
+              borderColor: '#3b82f6',
+              overflow: 'hidden',
             }}>
-            <View
+            <Text
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                margin: 20,
+                color: '#3b82f6',
+                fontSize: 18,
+                textAlign: 'center',
+                margin: 10,
+                fontWeight: 'bold',
               }}>
-              <Text style={{color: '#6C757D', fontSize: 18}}>
-                Feedback Detail
-              </Text>
-
-              <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
-                <Text style={{color: '#6C757D'}}>✖</Text>
-              </TouchableOpacity>
-            </View>
+              Feedback Detail
+            </Text>
             <View
               style={{
                 height: 1,
-                backgroundColor: 'gray',
+                backgroundColor: '#3b82f6',
                 width: wp('90%'),
+                marginBottom: 15,
               }}
             />
+
+            <Text style={styles.lblText}>Feedback:</Text>
+            <Text
+              style={[
+                styles.valueText,
+                {marginLeft: '5%', marginRight: '10%'},
+              ]}>
+              {feedbackDetail?.feedback.feed_feedback}
+            </Text>
+
             <View
               style={{
                 flexDirection: 'row',
+                marginLeft: 10,
+                marginRight: '5%',
                 justifyContent: 'space-between',
-                margin: 10,
+                marginTop: 10,
               }}>
               <View
                 style={{
-                  flexDirection: 'row',
-                }}>
-                <Text style={styles.lblText}>Teacher Name:</Text>
-                <Text style={styles.valueText}>
-                  {feedbackDetail?.employee.app_name}
-                </Text>
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  marginRight: 66,
-                }}>
-                <Text style={styles.lblText}>Class:</Text>
-                <Text style={styles.valueText}>
-                  {feedbackDetail?.class.cls_name}
-                </Text>
-              </View>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                margin: 10,
-              }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                }}>
-                <Text style={styles.lblText}>Section:</Text>
-                <Text style={styles.valueText}>
-                  {feedbackDetail?.section.sec_name}
-                </Text>
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                }}>
-                <Text style={styles.lblText}>Branch:</Text>
-                <Text style={styles.valueText}>
-                  {feedbackDetail?.branch.bra_name}
-                </Text>
-              </View>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                margin: 10,
-              }}>
-              <View
-                style={{
-                  marginTop: 10,
                   flexDirection: 'row',
                 }}>
                 <Text style={styles.lblText}>Added By:</Text>
-                <Text style={styles.valueText}>
+                <Text style={[styles.valueText, {marginLeft: 5}]}>
                   {feedbackDetail?.feedback.feed_feedbackby}
                 </Text>
               </View>
               <View
                 style={{
-                  marginLeft: 10,
-                  marginTop: 10,
                   flexDirection: 'row',
-                  marginRight: 20,
                 }}>
                 <Text style={styles.lblText}>Date:</Text>
-                <Text style={styles.valueText}>
-                  {feedbackDetail?.feedback.feed_date}
+                <Text style={[styles.valueText, {marginLeft: 5}]}>
+                  {formatDate(feedbackDetail?.feedback.feed_date ?? '--')}
                 </Text>
               </View>
             </View>
 
-            <View
+            <TouchableOpacity
+              onPress={() => setModalVisi(!isModalVisi)}
               style={{
-                marginLeft: 10,
-                marginTop: 10,
+                backgroundColor: '#3b82f6',
+                borderRadius: 5,
+                width: 50,
+                height: 23,
+                alignSelf: 'center',
+                marginTop: 'auto',
+                marginBottom: 10,
               }}>
-              <Text style={styles.lblText}>Feedback:</Text>
-              <Text style={styles.valueText}>
-                {feedbackDetail?.feedback.feed_feedback}
+              <Text style={{color: 'white', fontSize: 16, textAlign: 'center'}}>
+                Close
               </Text>
-            </View>
+            </TouchableOpacity>
           </View>
         ) : (
           <View
@@ -566,65 +415,42 @@ const TeacherFeedback = ({navigation}: any) => {
               flex: 1,
               backgroundColor: 'white',
               width: 'auto',
-              maxHeight: 'auto',
+              maxHeight: 400,
               borderRadius: 5,
               borderWidth: 1,
-              borderColor: '#6C757D',
+              borderColor: '#3b82f6',
+              overflow: 'hidden',
             }}>
-            <View
+            <Animated.View
+              style={[
+                styles.animatedBackground,
+                {transform: [{translateY: moveAnim}]},
+              ]}>
+              <ImageBackground
+                resizeMode="cover"
+                style={styles.backgroundImage}
+                source={require('../../assets/bgimg.jpg')}
+              />
+            </Animated.View>
+            <Text
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                margin: 20,
+                color: '#3b82f6',
+                fontSize: 18,
+                textAlign: 'center',
+                margin: 10,
+                fontWeight: 'bold',
               }}>
-              <Text style={{color: '#6C757D', fontSize: 18}}>
-                Show Staff Review Details
-              </Text>
+              Show Staff Review Details
+            </Text>
 
-              <TouchableOpacity onPress={() => setModalVisi(!isModalVisi)}>
-                <Text style={{color: '#6C757D'}}>✖</Text>
-              </TouchableOpacity>
-            </View>
             <View
               style={{
                 height: 1,
-                backgroundColor: 'gray',
+                backgroundColor: '#3b82f6',
                 width: wp('90%'),
               }}
             />
 
-            <Text
-              style={{
-                textAlign: 'center',
-                fontWeight: 'bold',
-                marginTop: 10,
-              }}>
-              {reviewDetails?.school.scl_institute_name}
-            </Text>
-            <Text
-              style={{
-                textAlign: 'center',
-              }}>
-              {reviewDetails?.branch.bra_name}
-            </Text>
-
-            <FlatList
-              contentContainerStyle={{paddingBottom: 10}}
-              style={{flexGrow: 0, marginTop: 10}}
-              data={Info || []}
-              keyExtractor={(item, index) =>
-                item?.key ? item.key.toString() : index.toString()
-              }
-              renderItem={({item}) => {
-                if (!item) return null;
-                return (
-                  <View style={styles.infoRow}>
-                    <Text style={styles.text}>{item.key}:</Text>
-                    <Text style={styles.value}>{item.value}</Text>
-                  </View>
-                );
-              }}
-            />
             <View
               style={{
                 flexDirection: 'row',
@@ -632,10 +458,10 @@ const TeacherFeedback = ({navigation}: any) => {
                 marginLeft: 10,
                 marginTop: 15,
               }}>
-              <Text style={styles.lblText}>
-                Effective teaching methods & engagement?
+              <Text style={styles.lblText}>Academic Performance</Text>
+              <Text style={[styles.valueText, {marginRight: 10}]}>
+                {reviewDetails?.staffreview.efective_tech_rate}
               </Text>
-              <Text style={styles.valueText}>2</Text>
             </View>
 
             <View
@@ -645,21 +471,10 @@ const TeacherFeedback = ({navigation}: any) => {
                 marginLeft: 10,
                 marginTop: 6,
               }}>
-              <Text style={styles.lblText}>
-                Is the teaching staff up-to-date with modern teaching methods
-                and technology?
+              <Text style={styles.lblText}>Behavior and Conduct</Text>
+              <Text style={[styles.valueText, {marginRight: 10}]}>
+                {reviewDetails?.staffreview.tech_staff_rate}
               </Text>
-              <Text style={styles.valueText}>4</Text>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginLeft: 10,
-                marginTop: 6,
-              }}>
-              <Text style={styles.lblText}>Innovative tech integration?</Text>
-              <Text style={styles.valueText}>2</Text>
             </View>
             <View
               style={{
@@ -669,10 +484,23 @@ const TeacherFeedback = ({navigation}: any) => {
                 marginTop: 6,
               }}>
               <Text style={styles.lblText}>
-                How do students perform academically under the guidance of the
-                teaching staff??
+                Social and Emotional Development
               </Text>
-              <Text style={styles.valueText}>2</Text>
+              <Text style={[styles.valueText, {marginRight: 10}]}>
+                {reviewDetails?.staffreview.tech_itigration_rate}
+              </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                marginLeft: 10,
+                marginTop: 6,
+              }}>
+              <Text style={styles.lblText}>Extra-curricular Involvement</Text>
+              <Text style={[styles.valueText, {marginRight: 10}]}>
+                {reviewDetails?.staffreview.academic_rate}
+              </Text>
             </View>
 
             <View
@@ -682,11 +510,26 @@ const TeacherFeedback = ({navigation}: any) => {
                 marginLeft: 10,
                 marginTop: 6,
               }}>
-              <Text style={styles.lblText}>
-                Positive classroom climate & rapport?
+              <Text style={styles.lblText}>Goal Setting and Progress</Text>
+              <Text style={[styles.valueText, {marginRight: 10}]}>
+                {reviewDetails?.staffreview.climate_rate}
               </Text>
-              <Text style={styles.valueText}>3</Text>
             </View>
+            <TouchableOpacity
+              onPress={() => setModalVisi(!isModalVisi)}
+              style={{
+                backgroundColor: '#3b82f6',
+                borderRadius: 5,
+                width: 50,
+                height: 23,
+                alignSelf: 'center',
+                marginTop: 'auto',
+                marginBottom: 10,
+              }}>
+              <Text style={{color: 'white', fontSize: 16, textAlign: 'center'}}>
+                Close
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
       </Modal>
@@ -716,7 +559,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#d5d5d9',
     borderRadius: 5,
-    minHeight: 30,
+    minHeight: 35,
     marginLeft: 10,
     zIndex: 100,
   },
@@ -786,10 +629,13 @@ const styles = StyleSheet.create({
   },
   lblText: {
     fontWeight: 'bold',
-    marginRight: 10,
+    color: '#3b82f6',
+    marginLeft: '5%',
+    marginTop: 5,
   },
   valueText: {
-    marginRight: 10,
+    color: '#3b82f6',
+    marginTop: 5,
   },
   iconContainer: {
     justifyContent: 'center',
@@ -801,7 +647,7 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     tintColor: '#3b82f6',
-    marginLeft: 70,
+    marginLeft: 40,
   },
   infoRow: {
     flexDirection: 'row',
@@ -814,5 +660,35 @@ const styles = StyleSheet.create({
   },
   value: {
     marginLeft: 10,
+  },
+  animatedBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+  },
+  card: {
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 20,
+    marginLeft: '2%',
+    marginRight: '3%',
+    marginTop: '1%',
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#3b82f6',
   },
 });

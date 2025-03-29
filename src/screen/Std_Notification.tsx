@@ -134,27 +134,38 @@ const Std_Notification = ({navigation}: any) => {
         <Text style={styles.headerText}>Messages</Text>
       </View>
 
-      <FlatList
-        data={notifications}
-        keyExtractor={item => item.id}
-        numColumns={2}
-        contentContainerStyle={[styles.listContainer, {marginTop: hp('5%')}]}
-        renderItem={({item, index}) => (
-          <View
-            style={[
-              styles.note,
-              {
-                backgroundColor: getRandomColor(index),
-                transform: [{rotate: `${index % 2 === 0 ? '-3deg' : '3deg'}`}],
-              },
-            ]}>
-            <Text style={styles.title}>{item.msg_subject}</Text>
-            <Text style={styles.message}>{item.msg_message}</Text>
+      {notifications.length > 0 ? (
+        <FlatList
+          style={{paddingVertical: 20}}
+          data={notifications}
+          keyExtractor={item => item.id}
+          numColumns={2}
+          contentContainerStyle={[styles.listContainer, {marginTop: hp('5%')}]}
+          renderItem={({item, index}) => (
+            <View
+              style={[
+                styles.note,
+                {
+                  backgroundColor: getRandomColor(index),
+                  transform: [
+                    {rotate: `${index % 2 === 0 ? '-3deg' : '3deg'}`},
+                  ],
+                },
+              ]}>
+              <Text style={styles.title}>{item.msg_subject}</Text>
+              <Text style={styles.message}>{item.msg_message}</Text>
 
-            <Text style={styles.date}>{item.msg_date}</Text>
-          </View>
-        )}
-      />
+              <Text style={styles.date}>{item.msg_date}</Text>
+            </View>
+          )}
+        />
+      ) : (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+            No data found in the database!
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -204,6 +215,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp('2%'),
     position: 'absolute',
     backgroundColor: '#3b82f6',
+    zIndex: 100,
   },
   backButton: {
     width: 25,

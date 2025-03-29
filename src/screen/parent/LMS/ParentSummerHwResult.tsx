@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {Image} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useUser} from '../../../Ctx/UserContext';
@@ -112,6 +112,28 @@ const ParentSummerHwResult = ({navigation}: any) => {
     return () => backHandler.remove();
   }, []);
 
+  const {totalMarks, totalObtain} = useMemo(() => {
+    let totalMarks = 0;
+    let totalObtain = 0;
+
+    if (ModalData) {
+      totalMarks = ModalData.reduce(
+        (acc, item) => acc + parseFloat(item.total_marks || '0'),
+        0,
+      );
+
+      totalObtain = ModalData.reduce(
+        (acc, item) => acc + parseFloat(item.obtain_marks || '0'),
+        0,
+      );
+    }
+
+    return {
+      totalMarks,
+      totalObtain,
+    };
+  }, [ModalData]);
+
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
       <Animated.View
@@ -139,59 +161,51 @@ const ParentSummerHwResult = ({navigation}: any) => {
         <Text style={styles.headerText}>Summer HomeWork Result</Text>
       </View>
 
-      {originalData.length > 0 ? (
-        <FlatList
-          style={{paddingVertical: 10}}
-          data={originalData}
-          keyExtractor={item => item.id.toString()}
-          renderItem={({item}) => (
-            <View style={styles.card}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                }}>
-                <Text style={styles.titl}>{item.cand_name}</Text>
+      <FlatList
+        style={{paddingVertical: 10}}
+        data={originalData}
+        keyExtractor={(item, index) => item.id.toString() || `item-${index}`}
+        renderItem={({item}) => (
+          <View style={styles.card}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={styles.titl}>{item.cand_name}</Text>
 
-                <TouchableOpacity
-                  style={styles.iconContainer}
-                  onPress={() => {
-                    const handleView = async (id: number) => {
-                      try {
-                        const response = await axios.get(
-                          `https://demo.capobrain.com/summerhomeworkmarking?id=${item.id}&_token=${token}`,
-                          {
-                            headers: {
-                              Authorization: `Bearer ${token}`,
-                            },
+              <TouchableOpacity
+                style={styles.iconContainer}
+                onPress={() => {
+                  const handleView = async (id: number) => {
+                    try {
+                      const response = await axios.get(
+                        `https://demo.capobrain.com/summerhomeworkmarking?id=${item.id}&_token=${token}`,
+                        {
+                          headers: {
+                            Authorization: `Bearer ${token}`,
                           },
-                        );
-                        setModalData(response.data.marking);
-                        setModalVisible(true);
-                      } catch (error) {
-                        console.log(error);
-                        throw error;
-                      }
-                    };
+                        },
+                      );
+                      setModalData(response.data.marking);
+                      setModalVisible(true);
+                    } catch (error) {
+                      console.log(error);
+                      throw error;
+                    }
+                  };
 
-                    handleView(item.id);
-                  }}>
-                  <Image
-                    style={styles.actionIcon}
-                    source={require('../../../assets/visible.png')}
-                  />
-                </TouchableOpacity>
-              </View>
+                  handleView(item.id);
+                }}>
+                <Image
+                  style={styles.actionIcon}
+                  source={require('../../../assets/visible.png')}
+                />
+              </TouchableOpacity>
             </View>
-          )}
-        />
-      ) : (
-        <View style={{width: '100%', marginTop: 20}}>
-          <Text style={{fontSize: 18, fontWeight: 'bold', textAlign: 'center'}}>
-            No data found in the database!
-          </Text>
-        </View>
-      )}
+          </View>
+        )}
+      />
 
       <Modal isVisible={isModalVisible}>
         <View
@@ -199,10 +213,10 @@ const ParentSummerHwResult = ({navigation}: any) => {
             flex: 1,
             backgroundColor: 'white',
             width: 'auto',
-            maxHeight: 600,
+            maxHeight: 'auto',
             borderRadius: 5,
             borderWidth: 1,
-            borderColor: '#6C757D',
+            borderColor: '#3b82f6',
             overflow: 'hidden',
           }}>
           <Animated.View
@@ -223,72 +237,135 @@ const ParentSummerHwResult = ({navigation}: any) => {
               margin: 10,
             }}>
             <Text style={{color: '#3b82f6', fontSize: 18, fontWeight: 'bold'}}>
-              Home Work
+              Result Card
             </Text>
 
             <TouchableOpacity onPress={() => setModalVisible(!isModalVisible)}>
               <Text style={{color: 'red'}}>✖</Text>
             </TouchableOpacity>
           </View>
-
           <View
             style={{
+              flexDirection: 'column',
               borderWidth: 1,
               borderColor: '#3b82f6',
-              borderBottomWidth: 1,
             }}
           />
 
-          {ModalData.length > 0 ? (
-            <FlatList
-              style={{paddingVertical: 10}}
-              data={ModalData}
-              keyExtractor={item => item.id.toString()}
-              renderItem={({item}) => (
-                <View style={styles.card}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                    }}>
-                    <Text style={styles.titl}>{item.sub_name}</Text>
-                    <Text style={{color: '#3b82f6'}}>
-                      {item.obtain_marks}/{item.total_marks}
-                    </Text>
-                  </View>
-                </View>
-              )}
-            />
-          ) : (
-            <View style={{width: '100%', marginTop: 20}}>
-              <Text
-                style={{fontSize: 18, fontWeight: 'bold', textAlign: 'center'}}>
-                No data found in the database!
-              </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              marginTop: 10,
+            }}>
+            <View style={{flexDirection: 'column', marginTop: 10}}>
+              <View style={{width: 200, marginTop: 9}}></View>
             </View>
-          )}
+          </View>
 
-          <TouchableOpacity onPress={printPDF} style={{marginTop: 'auto'}}>
-            <View
+          <View style={styles.row}>
+            <Text style={[styles.column, styles.headTable, {width: 50}]}>
+              Sr#
+            </Text>
+            <Text style={[styles.column, styles.headTable, {width: 50}]}>
+              Subject
+            </Text>
+
+            <Text style={[styles.column, styles.headTable, {width: 50}]}>
+              Total Marks
+            </Text>
+            <Text style={[styles.column, styles.headTable, {width: 50}]}>
+              Obtain Marks
+            </Text>
+          </View>
+
+          <FlatList
+            data={ModalData}
+            keyExtractor={(item, index) =>
+              item.id.toString() || `item-${index}`
+            }
+            renderItem={({item, index}) => {
+              return (
+                <View
+                  style={[
+                    styles.row,
+                    {backgroundColor: index % 2 === 0 ? 'white' : '#E2F0FF'},
+                  ]}>
+                  <Text style={[styles.column, {width: 50}]}>{index + 1}</Text>
+                  <Text style={[styles.column, styles.boldText, {width: 50}]}>
+                    {item.sub_name}
+                  </Text>
+
+                  <Text style={[styles.column, {width: 50}]}>
+                    {item.total_marks}
+                  </Text>
+                  <Text
+                    style={[
+                      {
+                        textAlign: 'center',
+                        color: '#3b82f6',
+                        fontSize: 11,
+                        flex: 1,
+                      },
+                      {width: 50},
+                    ]}>
+                    {item.obtain_marks}
+                  </Text>
+                </View>
+              );
+            }}
+            ListFooterComponent={() => (
+              <View>
+                {/* Total Row */}
+                <View style={[styles.row, {backgroundColor: '#E2F0FF'}]}>
+                  <Text
+                    style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
+                    Total
+                  </Text>
+                  <Text style={[styles.column, {width: 50}]}></Text>
+
+                  <Text
+                    style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
+                    {totalMarks}
+                  </Text>
+                  <Text
+                    style={[styles.column, {width: 50, fontWeight: 'bold'}]}>
+                    {totalObtain}
+                  </Text>
+                </View>
+              </View>
+            )}
+          />
+
+          <TouchableOpacity>
+            <TouchableOpacity
               style={{
+                flexDirection: 'row',
                 backgroundColor: '#3b82f6',
                 borderRadius: 5,
-                width: 50,
+                width: 60,
                 height: 30,
                 alignSelf: 'center',
                 marginTop: 20,
-                marginBottom: 20,
-              }}>
+                marginBottom: 10,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+              onPress={printPDF}>
+              <Icon
+                name="printer"
+                size={16}
+                color="white"
+                style={{marginRight: 5}}
+              />
               <Text
                 style={{
                   color: 'white',
                   textAlign: 'center',
-                  marginTop: 5,
-                  fontWeight: 'bold',
                 }}>
                 Print
               </Text>
-            </View>
+            </TouchableOpacity>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -445,5 +522,31 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     tintColor: '#3b82f6',
+  },
+  row: {
+    flexDirection: 'row',
+    width: '95%',
+    height: 40,
+    alignSelf: 'center',
+    alignItems: 'center',
+    paddingVertical: 5,
+  },
+  column: {
+    textAlign: 'center',
+    color: '#3b82f6',
+    fontSize: 11,
+    flex: 1,
+  },
+  headTable: {
+    backgroundColor: '#3b82f6',
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 10,
+    paddingVertical: 5,
+  },
+  boldText: {
+    fontWeight: 'bold',
+    fontSize: 12,
+    color: '#3b82f6',
   },
 });

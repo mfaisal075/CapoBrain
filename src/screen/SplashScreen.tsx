@@ -56,7 +56,7 @@ const SplashScreen = () => {
       </View>
 
       <Animated.Text style={[styles.tagline, {opacity: textOpacity}]}>
-        Version 1.3.22
+        Version 1.3.27
       </Animated.Text>
     </View>
   );

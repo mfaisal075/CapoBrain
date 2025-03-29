@@ -139,53 +139,61 @@ const SummerHomework = ({navigation}: any) => {
         <Text style={styles.headerText}>Summer Vacation HomeWork</Text>
       </View>
 
-      <FlatList
-        data={originalData}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => (
-          <View style={styles.card}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <TouchableOpacity
-                style={styles.iconContainer}
-                onPress={() => {
-                  const handleShowHomework = async (id: number) => {
-                    try {
-                      const response = await axios.get(
-                        `https://demo.capobrain.com/showstudentsummerwork?id=${item.id}&_token=${token}`,
-                        {
-                          headers: {
-                            Authorization: `Bearer ${token}`,
-                          },
-                        },
-                      );
-                      setHomeWorkData(response.data);
-                      setModalVisi(true);
-                    } catch (error) {
-                      console.log(error);
-                      throw error;
-                    }
-                  };
-
-                  handleShowHomework(item.id);
+      {originalData.length > 0 ? (
+        <FlatList
+          data={originalData}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => (
+            <View style={styles.card}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
                 }}>
-                <Image
-                  style={styles.actionIcon}
-                  source={require('../../assets/visible.png')}
-                />
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.iconContainer}
+                  onPress={() => {
+                    const handleShowHomework = async (id: number) => {
+                      try {
+                        const response = await axios.get(
+                          `https://demo.capobrain.com/showstudentsummerwork?id=${item.id}&_token=${token}`,
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          },
+                        );
+                        setHomeWorkData(response.data);
+                        setModalVisi(true);
+                      } catch (error) {
+                        console.log(error);
+                        throw error;
+                      }
+                    };
 
-              <Text style={styles.title}>{item.sub_name}</Text>
-              <Text style={{textAlign: 'right', color: '#3b82f6'}}>
-                {item.total_marks}
-              </Text>
+                    handleShowHomework(item.id);
+                  }}>
+                  <Image
+                    style={styles.actionIcon}
+                    source={require('../../assets/visible.png')}
+                  />
+                </TouchableOpacity>
+
+                <Text style={styles.title}>{item.sub_name}</Text>
+                <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                  {item.total_marks}
+                </Text>
+              </View>
             </View>
-          </View>
-        )}
-      />
+          )}
+        />
+      ) : (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+            No data found in the database!
+          </Text>
+        </View>
+      )}
 
       {/* View Modal */}
       <Modal isVisible={isModalVisi}>

@@ -148,33 +148,41 @@ const LibraryBooks = ({navigation}: any) => {
         <Text style={styles.headerText}>Library Books</Text>
       </View>
 
-      <FlatList
-        data={originalData}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => (
-          <TouchableOpacity
-            onPress={() => {
-              setIsOpen(true);
-              setSelectedTransaction(item.id);
-            }}>
-            <View style={styles.card}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                }}>
-                <Text style={styles.title}>{item.bk_name}</Text>
-                <Text
+      {originalData.length > 0 ? (
+        <FlatList
+          data={originalData}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => (
+            <TouchableOpacity
+              onPress={() => {
+                setIsOpen(true);
+                setSelectedTransaction(item.id);
+              }}>
+              <View style={styles.card}>
+                <View
                   style={{
-                    color: '#3b82f6',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
                   }}>
-                  {item.issue_bk_quantity_no}
-                </Text>
+                  <Text style={styles.title}>{item.bk_name}</Text>
+                  <Text
+                    style={{
+                      color: '#3b82f6',
+                    }}>
+                    {item.issue_bk_quantity_no}
+                  </Text>
+                </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
+            </TouchableOpacity>
+          )}
+        />
+      ) : (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+            No data found in the database!
+          </Text>
+        </View>
+      )}
 
       <Modal isVisible={isOpen}>
         <View style={styles.cards}>

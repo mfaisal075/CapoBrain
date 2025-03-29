@@ -184,12 +184,20 @@ const StdSports = ({navigation}: any) => {
         <Text style={styles.headerText}>Sports Notification</Text>
       </View>
 
-      <FlatList
-        data={sports}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => <SportCard sport={item} />}
-        contentContainerStyle={styles.listContent}
-      />
+      {sports.length > 0 ? (
+        <FlatList
+          data={sports}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => <SportCard sport={item} />}
+          contentContainerStyle={styles.listContent}
+        />
+      ) : (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+            No data found in the database!
+          </Text>
+        </View>
+      )}
     </ScrollView>
   );
 };

@@ -770,10 +770,28 @@ const TeacherUpload = ({navigation}: any) => {
                 setValue={val => setCurrentValu(val)}
                 maxHeight={200}
                 placeholder="Select Class"
-                placeholderStyle={{ color: "#3b82f6" }} 
-                          labelStyle={{ color: "#3b82f6" }} 
-                          textStyle={{ color: "#3b82f6" }} 
-                          arrowIconStyle={{ tintColor: "#3b82f6" }} 
+                placeholderStyle={{color: '#3b82f6'}}
+                labelStyle={{color: '#3b82f6'}}
+                textStyle={{color: '#3b82f6'}}
+                ArrowUpIconComponent={({style}) => (
+                  <Icon
+                    name="chevron-up"
+                    size={22}
+                    color="#3b82f6"
+                    style={style}
+                  />
+                )}
+                ArrowDownIconComponent={({style}) => (
+                  <Icon
+                    name="chevron-down"
+                    size={22}
+                    color="#3b82f6"
+                    style={style}
+                  />
+                )}
+                TickIconComponent={({style}) => (
+                  <Icon name="check" size={22} color="#3b82f6" style={style} />
+                )}
                 style={{
                   borderWidth: 1,
                   borderColor: 'white',
@@ -840,10 +858,28 @@ const TeacherUpload = ({navigation}: any) => {
                 setValue={val => setCurrentVal(val)}
                 maxHeight={200}
                 placeholder="Select Class First"
-                placeholderStyle={{ color: "#3b82f6" }} 
-                          labelStyle={{ color: "#3b82f6" }} 
-                          textStyle={{ color: "#3b82f6" }} 
-                          arrowIconStyle={{ tintColor: "#3b82f6" }} 
+                placeholderStyle={{color: '#3b82f6'}}
+                labelStyle={{color: '#3b82f6'}}
+                textStyle={{color: '#3b82f6'}}
+                ArrowUpIconComponent={({style}) => (
+                  <Icon
+                    name="chevron-up"
+                    size={22}
+                    color="#3b82f6"
+                    style={style}
+                  />
+                )}
+                ArrowDownIconComponent={({style}) => (
+                  <Icon
+                    name="chevron-down"
+                    size={22}
+                    color="#3b82f6"
+                    style={style}
+                  />
+                )}
+                TickIconComponent={({style}) => (
+                  <Icon name="check" size={22} color="#3b82f6" style={style} />
+                )}
                 style={{
                   borderWidth: 1,
                   borderColor: 'white',

@@ -150,6 +150,87 @@ const ParentResult = ({navigation}: any) => {
       console.log(error);
     }
   };
+  const {totalMarks, totalObtain, totalPercentageDisplay, grade, remark} =
+    React.useMemo(() => {
+      let totalMarks = 0;
+      let totalObtain = 0;
+
+      if (tableDta) {
+        totalMarks = tableDta.reduce(
+          (acc, item) => acc + parseFloat(item.res_total_marks || '0'),
+          0,
+        );
+        totalObtain = tableDta.reduce(
+          (acc, item) => acc + parseFloat(item.res_obtain_marks || '0'),
+          0,
+        );
+      }
+
+      const totalPercentage =
+        totalMarks > 0 ? (totalObtain / totalMarks) * 100 : 0;
+
+      // Grade calculation function
+      const getGradeAndRemark = (percentage: number) => {
+        const flooredPercentage = Math.floor(percentage);
+        let grade = '';
+        let remark = '';
+
+        if (flooredPercentage >= 95) {
+          grade = 'A+';
+          remark = 'Outstanding performance! Continue to excel.';
+        } else if (flooredPercentage >= 90) {
+          grade = 'A';
+          remark = 'Outstanding performance! Continue to excel.';
+        } else if (flooredPercentage >= 87) {
+          grade = 'B+';
+          remark = "Very good effort, but there's always room for improvement!";
+        } else if (flooredPercentage >= 83) {
+          grade = 'B';
+          remark = "Very good effort, but there's always room for improvement!";
+        } else if (flooredPercentage >= 80) {
+          grade = 'B-';
+          remark = "Very good effort, but there's always room for improvement!";
+        } else if (flooredPercentage >= 77) {
+          grade = 'C+';
+          remark =
+            "Good work, but let's work on understanding the concepts even better.";
+        } else if (flooredPercentage >= 73) {
+          grade = 'C';
+          remark =
+            "Good work, but let's work on understanding the concepts even better.";
+        } else if (flooredPercentage >= 70) {
+          grade = 'C-';
+          remark =
+            "Good work, but let's work on understanding the concepts even better.";
+        } else if (flooredPercentage >= 67) {
+          grade = 'D+';
+          remark = "You need to put in more effort. Let's try to improve.";
+        } else if (flooredPercentage >= 63) {
+          grade = 'D';
+          remark = "You need to put in more effort. Let's try to improve.";
+        } else if (flooredPercentage >= 60) {
+          grade = 'D-';
+          remark = "You need to put in more effort. Let's try to improve.";
+        } else {
+          grade = 'F';
+          remark =
+            "It's important to focus more on studies, seek help if you're struggling.";
+        }
+
+        return {grade, remark};
+      };
+
+      const {grade: calculatedGrade, remark: calculatedRemark} =
+        getGradeAndRemark(totalPercentage);
+
+      return {
+        totalMarks,
+        totalObtain,
+        totalPercentageDisplay: totalPercentage.toFixed(0),
+        grade: calculatedGrade,
+        remark: calculatedRemark,
+      };
+    }, [tableDta]);
 
   return (
     <View style={{backgroundColor: 'white', flex: 1}}>
@@ -175,37 +256,47 @@ const ParentResult = ({navigation}: any) => {
         </TouchableOpacity>
         <Text style={styles.headerText}>Results</Text>
       </View>
-      <FlatList
-        style={{paddingVertical: 10}}
-        data={originalData}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => (
-          <TouchableOpacity onPress={() => toggleModal(item.id)}>
-            <View style={styles.card}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                }}>
-                <Text style={styles.title}>{item.cand_name}</Text>
-                <Text
+
+      {originalData.length > 0 ? (
+        <FlatList
+          data={originalData}
+          keyExtractor={(item, index) => item.id.toString() || `item-${index}`}
+          renderItem={({item}) => (
+            <TouchableOpacity onPress={() => toggleModal(item.id)}>
+              <View style={styles.card}>
+                <View
                   style={{
-                    color: '#3b82f6',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
                   }}>
-                  {item.cls_name}
-                </Text>
+                  <Text style={styles.title}>{item.cand_name}</Text>
+                  <Text
+                    style={{
+                      color: '#3b82f6',
+                    }}>
+                    {item.cls_name}
+                  </Text>
+                </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
+            </TouchableOpacity>
+          )}
+        />
+      ) : (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+            No data found in the database!
+          </Text>
+        </View>
+      )}
 
       {/* Modal */}
-      <Modal isVisible={isModalVisible} style={{flex: 1}}>
+      <Modal isVisible={isModalVisible}>
         <View
           style={{
             flex: 1,
             backgroundColor: 'white',
+            width: 'auto',
+            maxHeight: 'auto',
             borderRadius: 5,
             borderWidth: 1,
             borderColor: '#3b82f6',
@@ -222,149 +313,334 @@ const ParentResult = ({navigation}: any) => {
               source={require('../../assets/bgimg.jpg')}
             />
           </Animated.View>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              margin: 10,
+            }}>
+            <Text style={{color: '#3b82f6', fontSize: 18, fontWeight: 'bold'}}>
+              Result Card
+            </Text>
 
-          <View style={{paddingBottom: 20}}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                margin: 10,
+            <TouchableOpacity
+              onPress={() => {
+                setModalVisible(!isModalVisible);
+                setValue(null);
               }}>
-              <Text
-                style={{color: '#3b82f6', fontSize: 18, fontWeight: 'bold'}}>
-                Result Card
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setModalVisible(!isModalVisible);
-                  setValue(null);
-                }}>
-                <Text style={{color: 'red'}}>✖</Text>
-              </TouchableOpacity>
+              <Text style={{color: 'red'}}>✖</Text>
+            </TouchableOpacity>
+          </View>
+          <View
+            style={{
+              flexDirection: 'column',
+              borderWidth: 1,
+              borderColor: '#3b82f6',
+            }}
+          />
+
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              marginTop: 10,
+            }}>
+            <View style={{flexDirection: 'column', marginTop: 10}}>
+              <View style={{width: 200, marginTop: 9}}>
+                <DropDownPicker
+                  items={transformedExamTypes}
+                  open={isOpn}
+                  setOpen={setIsOpn}
+                  value={value}
+                  setValue={setValue}
+                  maxHeight={200}
+                  placeholderStyle={{color: '#3b82f6'}}
+                  labelStyle={{color: '#3b82f6'}}
+                  textStyle={{color: '#3b82f6'}}
+                  ArrowUpIconComponent={({style}) => (
+                    <Icon
+                      name="chevron-up"
+                      size={22}
+                      color="#3b82f6"
+                      style={style}
+                    />
+                  )}
+                  ArrowDownIconComponent={({style}) => (
+                    <Icon
+                      name="chevron-down"
+                      size={22}
+                      color="#3b82f6"
+                      style={style}
+                    />
+                  )}
+                  TickIconComponent={({style}) => (
+                    <Icon
+                      name="check"
+                      size={22}
+                      color="#3b82f6"
+                      style={style}
+                    />
+                  )}
+                  placeholder="Select Exam Type Filter"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: '#3b82f6',
+                    borderRadius: 5,
+                    minHeight: 35,
+                    marginLeft: 10,
+                    width: '165%',
+                  }}
+                  dropDownContainerStyle={{
+                    marginLeft: 10,
+                    width: 330,
+                    borderColor: '#3b82f6',
+                  }}
+                />
+              </View>
             </View>
+          </View>
 
-            <DropDownPicker
-              items={transformedExamTypes}
-              open={isOpn}
-              setOpen={setIsOpn}
-              value={value}
-              setValue={setValue}
-              maxHeight={150}
-              placeholder="Select Exam Type Filter"
-              style={{
-                borderWidth: 1,
-                borderColor: '#3b82f6',
-                borderRadius: 5,
-                minHeight: 30,
-                width: '95%',
-                alignSelf: 'center',
-              }}
-              dropDownContainerStyle={{
-                width: '95%',
-                marginLeft: 9,
-              }}
-              placeholderStyle={{ color: "#3b82f6" }} 
-                          labelStyle={{ color: "#3b82f6" }} 
-                          textStyle={{ color: "#3b82f6" }} 
-                          arrowIconStyle={{ tintColor: "#3b82f6" }} 
-            />
+          {tableDta.length > 0 ? (
+            <>
+              <View style={styles.row}>
+                <Text style={[styles.column, styles.headTable, {width: 50}]}>
+                  Sr#
+                </Text>
+                <Text style={[styles.column, styles.headTable, {width: 50}]}>
+                  Subject
+                </Text>
 
-            <View style={{maxHeight: 300, marginTop: 10}}>
+                {value === null && (
+                  <Text
+                    style={[
+                      {
+                        textAlign: 'center',
+                        borderRightWidth: 1,
+                        borderRightColor: '#3b82f6',
+                        color: 'white',
+                        fontWeight: 'bold',
+                        width: 50,
+                        height: 30,
+                        textAlignVertical: 'center',
+                        backgroundColor: '#3b82f6',
+                        fontSize: 9,
+                        paddingVertical: 5,
+                      },
+                    ]}>
+                    Exam Type
+                  </Text>
+                )}
+
+                <Text style={[styles.column, styles.headTable, {width: 50}]}>
+                  Total Marks
+                </Text>
+                <Text style={[styles.column, styles.headTable, {width: 50}]}>
+                  Obtain Marks
+                </Text>
+                <Text style={[styles.column, styles.headTable, {width: 50}]}>
+                  Percentage
+                </Text>
+                <Text style={[styles.column, styles.headTable, {width: 50}]}>
+                  Grade
+                </Text>
+              </View>
+
               <FlatList
-                style={{paddingVertical: 20}}
-                nestedScrollEnabled={true}
                 data={tableDta}
-                keyExtractor={item => item.id.toString()}
-                renderItem={({item}) => (
-                  <View style={styles.card}>
+                keyExtractor={(item, index) =>
+                  item.id.toString() || `item-${index}`
+                }
+                renderItem={({item, index}) => {
+                  return (
                     <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                      }}>
-                      <Text style={styles.title}>{item.sub_name}</Text>
-                      <Text style={{color: '#3b82f6'}}>
-                        {item.res_exam_type_id}
+                      style={[
+                        styles.row,
+                        {
+                          backgroundColor:
+                            index % 2 === 0 ? 'white' : '#E2F0FF',
+                        },
+                      ]}>
+                      <Text style={[styles.column, {width: 50}]}>
+                        {index + 1}
+                      </Text>
+                      <Text
+                        style={[styles.column, styles.boldText, {width: 50}]}>
+                        {item.sub_name}
+                      </Text>
+
+                      {value === null && (
+                        <Text
+                          style={[
+                            {
+                              textAlign: 'center',
+                              borderRightWidth: 1,
+                              borderRightColor: '#3b82f6',
+                              color: '#3b82f6',
+                              fontSize: 11,
+                            },
+                            {width: 50},
+                          ]}>
+                          {item.res_exam_type_id}
+                        </Text>
+                      )}
+
+                      <Text style={[styles.column, {width: 50}]}>
+                        {item.res_total_marks}
+                      </Text>
+                      <Text style={[styles.column, {width: 50}]}>
+                        {item.res_obtain_marks}
+                      </Text>
+                      <Text style={[styles.column, {width: 50}]}>
+                        {item.percentage}
+                      </Text>
+                      <Text
+                        style={[
+                          {
+                            textAlign: 'center',
+                            color: '#3b82f6',
+                            fontSize: 11,
+                            flex: 1,
+                          },
+                          {width: 50},
+                        ]}>
+                        {item.grade}
                       </Text>
                     </View>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                      }}>
-                      <Text style={{color: '#3b82f6'}}>
-                        Total Marks: {item.res_total_marks}
+                  );
+                }}
+                ListFooterComponent={() => (
+                  <View>
+                    {/* Total Row */}
+                    <View style={[styles.row, {backgroundColor: '#E2F0FF'}]}>
+                      <Text
+                        style={[
+                          styles.column,
+                          {width: 50, fontWeight: 'bold'},
+                        ]}>
+                        Total
                       </Text>
-                      <Text style={{color: '#3b82f6'}}>
-                        Obtain Marks: {item.res_obtain_marks}
+                      <Text style={[styles.column, {width: 50}]}></Text>
+                      {value === null ? (
+                        <Text style={[styles.column, {width: 50}]}></Text>
+                      ) : null}
+
+                      <Text
+                        style={[
+                          styles.column,
+                          {width: 50, fontWeight: 'bold'},
+                        ]}>
+                        {totalMarks}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.column,
+                          {width: 50, fontWeight: 'bold'},
+                        ]}>
+                        {totalObtain}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.column,
+                          {width: 50, fontWeight: 'bold'},
+                        ]}>
+                        {totalPercentageDisplay}%
+                      </Text>
+                      <Text
+                        style={[
+                          styles.column,
+                          {width: 50, fontWeight: 'bold'},
+                        ]}>
+                        {grade}
                       </Text>
                     </View>
+
+                    {/* Remark Row */}
                     <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                      }}>
-                      <Text style={{color: '#3b82f6'}}>{item.percentage}</Text>
-                      <Text style={{color: '#3b82f6'}}>{item.grade}</Text>
+                      style={[
+                        styles.row,
+                        {
+                          backgroundColor: '#E2F0FF',
+                          borderTopWidth: 1,
+                          height: 85,
+                          borderTopColor: '#3b82f6',
+                          marginBottom: 5,
+
+                          flexDirection: 'column',
+                          alignItems: 'flex-start',
+                          padding: 10,
+                        },
+                      ]}>
+                      <Text
+                        style={[
+                          {
+                            fontWeight: 'bold',
+                            color: '#3b82f6',
+                            marginBottom: 5,
+                            marginTop: 5,
+                          },
+                        ]}>
+                        Teacher Review for Student:
+                      </Text>
+                      <Text
+                        style={[
+                          {
+                            color: '#3b82f6',
+                          },
+                        ]}>
+                        {remark}
+                      </Text>
                     </View>
                   </View>
                 )}
               />
-            </View>
 
-            <Text
-              style={{
-                marginTop: 6,
-                marginLeft: 10,
-                fontSize: 16,
-                color: '#3b82f6',
-              }}>
-              Teacher Review for Student:
-            </Text>
-            <Text
-              style={{
-                marginLeft: 10,
-                fontSize: 14,
-                marginBottom: 10,
-                color: '#3b82f6',
-              }}>
-              It's important to focus more on studies, seek help if you're
-              struggling.
-            </Text>
-
-            <TouchableOpacity>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  backgroundColor: '#3b82f6',
-                  borderRadius: 5,
-                  borderWidth: 1,
-                  width: 80,
-                  height: 35,
-                  alignSelf: 'center',
-                  borderColor: 'white',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  marginBottom: 10,
-                  marginTop: 20,
-                }}>
-                <Icon
-                  name="printer"
-                  size={15}
-                  color="white"
-                  style={{marginRight: 5}}
-                />
-                <Text
+              <TouchableOpacity>
+                <View
                   style={{
-                    color: 'white',
-                    textAlign: 'center',
-                    fontSize: 14,
+                    flexDirection: 'row',
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 5,
+                    width: 60,
+                    height: 30,
+                    alignSelf: 'center',
+                    marginTop: 20,
+                    marginBottom: 10,
+                    justifyContent: 'center',
+                    alignItems: 'center',
                   }}>
-                  Print
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+                  <Icon
+                    name="printer"
+                    size={16}
+                    color="white"
+                    style={{marginRight: 5}}
+                  />
+                  <Text
+                    style={{
+                      color: 'white',
+                      textAlign: 'center',
+                    }}>
+                    Print
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <View
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <Text
+                style={{
+                  fontSize: 18,
+                  color: '#3b82f6',
+                  fontWeight: 'bold',
+                }}>
+                No data found in the database!
+              </Text>
+            </View>
+          )}
         </View>
       </Modal>
     </View>
@@ -390,23 +666,6 @@ const styles = StyleSheet.create({
   },
   item: {
     borderBottomColor: '#ccc',
-  },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  column: {
-    width: '33.33%',
-  },
-  withBorder: {
-    borderRightWidth: 1,
-    borderColor: '#ccc',
-  },
-  headTable: {
-    fontWeight: 'bold',
-    backgroundColor: '#3b82f6',
-    color: 'white',
   },
 
   notAvailable: {
@@ -522,6 +781,35 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#3b82f6',
+  },
+
+  row: {
+    flexDirection: 'row',
+    width: '95%',
+    height: 40,
+    alignSelf: 'center',
+    alignItems: 'center',
+    paddingVertical: 5,
+  },
+  column: {
+    textAlign: 'center',
+    color: '#3b82f6',
+    fontSize: 11,
+    flex: 1,
+  },
+  headTable: {
+    backgroundColor: '#3b82f6',
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 9,
+    height: 30,
+    textAlignVertical: 'center',
+    paddingVertical: 5,
+  },
+  boldText: {
+    fontWeight: 'bold',
+    fontSize: 12,
     color: '#3b82f6',
   },
 });

@@ -216,37 +216,46 @@ const Account = ({navigation}: any) => {
         }}>
         Account Details
       </Text>
-      <FlatList
-        style={{marginBottom: 20}}
-        data={originalData}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => (
-          <TouchableOpacity onPress={() => setSelectedTransaction(item.id)}>
-            <View style={styles.card}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                }}>
-                <Text style={styles.title}>{item.transaction_id}</Text>
-                <Text style={{textAlign: 'right', color: '#3b82f6'}}>
-                  {formatDate(item.stuacc_date)}
-                </Text>
+
+      {originalData.length > 0 ? (
+        <FlatList
+          style={{marginBottom: 20}}
+          data={originalData}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => (
+            <TouchableOpacity onPress={() => setSelectedTransaction(item.id)}>
+              <View style={styles.card}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                  }}>
+                  <Text style={styles.title}>{item.transaction_id}</Text>
+                  <Text style={{textAlign: 'right', color: '#3b82f6'}}>
+                    {formatDate(item.stuacc_date)}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                  }}>
+                  <Text style={{color: '#3b82f6'}}>
+                    {item.stuacc_payment_method}
+                  </Text>
+                  <Text style={{color: '#3b82f6'}}>{item.monthly_fee}</Text>
+                </View>
               </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                }}>
-                <Text style={{color: '#3b82f6'}}>
-                  {item.stuacc_payment_method}
-                </Text>
-                <Text style={{color: '#3b82f6'}}>{item.monthly_fee}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
+            </TouchableOpacity>
+          )}
+        />
+      ) : (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 18, color: '#3b82f6', fontWeight: 'bold'}}>
+            No data found in the database!
+          </Text>
+        </View>
+      )}
 
       <Modal isVisible={!!selectedTransaction}>
         <View style={[styles.cards, {overflow: 'hidden'}]}>
